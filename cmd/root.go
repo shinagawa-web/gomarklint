@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var minHeadingLevel int
+
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint",
 	Short: "A fast markdown linter written in Go",
@@ -25,7 +27,7 @@ var rootCmd = &cobra.Command{
 				continue
 			}
 
-			errors := rule.CheckHeadingLevels(content)
+			errors := rule.CheckHeadingLevels(content, minHeadingLevel)
 			if len(errors) == 0 {
 				fmt.Println("No issues found 🎉")
 			} else {
@@ -36,6 +38,10 @@ var rootCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func init() {
+	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
 }
 
 func Execute() error {

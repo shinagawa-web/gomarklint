@@ -11,7 +11,7 @@ type LintError struct {
 	Message string
 }
 
-func CheckHeadingLevels(content string) []LintError {
+func CheckHeadingLevels(content string, minLevel int) []LintError {
 	lines := strings.Split(content, "\n")
 	var errs []LintError
 
@@ -22,7 +22,15 @@ func CheckHeadingLevels(content string) []LintError {
 		matches := headingRegex.FindStringSubmatch(line)
 		if matches != nil {
 			currentLevel := len(matches[1])
-			if prevLevel != 0 && currentLevel > prevLevel+1 {
+
+			if prevLevel == 0 {
+				if currentLevel != minLevel {
+					errs = append(errs, LintError{
+						Line:    i + 1,
+						Message: fmt.Sprintf("First heading should be level %d (found level %d)", minLevel, currentLevel),
+					})
+				}
+			} else if currentLevel > prevLevel+1 {
 				errs = append(errs, LintError{
 					Line:    i + 1,
 					Message: fmt.Sprintf("Heading level jumped from %d to %d", prevLevel, currentLevel),

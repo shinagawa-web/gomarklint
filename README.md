@@ -14,6 +14,7 @@
 - ✅ Detects unclosed code blocks
 - ⚡️ Blazing fast — built with Go
 
+📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
 ---
 
 ## 📦 Installation (for local testing)
@@ -33,10 +34,14 @@ go run main.go ./README.md
 ## 🚀 Usage
 
 ```bash
-gomarklint ./README.md
+gomarklint ./posts --min-heading 2
 gomarklint ./posts ./docs
 gomarklint ./content --ignore CHANGELOG.md --json
 ```
+
+Options:
+
+- `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
 
 ## 🛣 Roadmap
 
