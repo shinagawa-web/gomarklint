@@ -42,30 +42,30 @@ gomarklint ./content --ignore CHANGELOG.md --json
 
 v0.1.0
 - [x] Basic CLI setup with Cobra
-- [] Lint single file
-- [] Check heading level jumps
-- [] Check missing final blank lines
-- [] Check unclosed code blocks
+- [x] Lint single file
+- [x] Check heading level jumps
+- [ ] Check missing final blank lines
+- [ ] Check unclosed code blocks
 
 v0.2.0
-- [] Support multiple files and directories
-- [] Output file name and line number
-- [] Recursively search .md files
+- [ ] Support multiple files and directories
+- [ ] Output file name and line number
+- [ ] Recursively search .md files
 
 v0.3.0
-- [] Add rules: duplicate headings, empty alt text, TODO comments
-- [] Add --ignore flag
-- [] Add --json output option
+- [ ] Add rules: duplicate headings, empty alt text, TODO comments
+- [ ] Add --ignore flag
+- [ ] Add --json output option
 
 v0.4.0
-- [] GitHub Actions support
-- [] Cross-platform binaries via goreleaser
+- [ ] GitHub Actions support
+- [ ] Cross-platform binaries via goreleaser
 
 v1.0.0
-- [] At least 5 rules with test coverage
-- [] Stable CLI interface
-- [] Prebuilt binaries for macOS/Linux/Windows
-- [] Clear README and blog post with real usage examples
+- [ ] At least 5 rules with test coverage
+- [ ] Stable CLI interface
+- [ ] Prebuilt binaries for macOS/Linux/Windows
+- [ ] Clear README and blog post with real usage examples
 
 ## 📁 Project Structure
 
