@@ -49,8 +49,8 @@ v0.1.0
 - [x] Basic CLI setup with Cobra
 - [x] Lint single file
 - [x] Check heading level jumps
-- [ ] Check missing final blank lines
-- [ ] Check unclosed code blocks
+- [x] Check missing final blank lines
+- [x] Check unclosed code blocks
 
 v0.2.0
 - [ ] Support multiple files and directories
