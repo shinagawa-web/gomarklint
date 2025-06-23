@@ -24,6 +24,12 @@ func TestCheckHeadingLevels(t *testing.T) {
 			minLevel: 2,
 			wantErr:  true,
 		},
+		{
+			name:     "invalid first heading level",
+			filepath: "testdata/heading_level/invalid_first.md",
+			minLevel: 2,
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
