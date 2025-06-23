@@ -62,6 +62,7 @@ v0.2.0
 - [ ] Support multiple files and directories
 - [ ] Output file name and line number
 - [ ] Recursively search .md files
+- [ ] Frontmatter support
 
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments

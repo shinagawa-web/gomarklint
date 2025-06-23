@@ -19,7 +19,11 @@ var rootCmd = &cobra.Command{
 		if len(args) == 0 {
 			return fmt.Errorf("please provide a markdown file or directory")
 		}
-		for _, path := range args {
+		files, err := parser.ExpandPaths(args)
+		if err != nil {
+			return fmt.Errorf("failed to expand paths: %w", err)
+		}
+		for _, path := range files {
 			fmt.Printf("Linting: %s\n", path)
 			content, err := parser.ReadFile(path)
 			if err != nil {
