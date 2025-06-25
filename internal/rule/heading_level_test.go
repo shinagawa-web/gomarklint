@@ -42,7 +42,7 @@ func TestCheckHeadingLevels(t *testing.T) {
 				t.Fatalf("failed to read test file: %v", err)
 			}
 
-			errors := CheckHeadingLevels(string(data), tt.minLevel)
+			errors := CheckHeadingLevels(tt.filepath, string(data), tt.minLevel)
 			if (len(errors) > 0) != tt.wantErr {
 				t.Errorf("expected error: %v, got: %v", tt.wantErr, errors)
 			}

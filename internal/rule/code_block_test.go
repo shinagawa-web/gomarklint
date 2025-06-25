@@ -24,7 +24,7 @@ func TestCheckUnclosedCodeBlocks(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read test file: %v", err)
 			}
-			errs := CheckUnclosedCodeBlocks(string(data))
+			errs := CheckUnclosedCodeBlocks(path, string(data))
 			if (len(errs) > 0) != tt.wantErr {
 				t.Errorf("expected error: %v, got: %v", tt.wantErr, errs)
 			}

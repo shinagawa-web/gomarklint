@@ -7,11 +7,12 @@ import (
 )
 
 type LintError struct {
+	File    string
 	Line    int
 	Message string
 }
 
-func CheckHeadingLevels(content string, minLevel int) []LintError {
+func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
 	lines := strings.Split(content, "\n")
 	var errs []LintError
 
@@ -32,6 +33,7 @@ func CheckHeadingLevels(content string, minLevel int) []LintError {
 				}
 			} else if currentLevel > prevLevel+1 {
 				errs = append(errs, LintError{
+					File:    filename,
 					Line:    i + 1,
 					Message: fmt.Sprintf("Heading level jumped from %d to %d", prevLevel, currentLevel),
 				})

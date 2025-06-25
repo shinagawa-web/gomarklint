@@ -30,13 +30,15 @@ var rootCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
 				continue
 			}
-
-			errors := rule.CheckHeadingLevels(content, minHeadingLevel)
-			if len(errors) == 0 {
+			allErrors := []rule.LintError{}
+			allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, minHeadingLevel)...)
+			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
+			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
+			if len(allErrors) == 0 {
 				fmt.Println("No issues found 🎉")
 			} else {
-				for _, e := range errors {
-					fmt.Printf("%s:%d: %s\n", path, e.Line, e.Message)
+				for _, e := range allErrors {
+					fmt.Printf("%s:%d: %s\n", e.File, e.Line, e.Message)
 				}
 			}
 		}

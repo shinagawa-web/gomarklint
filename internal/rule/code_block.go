@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func CheckUnclosedCodeBlocks(content string) []LintError {
+func CheckUnclosedCodeBlocks(filename, content string) []LintError {
 	var errs []LintError
 	lines := strings.Split(content, "\n")
 
@@ -24,6 +24,7 @@ func CheckUnclosedCodeBlocks(content string) []LintError {
 
 	if inCodeBlock {
 		errs = append(errs, LintError{
+			File:    filename,
 			Line:    startLine,
 			Message: "Unclosed code block",
 		})

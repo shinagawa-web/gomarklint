@@ -31,7 +31,7 @@ func TestCheckFinalBlankLine(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read test file: %v", err)
 			}
-			errors := CheckFinalBlankLine(string(data))
+			errors := CheckFinalBlankLine(path, string(data))
 			if (len(errors) > 0) != tt.wantErr {
 				t.Errorf("expected error: %v, got %v", tt.wantErr, errors)
 			}

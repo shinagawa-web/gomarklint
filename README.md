@@ -59,8 +59,8 @@ v0.1.0
 - [x] Check unclosed code blocks
 
 v0.2.0
-- [ ] Support multiple files and directories
-- [ ] Output file name and line number
+- [x] Support multiple files and directories
+- [x] Output file name and line number
 - [ ] Recursively search .md files
 - [ ] Frontmatter support
 
@@ -91,6 +91,16 @@ gomarklint/
 ├── main.go
 └── README.md
 ```
+
+## 📁 Path Handling
+
+When specifying files or directories, `gomarklint` will:
+
+- Recursively search `.md` files using `filepath.WalkDir`
+- Ignore hidden directories like `.git/`
+- Skip symbolic links
+- Report all files, regardless of `.gitignore`
+- Silently skip missing files (`os.IsNotExist`)
 
 ## 🤝 Contributing
 
