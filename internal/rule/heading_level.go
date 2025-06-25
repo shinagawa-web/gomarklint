@@ -2,6 +2,7 @@ package rule
 
 import (
 	"fmt"
+	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"regexp"
 	"strings"
 )
@@ -13,7 +14,8 @@ type LintError struct {
 }
 
 func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
-	lines := strings.Split(content, "\n")
+	body, offset := parser.StripFrontmatter(content)
+	lines := strings.Split(body, "\n")
 	var errs []LintError
 
 	prevLevel := 0
@@ -27,14 +29,14 @@ func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
 			if prevLevel == 0 {
 				if currentLevel != minLevel {
 					errs = append(errs, LintError{
-						Line:    i + 1,
+						Line:    i + 1 + offset,
 						Message: fmt.Sprintf("First heading should be level %d (found level %d)", minLevel, currentLevel),
 					})
 				}
 			} else if currentLevel > prevLevel+1 {
 				errs = append(errs, LintError{
 					File:    filename,
-					Line:    i + 1,
+					Line:    i + 1 + offset,
 					Message: fmt.Sprintf("Heading level jumped from %d to %d", prevLevel, currentLevel),
 				})
 			}

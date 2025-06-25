@@ -15,6 +15,7 @@ func TestCheckUnclosedCodeBlocks(t *testing.T) {
 	}{
 		{"valid", "testdata/code_block/valid.md", false},
 		{"unclosed", "testdata/code_block/unclosed.md", true},
+		{"frontmatter_unclosed", "testdata/code_block/frontmatter_unclosed.md", true},
 	}
 
 	for _, tt := range tests {

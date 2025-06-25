@@ -21,6 +21,8 @@ func TestCheckFinalBlankLine(t *testing.T) {
 	}{
 		{"with_blank", "testdata/final_blank/with_blank.md", false},
 		{"no_blank", "testdata/final_blank/no_blank.md", true},
+		{"frontmatter_with_blank", "testdata/final_blank/frontmatter_with_blank.md", false},
+		{"frontmatter_no_blank", "testdata/final_blank/frontmatter_no_blank.md", true},
 	}
 
 	for _, tt := range tests {

@@ -18,6 +18,7 @@
 - ✅ Checks for heading level consistency (`# → ## → ###`)
 - ✅ Detects missing trailing blank lines
 - ✅ Detects unclosed code blocks
+- ✅ Ignores YAML frontmatter correctly when linting
 - ⚡️ Blazing fast — built with Go
 
 📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
@@ -61,8 +62,8 @@ v0.1.0
 v0.2.0
 - [x] Support multiple files and directories
 - [x] Output file name and line number
-- [ ] Recursively search .md files
-- [ ] Frontmatter support
+- [x] Recursively search .md files
+- [x] Frontmatter support
 
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments
