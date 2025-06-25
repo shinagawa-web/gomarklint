@@ -29,6 +29,7 @@ func setupTestFiles(t *testing.T) string {
 	mustWrite("file1.md", "# Hello")
 	mustWrite("file2.txt", "text")
 	mustWrite("subdir/nested.md", "# Nested")
+	mustWrite(".hidden/secret.md", "# Hidden")
 
 	return base
 }
@@ -50,6 +51,16 @@ func TestExpandPaths(t *testing.T) {
 			name:     "directory with nested md",
 			input:    []string{base},
 			wantEnds: []string{"file1.md", "subdir/nested.md"},
+		},
+		{
+			name:     "non-md file",
+			input:    []string{filepath.Join(base, "file2.txt")},
+			wantEnds: []string{},
+		},
+		{
+			name:     "nonexistent path",
+			input:    []string{filepath.Join(base, "nonexistent.md")},
+			wantEnds: []string{},
 		},
 	}
 

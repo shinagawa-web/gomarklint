@@ -6,6 +6,19 @@ import (
 	"strings"
 )
 
+// ExpandPaths takes a list of file or directory paths and returns a slice of
+// all Markdown (.md) file paths found.
+//
+// It handles the following behavior:
+//   - Recursively searches directories for files ending in .md
+//   - Skips hidden directories (e.g., .git/)
+//   - Ignores non-existent paths without failing
+//   - Does not follow symbolic links
+//
+// Example:
+//
+//	input:  []string{"docs", "README.md"}
+//	output: ["docs/a.md", "docs/sub/b.md", "README.md"]
 func ExpandPaths(paths []string) ([]string, error) {
 	var results []string
 

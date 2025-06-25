@@ -13,6 +13,16 @@ type LintError struct {
 	Message string
 }
 
+// CheckHeadingLevels analyzes the heading structure of the given Markdown content
+// and reports any issues such as the first heading not starting at the specified minimum level
+// or heading levels that jump more than one level (e.g., from ## to ####).
+//
+// Parameters:
+//   - content: the raw Markdown content as a string
+//   - minLevel: the expected minimum level for the first heading (e.g., 2 for ##)
+//
+// Returns:
+//   - A slice of LintError containing the line number and description of each detected issue.
 func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
 	body, offset := parser.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")
