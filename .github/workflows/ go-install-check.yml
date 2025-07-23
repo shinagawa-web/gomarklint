@@ -1,0 +1,27 @@
+name: Check go install
+
+on:
+  pull_request:
+    paths:
+      - '**.go'
+      - go.mod
+      - go.sum
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  check-go-install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Try go install
+        run: |
+          go install github.com/shinagawa-web/gomarklint@$(git describe --tags --abbrev=0)

@@ -19,6 +19,7 @@
 - ✅ Detects missing trailing blank lines
 - ✅ Detects unclosed code blocks
 - ✅ Ignores YAML frontmatter correctly when linting
+- ✅ Detects broken external links (e.g. `[text](https://...)`, `https://...`) with `--check-links`
 - ⚡️ Blazing fast — built with Go
 
 📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
@@ -27,13 +28,13 @@
 ## 📦 Installation (for local testing)
 
 ```bash
-go install github.com/yourname/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint@latest
 ```
 
 Or clone and run:
 
 ```bash
-git clone https://github.com/yourname/gomarklint.git
+git clone https://github.com/shinagawa-web/gomarklint.git
 cd gomarklint
 go run main.go ./README.md
 ```
