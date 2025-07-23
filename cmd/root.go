@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
@@ -20,6 +21,10 @@ var rootCmd = &cobra.Command{
 	Short: "A fast markdown linter written in Go",
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		start := time.Now()
+
+		fmt.Println()
+
 		if len(args) == 0 {
 			return fmt.Errorf("please provide a markdown file or directory")
 		}
@@ -61,8 +66,25 @@ var rootCmd = &cobra.Command{
 				totalErrors += len(allErrors)
 			}
 		}
+
+		red := "\033[31m"
+		green := "\033[32m"
+		gray := "\033[90m"
+		reset := "\033[0m"
+
 		if totalErrors > 0 {
-			fmt.Printf("\n✖ %d issues found\n", totalErrors)
+			fmt.Printf("\n%s✖ %d issues found%s\n", red, totalErrors, reset)
+		} else {
+			fmt.Printf("\n%s✔ No issues found%s\n", green, reset)
+		}
+
+		elapsed := time.Since(start)
+		if elapsed < time.Second {
+			fmt.Printf("%s✓%s Checked %d file(s) in %s%dms%s\n",
+				green, reset, len(files), gray, elapsed.Milliseconds(), reset)
+		} else {
+			fmt.Printf("%s✓%s Checked %d file(s) in %s%.1fs%s\n",
+				green, reset, len(files), gray, elapsed.Seconds(), reset)
 		}
 		return nil
 	},
