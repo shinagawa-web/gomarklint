@@ -44,11 +44,13 @@ go run main.go ./README.md
 gomarklint ./posts --min-heading 2
 gomarklint ./posts ./docs
 gomarklint ./content --ignore CHANGELOG.md --json
+gomarklint ./docs --check-links
 ```
 
 Options:
 
 - `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
+- `--check-links` — Check for broken external links (http/https) such as [text](https://...), ![alt](https://...), or bare URLs. Only runs when explicitly enabled.
 
 ## 🛣 Roadmap
 
@@ -74,10 +76,9 @@ v0.2.1
 - [x] Report links that return 4xx or 5xx status codes
 - [x] Set request timeout (default: 5 seconds)
 - [x] Include automated tests (with mock server for consistent results)
-- [ ] `--check-links` flag to enable external link checking
-- [ ] Show file name and line number for each broken link
-- [ ] Skip external link checking unless `--check-links` is specified
-- [ ] Support excluding domains via `--skip-link-patterns` (optional)
+- [x] Show file name and line number for each broken link
+- [x] `--check-links` flag to enable external link checking
+- [x] Skip external link checking unless `--check-links` is specified
 
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments

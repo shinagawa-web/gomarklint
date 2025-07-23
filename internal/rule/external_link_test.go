@@ -23,9 +23,11 @@ func TestCheckExternalLinks(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	markdown := fmt.Sprintf(`
-[working](%s/ok)
-[broken](%s/fail)
+	markdown := fmt.Sprintf(`# Title
+
+This link should pass: [working](%s/ok)
+
+This link should fail: [broken](%s/fail)
 `, ts.URL, ts.URL)
 
 	results := rule.CheckExternalLinks("mock.md", markdown)
@@ -35,7 +37,16 @@ func TestCheckExternalLinks(t *testing.T) {
 	}
 
 	got := results[0]
+
 	if !strings.Contains(got.Message, "/fail") || !strings.Contains(got.Message, "404") {
 		t.Errorf("unexpected error message: %s", got.Message)
+	}
+
+	if got.Line != 5 {
+		t.Errorf("expected line number 5, got %d", got.Line)
+	}
+
+	if got.File != "mock.md" {
+		t.Errorf("expected file 'mock.md', got %s", got.File)
 	}
 }

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"regexp"
+	"strings"
 )
 
 var (
@@ -15,21 +16,38 @@ var (
 	bareURLPattern = regexp.MustCompile(`(?m)^.*?(https?://[^\s<>()]+).*?$`)
 )
 
-func ExtractExternalLinks(text string) []string {
-	links := make(map[string]bool)
+type ExtractedLink struct {
+	URL  string
+	Line int
+}
 
-	for _, re := range []*regexp.Regexp{inlineLinkPattern, imageLinkPattern, bareURLPattern} {
-		matches := re.FindAllStringSubmatch(text, -1)
-		for _, match := range matches {
-			if len(match) > 1 {
-				links[match[1]] = true
+func ExtractExternalLinksWithLineNumbers(content string) []ExtractedLink {
+	lines := strings.Split(content, "\n")
+	patterns := []*regexp.Regexp{
+		inlineLinkPattern,
+		imageLinkPattern,
+		bareURLPattern,
+	}
+
+	var results []ExtractedLink
+	seen := map[string]bool{}
+
+	for i, line := range lines {
+		for _, re := range patterns {
+			matches := re.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) > 1 {
+					url := match[1]
+					if !seen[url] {
+						results = append(results, ExtractedLink{
+							URL:  url,
+							Line: i + 1, // 1-based line number
+						})
+						seen[url] = true
+					}
+				}
 			}
 		}
 	}
-
-	result := make([]string, 0, len(links))
-	for url := range links {
-		result = append(result, url)
-	}
-	return result
+	return results
 }

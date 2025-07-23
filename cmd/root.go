@@ -10,6 +10,7 @@ import (
 )
 
 var minHeadingLevel int
+var checkLinks bool
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint",
@@ -34,6 +35,9 @@ var rootCmd = &cobra.Command{
 			allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, minHeadingLevel)...)
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
+			if checkLinks {
+				allErrors = append(allErrors, rule.CheckExternalLinks(path, content)...)
+			}
 			if len(allErrors) == 0 {
 				fmt.Println("No issues found 🎉")
 			} else {
@@ -48,6 +52,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
+	rootCmd.Flags().BoolVar(&checkLinks, "check-links", false, "enable external link checking")
 }
 
 func Execute() error {

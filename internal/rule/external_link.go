@@ -9,24 +9,23 @@ import (
 )
 
 func CheckExternalLinks(path string, content string) []LintError {
-	urls := parser.ExtractExternalLinks(content)
-
+	links := parser.ExtractExternalLinksWithLineNumbers(content)
 	var errs []LintError
+
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 
-	for _, url := range urls {
-		status, err := checkURL(client, url)
+	for _, link := range links {
+		status, err := checkURL(client, link.URL)
 		if err != nil || status >= 400 {
 			errs = append(errs, LintError{
 				File:    path,
-				Line:    1,
-				Message: formatLinkError(url, status, err),
+				Line:    link.Line,
+				Message: formatLinkError(link.URL, status, err),
 			})
 		}
 	}
-
 	return errs
 }
 
