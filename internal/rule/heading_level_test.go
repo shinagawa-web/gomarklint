@@ -36,6 +36,12 @@ func TestCheckHeadingLevels(t *testing.T) {
 			minLevel: 2,
 			wantErr:  true,
 		},
+		{
+			name:     "valid heading levels with code block",
+			filepath: "testdata/heading_level/with_codeblock.md",
+			minLevel: 2,
+			wantErr:  false,
+		},
 	}
 
 	for _, tt := range tests {

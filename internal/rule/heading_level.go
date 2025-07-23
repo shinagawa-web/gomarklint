@@ -31,7 +31,12 @@ func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
 	prevLevel := 0
 	headingRegex := regexp.MustCompile(`^(#{1,6})\s+`)
 
+	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
+
 	for i, line := range lines {
+		if isInCodeBlock(i+1, codeBlockRanges) {
+			continue
+		}
 		matches := headingRegex.FindStringSubmatch(line)
 		if matches != nil {
 			currentLevel := len(matches[1])
