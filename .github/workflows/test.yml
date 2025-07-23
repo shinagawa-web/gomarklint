@@ -20,7 +20,7 @@ jobs:
           go-version: '1.22'
 
       - name: Build binary
-        run: go build -o gomarklint ./...
+        run: go build -o gomarklint
 
       - name: Run tests
         run: go test ./... -coverprofile=coverage.txt
