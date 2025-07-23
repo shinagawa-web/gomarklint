@@ -3,12 +3,13 @@ package rule
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
-func CheckExternalLinks(path string, content string) []LintError {
+func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp) []LintError {
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 	var errs []LintError
 
@@ -17,6 +18,10 @@ func CheckExternalLinks(path string, content string) []LintError {
 	}
 
 	for _, link := range links {
+		if shouldSkipLink(link.URL, skipPatterns) {
+			continue
+		}
+
 		status, err := checkURL(client, link.URL)
 		if err != nil || status >= 400 {
 			errs = append(errs, LintError{
@@ -60,4 +65,13 @@ func formatLinkError(url string, status int, err error) string {
 		return fmt.Sprintf("Link unreachable: %s (%v)", url, err)
 	}
 	return fmt.Sprintf("Link unreachable: %s (status: %d)", url, status)
+}
+
+func shouldSkipLink(url string, skipPatterns []*regexp.Regexp) bool {
+	for _, re := range skipPatterns {
+		if re.MatchString(url) {
+			return true
+		}
+	}
+	return false
 }

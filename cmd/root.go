@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"regexp"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
@@ -11,6 +13,7 @@ import (
 
 var minHeadingLevel int
 var checkLinks bool
+var skipLinkPatterns []string
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint",
@@ -36,7 +39,16 @@ var rootCmd = &cobra.Command{
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
 			if checkLinks {
-				allErrors = append(allErrors, rule.CheckExternalLinks(path, content)...)
+				compiledPatterns := []*regexp.Regexp{}
+				for _, pat := range skipLinkPatterns {
+					re, err := regexp.Compile(pat)
+					if err != nil {
+						log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
+						continue
+					}
+					compiledPatterns = append(compiledPatterns, re)
+				}
+				allErrors = append(allErrors, rule.CheckExternalLinks(path, content, compiledPatterns)...)
 			}
 			if len(allErrors) == 0 {
 				fmt.Println("No issues found 🎉")
@@ -53,6 +65,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
 	rootCmd.Flags().BoolVar(&checkLinks, "check-links", false, "enable external link checking")
+	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
 }
 
 func Execute() error {

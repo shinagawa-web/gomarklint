@@ -52,7 +52,9 @@ Options:
 
 - `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
 - `--check-links` — Check for broken external links (http/https) such as [text](https://...), ![alt](https://...), or bare URLs. Only runs when explicitly enabled.
-
+- `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
+  - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
+  
 ## 🛣 Roadmap
 
 v0.1.0
@@ -80,6 +82,14 @@ v0.2.1
 - [x] Show file name and line number for each broken link
 - [x] `--check-links` flag to enable external link checking
 - [x] Skip external link checking unless `--check-links` is specified
+
+v0.2.2
+- [x] Support `--skip-link-patterns` to exclude certain domains from link checking
+- [ ] Ignore links inside fenced code blocks (```...```)
+
+v0.2.3
+- [ ] Refactor output: show external link errors at the end of lint result
+- [ ] Remove or suppress No issues found 🎉 message (consider --quiet flag)
 
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -23,30 +24,47 @@ func TestCheckExternalLinks(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	markdown := fmt.Sprintf(`# Title
-
-This link should pass: [working](%s/ok)
-
-This link should fail: [broken](%s/fail)
+	t.Run("basic success/failure", func(t *testing.T) {
+		markdown := fmt.Sprintf(`[ok](%s/ok)
+[fail](%s/fail)
 `, ts.URL, ts.URL)
 
-	results := rule.CheckExternalLinks("mock.md", markdown)
+		file := "mock.md"
+		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{})
 
-	if len(results) != 1 {
-		t.Fatalf("expected 1 error, got %d", len(results))
-	}
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error, got %d", len(results))
+		}
 
-	got := results[0]
+		got := results[0]
+		if !strings.Contains(got.Message, "/fail") || !strings.Contains(got.Message, "404") {
+			t.Errorf("unexpected error message: %s", got.Message)
+		}
+		if got.Line != 2 {
+			t.Errorf("expected line number 2, got %d", got.Line)
+		}
+		if got.File != file {
+			t.Errorf("expected file '%s', got %s", file, got.File)
+		}
+	})
 
-	if !strings.Contains(got.Message, "/fail") || !strings.Contains(got.Message, "404") {
-		t.Errorf("unexpected error message: %s", got.Message)
-	}
+	t.Run("skip pattern should exclude localhost", func(t *testing.T) {
+		markdown := `
+[skip this](http://localhost/skip)
+[check this](https://httpstat.us/404)
+`
+		skip := []*regexp.Regexp{
+			regexp.MustCompile(`localhost`),
+		}
 
-	if got.Line != 5 {
-		t.Errorf("expected line number 5, got %d", got.Line)
-	}
+		results := rule.CheckExternalLinks("mock.md", markdown, skip)
 
-	if got.File != "mock.md" {
-		t.Errorf("expected file 'mock.md', got %s", got.File)
-	}
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
+		}
+		if !strings.Contains(results[0].Message, "httpstat.us") {
+			t.Errorf("expected error for httpstat.us link, got: %v", results[0])
+		}
+	})
+
 }
