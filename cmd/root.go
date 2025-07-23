@@ -53,9 +53,11 @@ var rootCmd = &cobra.Command{
 				allErrors = append(allErrors, rule.CheckExternalLinks(path, content, compiledPatterns)...)
 			}
 			if len(allErrors) > 0 {
+				fmt.Printf("Errors in %s:\n", path)
 				for _, e := range allErrors {
-					fmt.Printf("%s:%d: %s\n", e.File, e.Line, e.Message)
+					fmt.Printf("  %s:%d: %s\n", e.File, e.Line, e.Message)
 				}
+				fmt.Println()
 				totalErrors += len(allErrors)
 			}
 		}

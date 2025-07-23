@@ -44,6 +44,7 @@ func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
 			if prevLevel == 0 {
 				if currentLevel != minLevel {
 					errs = append(errs, LintError{
+						File:    filename,
 						Line:    i + 1 + offset,
 						Message: fmt.Sprintf("First heading should be level %d (found level %d)", minLevel, currentLevel),
 					})
