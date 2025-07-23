@@ -81,6 +81,23 @@ func TestExpandPaths(t *testing.T) {
 			}
 		})
 	}
+	t.Run("unreadable directory", func(t *testing.T) {
+		base := t.TempDir()
+		badDir := filepath.Join(base, "secret")
+
+		if err := os.Mkdir(badDir, 0755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		if err := os.Chmod(badDir, 0000); err != nil {
+			t.Skipf("cannot make directory unreadable, skipping test: %v", err)
+		}
+		defer os.Chmod(badDir, 0755) // cleanup
+
+		_, err := ExpandPaths([]string{base})
+		if err != nil {
+			t.Fatalf("ExpandPaths failed: %v", err)
+		}
+	})
 }
 
 func sorted(s []string) []string {
