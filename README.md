@@ -65,6 +65,20 @@ v0.2.0
 - [x] Recursively search .md files
 - [x] Frontmatter support
 
+v0.2.1
+- [x] Extract `http`/`https` URLs from:
+  - Inline links: `[text](https://example.com)`
+  - Image links: `![alt](https://example.com/image.png)`
+  - Bare URLs: `https://example.com/path`
+- [x] Perform HTTP `HEAD` or fallback `GET` request to validate links
+- [x] Report links that return 4xx or 5xx status codes
+- [x] Set request timeout (default: 5 seconds)
+- [x] Include automated tests (with mock server for consistent results)
+- [ ] `--check-links` flag to enable external link checking
+- [ ] Show file name and line number for each broken link
+- [ ] Skip external link checking unless `--check-links` is specified
+- [ ] Support excluding domains via `--skip-link-patterns` (optional)
+
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments
 - [ ] Add --ignore flag
