@@ -86,8 +86,7 @@ v0.2.1
 v0.2.2
 - [x] Support `--skip-link-patterns` to exclude certain domains from link checking
 - [x] Ignore links inside fenced code blocks (```...```)
-- [ ] Refactor output: show external link errors at the end of lint result
-- [ ] Remove or suppress No issues found 🎉 message (consider --quiet flag)
+- [x] Remove No issues found 🎉 message (consider --quiet flag)
 
 v0.3.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments

@@ -27,8 +27,19 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to expand paths: %w", err)
 		}
+		compiledPatterns := []*regexp.Regexp{}
+		if checkLinks {
+			for _, pat := range skipLinkPatterns {
+				re, err := regexp.Compile(pat)
+				if err != nil {
+					log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
+					continue
+				}
+				compiledPatterns = append(compiledPatterns, re)
+			}
+		}
+		totalErrors := 0
 		for _, path := range files {
-			fmt.Printf("Linting: %s\n", path)
 			content, err := parser.ReadFile(path)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
@@ -39,24 +50,17 @@ var rootCmd = &cobra.Command{
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
 			if checkLinks {
-				compiledPatterns := []*regexp.Regexp{}
-				for _, pat := range skipLinkPatterns {
-					re, err := regexp.Compile(pat)
-					if err != nil {
-						log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
-						continue
-					}
-					compiledPatterns = append(compiledPatterns, re)
-				}
 				allErrors = append(allErrors, rule.CheckExternalLinks(path, content, compiledPatterns)...)
 			}
-			if len(allErrors) == 0 {
-				fmt.Println("No issues found 🎉")
-			} else {
+			if len(allErrors) > 0 {
 				for _, e := range allErrors {
 					fmt.Printf("%s:%d: %s\n", e.File, e.Line, e.Message)
 				}
+				totalErrors += len(allErrors)
 			}
+		}
+		if totalErrors > 0 {
+			fmt.Printf("\n✖ %d issues found\n", totalErrors)
 		}
 		return nil
 	},
