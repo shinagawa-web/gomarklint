@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-// ヘルパー関数：プロジェクトルートからの相対パスを解決
 func getTestFilePath(rel string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Join(filepath.Dir(filename), "../..")

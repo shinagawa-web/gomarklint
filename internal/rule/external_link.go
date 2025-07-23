@@ -10,6 +10,7 @@ import (
 )
 
 func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp) []LintError {
+	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 	var errs []LintError
 
@@ -18,6 +19,9 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	}
 
 	for _, link := range links {
+		if isInCodeBlock(link.Line, codeBlockRanges) {
+			continue
+		}
 		if shouldSkipLink(link.URL, skipPatterns) {
 			continue
 		}
@@ -70,6 +74,15 @@ func formatLinkError(url string, status int, err error) string {
 func shouldSkipLink(url string, skipPatterns []*regexp.Regexp) bool {
 	for _, re := range skipPatterns {
 		if re.MatchString(url) {
+			return true
+		}
+	}
+	return false
+}
+
+func isInCodeBlock(line int, ranges [][2]int) bool {
+	for _, r := range ranges {
+		if line >= r[0] && line <= r[1] {
 			return true
 		}
 	}

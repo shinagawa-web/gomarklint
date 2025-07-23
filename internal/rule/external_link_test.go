@@ -66,5 +66,19 @@ func TestCheckExternalLinks(t *testing.T) {
 			t.Errorf("expected error for httpstat.us link, got: %v", results[0])
 		}
 	})
+	t.Run("ignore links inside code blocks", func(t *testing.T) {
+		markdown := fmt.Sprintf("```\n[code link](%s/in-code)\n```\n[real link](%s/fail)\n", ts.URL, ts.URL)
 
+		skip := []*regexp.Regexp{}
+		results := rule.CheckExternalLinks("mock.md", markdown, skip)
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
+		}
+		if !strings.Contains(results[0].Message, "/fail") {
+			t.Errorf("expected error for real link, got: %v", results[0])
+		}
+		if results[0].Line != 4 {
+			t.Errorf("expected line 4 for real link, got: %d", results[0].Line)
+		}
+	})
 }

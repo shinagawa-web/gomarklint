@@ -11,3 +11,9 @@ func main() {
   fmt.Println("Hello, world!")
 }
 ```
+
+```ts
+function main () {
+  console.log("Hello, world!")
+}
+```

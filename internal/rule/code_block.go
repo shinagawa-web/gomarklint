@@ -20,29 +20,42 @@ func CheckUnclosedCodeBlocks(filename, content string) []LintError {
 	body, offset := parser.StripFrontmatter(content)
 
 	var errs []LintError
-	lines := strings.Split(body, "\n")
+	_, unclosed := GetCodeBlockLineRanges(body)
 
-	inCodeBlock := false
-	var startLine int
-
-	for i, line := range lines {
-		if strings.HasPrefix(line, "```") {
-			if !inCodeBlock {
-				inCodeBlock = true
-				startLine = i + 1 + offset
-			} else {
-				inCodeBlock = false
-			}
-		}
-	}
-
-	if inCodeBlock {
+	for _, start := range unclosed {
 		errs = append(errs, LintError{
 			File:    filename,
-			Line:    startLine,
+			Line:    start + offset + 1,
 			Message: "Unclosed code block",
 		})
 	}
 
 	return errs
+}
+
+func GetCodeBlockLineRanges(content string) (closed [][2]int, unclosed []int) {
+	lines := strings.Split(content, "\n")
+	inBlock := false
+	var start int
+	var closedRanges [][2]int
+	var unclosedStarts []int
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			if inBlock {
+				closedRanges = append(closedRanges, [2]int{start + 1, i + 1})
+				inBlock = false
+			} else {
+				start = i
+				inBlock = true
+			}
+		}
+	}
+
+	if inBlock {
+		unclosedStarts = append(unclosedStarts, start)
+	}
+
+	return closedRanges, unclosedStarts
 }
