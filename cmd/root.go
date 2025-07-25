@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
@@ -22,6 +23,7 @@ var rootCmd = &cobra.Command{
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		start := time.Now()
+		totalLines := 0
 
 		fmt.Println()
 
@@ -50,6 +52,8 @@ var rootCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
 				continue
 			}
+			lines := strings.Count(content, "\n") + 1
+			totalLines += lines
 			allErrors := []rule.LintError{}
 			allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, minHeadingLevel)...)
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
@@ -80,11 +84,11 @@ var rootCmd = &cobra.Command{
 
 		elapsed := time.Since(start)
 		if elapsed < time.Second {
-			fmt.Printf("%s✓%s Checked %d file(s) in %s%dms%s\n",
-				green, reset, len(files), gray, elapsed.Milliseconds(), reset)
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%dms%s\n",
+				green, reset, len(files), totalLines, gray, elapsed.Milliseconds(), reset)
 		} else {
-			fmt.Printf("%s✓%s Checked %d file(s) in %s%.1fs%s\n",
-				green, reset, len(files), gray, elapsed.Seconds(), reset)
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%.1fs%s\n",
+				green, reset, len(files), totalLines, gray, elapsed.Seconds(), reset)
 		}
 		return nil
 	},

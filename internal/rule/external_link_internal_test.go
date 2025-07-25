@@ -82,21 +82,17 @@ func Test_formatLinkError(t *testing.T) {
 	}{
 		{
 			url:      "https://example.com/404",
-			status:   404,
-			err:      nil,
-			expected: "Link unreachable: https://example.com/404 (status: 404)",
+			expected: "Link unreachable: https://example.com/404",
 		},
 		{
 			url:      "https://example.com/timeout",
-			status:   0,
-			err:      errors.New("timeout"),
-			expected: "Link unreachable: https://example.com/timeout (timeout)",
+			expected: "Link unreachable: https://example.com/timeout",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.url, func(t *testing.T) {
-			msg := formatLinkError(tt.url, tt.status, tt.err)
+			msg := formatLinkError(tt.url)
 			if !strings.Contains(msg, tt.expected) && msg != tt.expected {
 				t.Errorf("unexpected message:\n got: %s\nwant: %s", msg, tt.expected)
 			}

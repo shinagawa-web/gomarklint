@@ -37,7 +37,7 @@ func TestCheckExternalLinks(t *testing.T) {
 		}
 
 		got := results[0]
-		if !strings.Contains(got.Message, "/fail") || !strings.Contains(got.Message, "404") {
+		if !strings.Contains(got.Message, "/fail") {
 			t.Errorf("unexpected error message: %s", got.Message)
 		}
 		if got.Line != 2 {

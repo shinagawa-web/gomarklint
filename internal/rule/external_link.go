@@ -31,7 +31,7 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 			errs = append(errs, LintError{
 				File:    path,
 				Line:    link.Line,
-				Message: formatLinkError(link.URL, status, err),
+				Message: formatLinkError(link.URL),
 			})
 		}
 	}
@@ -64,11 +64,8 @@ func checkURL(client *http.Client, url string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func formatLinkError(url string, status int, err error) string {
-	if err != nil {
-		return fmt.Sprintf("Link unreachable: %s (%v)", url, err)
-	}
-	return fmt.Sprintf("Link unreachable: %s (status: %d)", url, status)
+func formatLinkError(url string) string {
+	return fmt.Sprintf("Link unreachable: %s", url)
 }
 
 func shouldSkipLink(url string, skipPatterns []*regexp.Regexp) bool {

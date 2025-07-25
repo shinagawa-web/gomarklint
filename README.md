@@ -88,12 +88,21 @@ v0.2.2
 - [x] Ignore links inside fenced code blocks (```...```)
 - [x] Remove No issues found 🎉 message (consider --quiet flag)
 
-v0.3.0
+v0.3.0 - Configuration File Support
+
+- [ ] Define `Config` struct to represent configuration options
+- [ ] Add `--config` flag to specify config file path (default: `.gomarklint.json`)
+- [ ] Load configuration via `os.ReadFile` and `json.Unmarshal`
+- [ ] Determine priority between flags and config file (e.g., flags override config or vice versa)
+- [ ] Handle missing config file gracefully and apply default values
+- [ ] Add `gomarklint init` subcommand to generate a default `.gomarklint.json` file
+
+v0.4.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments
 - [ ] Add --ignore flag
 - [ ] Add --json output option
 
-v0.4.0
+v0.5.0
 - [ ] GitHub Actions support
 - [ ] Cross-platform binaries via goreleaser
 
