@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -68,5 +69,19 @@ func TestLoadConfig_InvalidJSON(t *testing.T) {
 	_, err := LoadConfig(tmp)
 	if err == nil {
 		t.Error("expected error for invalid JSON, got nil")
+	}
+}
+
+func TestDefaultConfig(t *testing.T) {
+	want := Config{
+		MinHeadingLevel:  2,
+		CheckLinks:       false,
+		SkipLinkPatterns: []string{},
+	}
+
+	got := Default()
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Default() = %+v, want %+v", got, want)
 	}
 }
