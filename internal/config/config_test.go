@@ -10,7 +10,7 @@ import (
 func TestLoadConfig_ValidFile(t *testing.T) {
 	json := `{
 		"minHeadingLevel": 3,
-		"checkLinks": true,
+		"enableLinkCheck": true,
 		"skipLinkPatterns": ["localhost", "example.com"]
 	}`
 
@@ -27,8 +27,8 @@ func TestLoadConfig_ValidFile(t *testing.T) {
 	if cfg.MinHeadingLevel != 3 {
 		t.Errorf("expected minHeadingLevel=3, got %d", cfg.MinHeadingLevel)
 	}
-	if !cfg.CheckLinks {
-		t.Errorf("expected checkLinks=true")
+	if !cfg.EnableLinkCheck {
+		t.Errorf("expected EnableLinkCheck=true")
 	}
 	if len(cfg.SkipLinkPatterns) != 2 {
 		t.Errorf("expected 2 skip patterns, got %d", len(cfg.SkipLinkPatterns))
@@ -74,11 +74,12 @@ func TestLoadConfig_InvalidJSON(t *testing.T) {
 
 func TestDefaultConfig(t *testing.T) {
 	want := Config{
-		MinHeadingLevel:  2,
-		CheckLinks:       false,
-		SkipLinkPatterns: []string{},
-		Ignore:           []string{},
-		OutputFormat:     "text",
+		MinHeadingLevel:             2,
+		EnableLinkCheck:             false,
+		SkipLinkPatterns:            []string{},
+		Ignore:                      []string{},
+		OutputFormat:                "text",
+		EnableDuplicateHeadingCheck: true,
 	}
 
 	got := Default()

@@ -1,10 +1,11 @@
 {
   "minHeadingLevel": 2,
-  "checkLinks": true,
+  "enableLinkCheck": false,
   "skipLinkPatterns": [
     "localhost",
     "example.com"
   ],
   "ignore": [],
-  "output": "text"
+  "output": "text",
+  "enableDuplicateHeadingCheck": true
 }

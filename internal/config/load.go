@@ -22,6 +22,10 @@ func LoadConfig(path string) (Config, error) {
 	if err := decoder.Decode(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to parse config file: %w", err)
 	}
+	if cfg.OutputFormat == "" {
+		// Fallback to default if not set in config file
+		cfg.OutputFormat = "text"
+	}
 
 	return cfg, nil
 }
