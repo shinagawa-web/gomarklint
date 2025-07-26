@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -84,10 +85,14 @@ var rootCmd = &cobra.Command{
 			allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, minHeadingLevel)...)
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
+			allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, content)...)
 			if checkLinks {
 				allErrors = append(allErrors, rule.CheckExternalLinks(path, content, compiledPatterns)...)
 			}
 			if len(allErrors) > 0 {
+				sort.Slice(allErrors, func(i, j int) bool {
+					return allErrors[i].Line < allErrors[j].Line
+				})
 				fmt.Printf("Errors in %s:\n", path)
 				for _, e := range allErrors {
 					fmt.Printf("  %s:%d: %s\n", e.File, e.Line, e.Message)

@@ -16,14 +16,18 @@
 
 - ✅ Lint individual `.md` files or entire directories
 - ✅ Checks for heading level consistency (`# → ## → ###`)
+- ✅ Detects duplicate headings (case-insensitive, trims trailing spaces)
 - ✅ Detects missing trailing blank lines
 - ✅ Detects unclosed code blocks
 - ✅ Ignores YAML frontmatter correctly when linting
 - ✅ Detects broken external links (e.g. `[text](https://...)`, `https://...`) with `--check-links`
-- ⚡️ Blazing fast — built with Go
+- ✅ Supports config file (`.gomarklint.json`) to store default options
+- ⚡️ Blazing fast — 157 files and 52,000+ lines scanned in under 50ms
+- 🐢 External link checking is slower (e.g. ~160s for 157 files), but optional and off by default
+
 
 📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
----
+
 
 ## 📦 Installation (for local testing)
 
@@ -52,6 +56,10 @@ Options:
 
 - `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
 - `--check-links` — Check for broken external links (http/https) such as [text](https://...), ![alt](https://...), or bare URLs. Only runs when explicitly enabled.
+  - Example: `[text](https://...)`, `![img](https://...)`, or bare URLs
+> 🕒 Note: With `--check-links` enabled, performance depends on network conditions.
+> For example, checking 157 files (~52,000 lines) with link validation may take ~100s.
+
 - `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
   - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
 
@@ -77,6 +85,31 @@ you can generate a default config file using:
 ```bash
 gomarklint init
 ```
+
+## ⚡️ Performance Tips
+
+`gomarklint` is built for speed.  
+For example, scanning **157 files and 52,000+ lines** takes under **50ms** when external link checking is disabled.
+
+However, when using `--check-links`, performance may slow down because:
+
+- External links require real **HTTP requests**
+- Network latency, timeouts, or retries can significantly impact speed
+- More links = more waiting
+
+### ✅ Recommended usage
+
+Use `--check-links` only when necessary, such as:
+
+- Nightly CI runs
+- Pre-release validation
+- Verifying newly added content
+
+If you want lightning-fast feedback while editing, omit `--check-links`.
+
+> ⏱️ **Fastest mode:**  
+> `gomarklint ./content` → ✅ completes in milliseconds!
+
 
 ## 🛣 Roadmap
 
