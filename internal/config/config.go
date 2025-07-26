@@ -5,6 +5,7 @@ type Config struct {
 	MinHeadingLevel  int      `json:"minHeadingLevel"`
 	CheckLinks       bool     `json:"checkLinks"`
 	SkipLinkPatterns []string `json:"skipLinkPatterns"`
+	Ignore           []string `json:"ignore"`
 }
 
 func Default() Config {
@@ -12,5 +13,6 @@ func Default() Config {
 		MinHeadingLevel:  2,
 		CheckLinks:       false,
 		SkipLinkPatterns: []string{},
+		Ignore:           []string{},
 	}
 }

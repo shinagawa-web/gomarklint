@@ -22,12 +22,30 @@
 - ✅ Ignores YAML frontmatter correctly when linting
 - ✅ Detects broken external links (e.g. `[text](https://...)`, `https://...`) with `--check-links`
 - ✅ Supports config file (`.gomarklint.json`) to store default options
+- ✅ Supports ignore patterns (e.g. `**/CHANGELOG.md`) via config file
 - ⚡️ Blazing fast — 157 files and 52,000+ lines scanned in under 50ms
 - 🐢 External link checking is slower (e.g. ~160s for 157 files), but optional and off by default
 
 
 📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
 
+
+## 📋 Example Output
+
+```bash
+❯ go run main.go testdata/sample_links.md
+
+Errors in testdata/sample_links.md:
+  testdata/sample_links.md:1: First heading should be level 2 (found level 1)
+  testdata/sample_links.md:4: Link unreachable: https://httpstat.us/404
+  testdata/sample_links.md:12: Link unreachable: http://localhost-test:3001
+  testdata/sample_links.md:16: duplicate heading: "overview"
+  testdata/sample_links.md:18: image with empty alt text
+
+
+✖ 5 issues found
+✓ Checked 1 file(s), 19 line(s) in 757ms
+```
 
 ## 📦 Installation (for local testing)
 
@@ -154,8 +172,8 @@ v0.3.0 - Configuration File Support
 - [x] Add `gomarklint init` subcommand to generate a default `.gomarklint.json` file
 
 v0.4.0
-- [ ] Add rules: duplicate headings, empty alt text, TODO comments
-- [ ] Add --ignore flag
+- [x] Add rules: duplicate headings, empty alt text
+- [x] Add --ignore flag
 - [ ] Add --json output option
 
 v0.5.0

@@ -57,7 +57,8 @@ var rootCmd = &cobra.Command{
 		if len(args) == 0 {
 			return fmt.Errorf("please provide a markdown file or directory")
 		}
-		files, err := parser.ExpandPaths(args)
+
+		files, err := parser.ExpandPaths(args, cfg.Ignore)
 		if err != nil {
 			return fmt.Errorf("failed to expand paths: %w", err)
 		}

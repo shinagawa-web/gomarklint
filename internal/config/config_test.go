@@ -77,6 +77,7 @@ func TestDefaultConfig(t *testing.T) {
 		MinHeadingLevel:  2,
 		CheckLinks:       false,
 		SkipLinkPatterns: []string{},
+		Ignore:           []string{},
 	}
 
 	got := Default()

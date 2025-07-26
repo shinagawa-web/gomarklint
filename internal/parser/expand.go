@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/shinagawa-web/gomarklint/internal/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +20,8 @@ import (
 //
 //	input:  []string{"docs", "README.md"}
 //	output: ["docs/a.md", "docs/sub/b.md", "README.md"]
-func ExpandPaths(paths []string) ([]string, error) {
+func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
+
 	var results []string
 
 	for _, p := range paths {
@@ -39,6 +41,9 @@ func ExpandPaths(paths []string) ([]string, error) {
 				}
 
 				if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
+					if util.ShouldIgnore(path, ignorePatterns) {
+						return nil
+					}
 					results = append(results, path)
 				}
 				return nil
@@ -47,6 +52,9 @@ func ExpandPaths(paths []string) ([]string, error) {
 				return nil, err
 			}
 		} else if strings.HasSuffix(info.Name(), ".md") {
+			if util.ShouldIgnore(p, ignorePatterns) {
+				continue
+			}
 			results = append(results, p)
 		}
 	}
