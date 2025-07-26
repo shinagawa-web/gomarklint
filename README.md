@@ -55,6 +55,29 @@ Options:
 - `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
   - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
 
+## ⚙️ Configuration File
+
+`gomarklint` supports configuration via a `.gomarklint.json` file.
+
+By default, if the file exists in the current directory, it will be loaded automatically. You can also specify a custom path using the `--config` flag.
+
+```json
+{
+  "minHeadingLevel": 2,
+  "checkLinks": true,
+  "skipLinkPatterns": ["localhost", "example.com"]
+}
+```
+
+- CLI flags override values in the config file.
+- Unknown fields in the JSON will cause an error (strict validation).
+
+you can generate a default config file using:
+
+```bash
+gomarklint init
+```
+
 ## 🛣 Roadmap
 
 v0.1.0

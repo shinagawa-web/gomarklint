@@ -20,9 +20,10 @@ var skipLinkPatterns []string
 var configFilePath string
 
 var rootCmd = &cobra.Command{
-	Use:   "gomarklint",
+	Use:   "gomarklint [files or directories]",
 	Short: "A fast markdown linter written in Go",
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 
