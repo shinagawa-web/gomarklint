@@ -23,6 +23,7 @@
 - ✅ Detects broken external links (e.g. `[text](https://...)`, `https://...`) with `--check-links`
 - ✅ Supports config file (`.gomarklint.json`) to store default options
 - ✅ Supports ignore patterns (e.g. `**/CHANGELOG.md`) via config file
+- ✅ Supports structured JSON output via `--output=json`
 - ⚡️ Blazing fast — 157 files and 52,000+ lines scanned in under 50ms
 - 🐢 External link checking is slower (e.g. ~160s for 157 files), but optional and off by default
 
@@ -31,6 +32,8 @@
 
 
 ## 📋 Example Output
+
+### Text Output
 
 ```bash
 ❯ go run main.go testdata/sample_links.md
@@ -46,6 +49,51 @@ Errors in testdata/sample_links.md:
 ✖ 5 issues found
 ✓ Checked 1 file(s), 19 line(s) in 757ms
 ```
+
+### JSON Output
+
+```bash
+❯ gomarklint testdata/sample_links.md --output=json
+```
+
+```json
+{
+  "files": 1,
+  "lines": 19,
+  "errors": 5,
+  "elapsed_ms": 790,
+  "details": {
+    "testdata/sample_links.md": [
+      {
+        "File": "testdata/sample_links.md",
+        "Line": 1,
+        "Message": "First heading should be level 2 (found level 1)"
+      },
+      {
+        "File": "testdata/sample_links.md",
+        "Line": 4,
+        "Message": "Link unreachable: https://httpstat.us/404"
+      },
+      {
+        "File": "testdata/sample_links.md",
+        "Line": 12,
+        "Message": "Link unreachable: http://localhost-test:3001"
+      },
+      {
+        "File": "testdata/sample_links.md",
+        "Line": 16,
+        "Message": "duplicate heading: \"overview\""
+      },
+      {
+        "File": "testdata/sample_links.md",
+        "Line": 18,
+        "Message": "image with empty alt text"
+      }
+    ]
+  }
+}
+```
+
 
 ## 📦 Installation (for local testing)
 
@@ -80,6 +128,8 @@ Options:
 
 - `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
   - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
+- `--output` — Set output format. Accepts `"text"` (default) or `"json"`.  Use `"json"` to generate structured output for CI tools, scripts, etc.
+  - Example: `--output=json`
 
 ## ⚙️ Configuration File
 
@@ -91,12 +141,18 @@ By default, if the file exists in the current directory, it will be loaded autom
 {
   "minHeadingLevel": 2,
   "checkLinks": true,
-  "skipLinkPatterns": ["localhost", "example.com"]
+  "skipLinkPatterns": [
+    "localhost",
+    "example.com"
+  ],
+  "ignore": [],
+  "output": "text"
 }
 ```
 
 - CLI flags override values in the config file.
 - Unknown fields in the JSON will cause an error (strict validation).
+- Valid values: `"text"` (default) or `"json"`
 
 you can generate a default config file using:
 
@@ -174,7 +230,7 @@ v0.3.0 - Configuration File Support
 v0.4.0
 - [x] Add rules: duplicate headings, empty alt text
 - [x] Add --ignore flag
-- [ ] Add --json output option
+- [x] Add --json output option
 
 v0.5.0
 - [ ] GitHub Actions support
