@@ -86,6 +86,7 @@ var rootCmd = &cobra.Command{
 			allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 			allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
 			allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, content)...)
+			allErrors = append(allErrors, rule.CheckEmptyAltText(path, content)...)
 			if checkLinks {
 				allErrors = append(allErrors, rule.CheckExternalLinks(path, content, compiledPatterns)...)
 			}
