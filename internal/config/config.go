@@ -6,6 +6,7 @@ type Config struct {
 	CheckLinks       bool     `json:"checkLinks"`
 	SkipLinkPatterns []string `json:"skipLinkPatterns"`
 	Ignore           []string `json:"ignore"`
+	OutputFormat     string   `json:"output"`
 }
 
 func Default() Config {
@@ -14,5 +15,6 @@ func Default() Config {
 		CheckLinks:       false,
 		SkipLinkPatterns: []string{},
 		Ignore:           []string{},
+		OutputFormat:     "text",
 	}
 }

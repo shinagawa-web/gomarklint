@@ -4,5 +4,7 @@
   "skipLinkPatterns": [
     "localhost",
     "example.com"
-  ]
+  ],
+  "ignore": [],
+  "output": "text"
 }

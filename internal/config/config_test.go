@@ -78,6 +78,7 @@ func TestDefaultConfig(t *testing.T) {
 		CheckLinks:       false,
 		SkipLinkPatterns: []string{},
 		Ignore:           []string{},
+		OutputFormat:     "text",
 	}
 
 	got := Default()
