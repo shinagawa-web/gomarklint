@@ -1,0 +1,8 @@
+{
+  "minHeadingLevel": 2,
+  "checkLinks": true,
+  "skipLinkPatterns": [
+    "localhost",
+    "example.com"
+  ]
+}

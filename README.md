@@ -90,12 +90,12 @@ v0.2.2
 
 v0.3.0 - Configuration File Support
 
-- [ ] Define `Config` struct to represent configuration options
-- [ ] Add `--config` flag to specify config file path (default: `.gomarklint.json`)
-- [ ] Load configuration via `os.ReadFile` and `json.Unmarshal`
-- [ ] Determine priority between flags and config file (e.g., flags override config or vice versa)
-- [ ] Handle missing config file gracefully and apply default values
-- [ ] Add `gomarklint init` subcommand to generate a default `.gomarklint.json` file
+- [x] Define `Config` struct to represent configuration options
+- [x] Add `--config` flag to specify config file path (default: `.gomarklint.json`)
+- [x] Load configuration via `os.ReadFile` and `json.Unmarshal`
+- [x] Determine priority between flags and config file (e.g., flags override config or vice versa)
+- [x] Handle missing config file gracefully and apply default values
+- [x] Add `gomarklint init` subcommand to generate a default `.gomarklint.json` file
 
 v0.4.0
 - [ ] Add rules: duplicate headings, empty alt text, TODO comments

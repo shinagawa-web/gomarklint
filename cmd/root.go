@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shinagawa-web/gomarklint/internal/config"
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
 	"github.com/spf13/cobra"
@@ -16,16 +17,40 @@ import (
 var minHeadingLevel int
 var checkLinks bool
 var skipLinkPatterns []string
+var configFilePath string
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint",
 	Short: "A fast markdown linter written in Go",
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		start := time.Now()
-		totalLines := 0
-
 		fmt.Println()
+
+		start := time.Now()
+		cfg := config.Default()
+		if _, err := os.Stat(configFilePath); err == nil {
+			c, err := config.LoadConfig(configFilePath)
+			if err != nil {
+				return err
+			}
+			cfg = c
+		}
+
+		if cmd.Flags().Changed("min-heading") {
+			cfg.MinHeadingLevel = minHeadingLevel
+		}
+		if cmd.Flags().Changed("check-links") {
+			cfg.CheckLinks = checkLinks
+		}
+		if cmd.Flags().Changed("skip-link-patterns") {
+			cfg.SkipLinkPatterns = skipLinkPatterns
+		}
+
+		minHeadingLevel = cfg.MinHeadingLevel
+		checkLinks = cfg.CheckLinks
+		skipLinkPatterns = cfg.SkipLinkPatterns
+
+		totalLines := 0
 
 		if len(args) == 0 {
 			return fmt.Errorf("please provide a markdown file or directory")
@@ -95,9 +120,13 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.Flags().StringVar(&configFilePath, "config", ".gomarklint.json", "path to config file (default: .gomarklint.json)")
+
 	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
 	rootCmd.Flags().BoolVar(&checkLinks, "check-links", false, "enable external link checking")
 	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
+
+	rootCmd.AddCommand(initCmd)
 }
 
 func Execute() error {
