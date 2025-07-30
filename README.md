@@ -95,13 +95,31 @@ Errors in testdata/sample_links.md:
 ```
 
 
-## 📦 Installation (for local testing)
+## 📦 Installation (for local linting)
+
+### Option 1: Pre-built Binaries (Recommended for most users)
+
+You can download the latest binary from GitHub Releases.
+
+```bash
+# Example (Linux, x86_64)
+curl -L -o gomarklint.tar.gz https://github.com/shinagawa-web/gomarklint/releases/latest/download/gomarklint_Linux_x86_64.tar.gz
+tar -xzf gomarklint.tar.gz
+mv gomarklint /usr/local/bin/
+```
+
+- Binaries for macOS, Linux, and Windows are available.
+- Windows users: download the `.zip` version and extract it manually
+- All binaries are statically compiled with `CGO_ENABLED=0`, so no external dependencies are required.
+
+
+### Option 2: go install (for Go users)
 
 ```bash
 go install github.com/shinagawa-web/gomarklint@latest
 ```
 
-Or clone and run:
+### Option 3: Clone and run locally
 
 ```bash
 git clone https://github.com/shinagawa-web/gomarklint.git
@@ -184,6 +202,52 @@ If you want lightning-fast feedback while editing, omit `--enable-link-check`.
 > ⏱️ **Fastest mode:**  
 > `gomarklint ./content` → ✅ completes in milliseconds!
 
+## 🧪 GitHub Actions Integration
+
+
+You can use gomarklint in your CI workflows using the official [GitHub Action](https://github.com/marketplace/actions/gomarklint-markdown-linter):
+
+> ⚠️ Note:
+> When using `gomarklint` in GitHub Actions, you must first create a `.gomarklint.json` configuration file in your repository root.
+> This ensures all options are explicitly defined and reproducible in CI environments.
+
+You can generate a default config with:
+
+```bash
+gomarklint init
+```
+
+Example: .github/workflows/lint.yml
+
+```yml
+name: Lint Markdown
+
+on:
+  push:
+    paths:
+      - '**/*.md'
+  pull_request:
+    paths:
+      - '**/*.md'
+
+jobs:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run gomarklint Action
+        uses: shinagawa-web/gomarklint-action@v1
+        with:
+          args: markdown
+```
+
+### Args
+
+- args: Specify the directory or files to lint. For example: `.` or `docs` or `README.md.`
+
+> By default, the action runs gomarklint using the latest release binary.
 
 ## 🛣 Roadmap
 
@@ -233,8 +297,8 @@ v0.4.0
 - [x] Add --json output option
 
 v0.5.0
-- [ ] GitHub Actions support
-- [ ] Cross-platform binaries via goreleaser
+- [x] Cross-platform binaries via goreleaser
+- [x] GitHub Actions support
 
 v1.0.0
 - [ ] At least 5 rules with test coverage

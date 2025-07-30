@@ -36,8 +36,10 @@ func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
 					return nil
 				}
 
-				if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
-					return filepath.SkipDir
+				if d.IsDir() {
+					if path != p && strings.HasPrefix(d.Name(), ".") {
+						return filepath.SkipDir
+					}
 				}
 
 				if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
