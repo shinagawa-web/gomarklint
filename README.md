@@ -36,7 +36,7 @@
 ### Text Output
 
 ```bash
-❯ go run main.go testdata/sample_links.md
+❯ gomarklint testdata/sample_links.md
 
 Errors in testdata/sample_links.md:
   testdata/sample_links.md:1: First heading should be level 2 (found level 1)
@@ -163,7 +163,6 @@ By default, if the file exists in the current directory, it will be loaded autom
     "localhost",
     "example.com"
   ],
-  "ignore": [],
   "output": "text"
 }
 ```
@@ -240,7 +239,7 @@ jobs:
       - name: Run gomarklint Action
         uses: shinagawa-web/gomarklint-action@v1
         with:
-          args: markdown
+          args: .
 ```
 
 ### Args
