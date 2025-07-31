@@ -249,62 +249,50 @@ jobs:
 
 > By default, the action runs gomarklint using the latest release binary.
 
-## 🛣 Roadmap
+## 🛣️ Roadmap (Post v1.0.0)
 
-v0.1.0
-- [x] Basic CLI setup with Cobra
-- [x] Lint single file
-- [x] Check heading level jumps
-- [x] Check missing final blank lines
-- [x] Check unclosed code blocks
+### ✅ Core Quality & Rule Expansion
 
-v0.2.0
-- [x] Support multiple files and directories
-- [x] Output file name and line number
-- [x] Recursively search .md files
-- [x] Frontmatter support
+- [ ] `max-line-length`: Enforce maximum line width
+- [ ] `no-multiple-consecutive-blank-lines`: Disallow multiple blank lines
+- [ ] `image-alt-text` improvements: Enforce alt text style and length
+- [ ] `no-dead-anchor-links`: Ensure in-page anchor links point to valid headings
+- [ ] `title-case-heading`: Enforce consistent heading capitalization
+- [ ] Per-rule enable/disable configuration via `.gomarklint.json`
+- [ ] Rule severity levels (e.g. `warning`, `error`)
 
-v0.2.1
-- [x] Extract `http`/`https` URLs from:
-  - Inline links: `[text](https://example.com)`
-  - Image links: `![alt](https://example.com/image.png)`
-  - Bare URLs: `https://example.com/path`
-- [x] Perform HTTP `HEAD` or fallback `GET` request to validate links
-- [x] Report links that return 4xx or 5xx status codes
-- [x] Set request timeout (default: 5 seconds)
-- [x] Include automated tests (with mock server for consistent results)
-- [x] Show file name and line number for each broken link
-- [x] `--enable-link-check` flag to enable external link checking
-- [x] Skip external link checking unless `--enable-link-check` is specified
+### 🧩 Extensibility
 
-v0.2.2
-- [x] Support `--skip-link-patterns` to exclude certain domains from link checking
-- [x] Ignore links inside fenced code blocks (```...```)
-- [x] Remove No issues found 🎉 message (consider --quiet flag)
+- [ ] Plugin system for custom rules (via Go interface or external binary)
+- [ ] Allow disabling specific rules via inline comments (e.g. `<!-- gomarklint-disable -->`)
 
-v0.3.0 - Configuration File Support
+### 🧪 Testing & Stability
 
-- [x] Define `Config` struct to represent configuration options
-- [x] Add `--config` flag to specify config file path (default: `.gomarklint.json`)
-- [x] Load configuration via `os.ReadFile` and `json.Unmarshal`
-- [x] Determine priority between flags and config file (e.g., flags override config or vice versa)
-- [x] Handle missing config file gracefully and apply default values
-- [x] Add `gomarklint init` subcommand to generate a default `.gomarklint.json` file
+- [ ] Snapshot testing support for easier rule verification
+- [ ] Regression test suite for real-world Markdown samples
 
-v0.4.0
-- [x] Add rules: duplicate headings, empty alt text
-- [x] Add --ignore flag
-- [x] Add --json output option
+### 🛠️ Developer UX
 
-v0.5.0
-- [x] Cross-platform binaries via goreleaser
-- [x] GitHub Actions support
+- [ ] VS Code extension using gomarklint core
+- [ ] Interactive mode (e.g. prompt to fix or explain errors)
+- [ ] File caching for faster repeated linting
 
-v1.0.0
-- [ ] At least 5 rules with test coverage
-- [ ] Stable CLI interface
-- [ ] Prebuilt binaries for macOS/Linux/Windows
-- [ ] Clear README and blog post with real usage examples
+### 📦 Ecosystem & CI
+
+- [x] GitHub Actions integration
+- [x] Prebuilt binaries via `goreleaser` (macOS/Linux/Windows)
+- [ ] Homebrew formula
+- [ ] Docker image (e.g. `ghcr.io/shinagawa-web/gomarklint`)
+
+### 🌍 Internationalization
+
+- [ ] Localized messages (e.g. Japanese, Spanish)
+- [ ] Rule messages with IDs and documentation links
+
+---
+
+**Feel free to suggest more ideas by opening an issue or discussion on GitHub!**
+
 
 ## 📁 Project Structure
 
