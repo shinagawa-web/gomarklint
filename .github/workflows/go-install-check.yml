@@ -24,4 +24,9 @@ jobs:
 
       - name: Try go install
         run: |
-          go install github.com/shinagawa-web/gomarklint@$(git describe --tags --abbrev=0)
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION=$(git describe --tags --abbrev=0)
+          else
+            VERSION="latest"
+          fi
+          go install github.com/shinagawa-web/gomarklint@${VERSION}
