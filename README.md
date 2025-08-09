@@ -245,15 +245,7 @@ jobs:
 
       - name: Run gomarklint Action
         uses: shinagawa-web/gomarklint-action@v1
-        with:
-          args: .
 ```
-
-### Args
-
-- args: Specify the directory or files to lint. For example: `.` or `docs` or `README.md.`
-
-> By default, the action runs gomarklint using the latest release binary.
 
 ## 🛣️ Roadmap (Post v1.0.0)
 
