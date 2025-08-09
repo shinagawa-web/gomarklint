@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -112,6 +113,14 @@ var rootCmd = &cobra.Command{
 		} else {
 			printHumanOutput(orderedPaths, results, len(files), totalLines, totalErrors, elapsed)
 		}
+
+		onCI := os.Getenv("GITHUB_ACTIONS") == "true"
+		if totalErrors > 0 {
+			if onCI {
+				return errors.New("")
+			}
+			return nil
+		}
 		return nil
 	},
 }
@@ -198,6 +207,8 @@ func printHumanOutput(
 }
 
 func init() {
+	rootCmd.SilenceUsage = true
+	rootCmd.SilenceErrors = true
 	rootCmd.Flags().StringVar(&configFilePath, "config", ".gomarklint.json", "path to config file (default: .gomarklint.json)")
 
 	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
