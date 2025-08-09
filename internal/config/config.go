@@ -5,6 +5,7 @@ type Config struct {
 	MinHeadingLevel             int      `json:"minHeadingLevel"`
 	EnableLinkCheck             bool     `json:"enableLinkCheck"`
 	SkipLinkPatterns            []string `json:"skipLinkPatterns"`
+	Include                     []string `json:"include"`
 	Ignore                      []string `json:"ignore"`
 	OutputFormat                string   `json:"output"`
 	EnableDuplicateHeadingCheck bool     `json:"enableDuplicateHeadingCheck"`
@@ -15,6 +16,7 @@ func Default() Config {
 		MinHeadingLevel:             2,
 		EnableLinkCheck:             false,
 		SkipLinkPatterns:            []string{},
+		Include:                     []string{"README.md", "testdata"},
 		Ignore:                      []string{},
 		OutputFormat:                "text",
 		EnableDuplicateHeadingCheck: true,

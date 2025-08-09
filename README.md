@@ -158,13 +158,20 @@ By default, if the file exists in the current directory, it will be loaded autom
 ```json
 {
   "minHeadingLevel": 2,
-  "checkLinks": true,
+  "enableLinkCheck": false,
   "skipLinkPatterns": [
     "localhost",
     "example.com"
   ],
-  "output": "text"
+  "include": [
+    "README.md",
+    "testdata"
+  ],
+  "ignore": ["doc.md"],
+  "output": "text",
+  "enableDuplicateHeadingCheck": true
 }
+
 ```
 
 - CLI flags override values in the config file.

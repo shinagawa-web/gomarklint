@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 	Use:   "gomarklint [files or directories]",
 	Short: "A fast markdown linter written in Go",
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 
@@ -64,7 +64,11 @@ var rootCmd = &cobra.Command{
 		skipLinkPatterns = cfg.SkipLinkPatterns
 
 		if len(args) == 0 {
-			return fmt.Errorf("please provide a markdown file or directory")
+			if len(cfg.Include) > 0 {
+				args = cfg.Include
+			} else {
+				return fmt.Errorf("please provide a markdown file or directory (or set 'include' in .gomarklint.json)")
+			}
 		}
 
 		files, err := parser.ExpandPaths(args, cfg.Ignore)

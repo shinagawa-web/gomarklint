@@ -77,6 +77,7 @@ func TestDefaultConfig(t *testing.T) {
 		MinHeadingLevel:             2,
 		EnableLinkCheck:             false,
 		SkipLinkPatterns:            []string{},
+		Include:                     []string{"README.md", "testdata"},
 		Ignore:                      []string{},
 		OutputFormat:                "text",
 		EnableDuplicateHeadingCheck: true,
