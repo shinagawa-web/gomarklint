@@ -3,7 +3,7 @@ module github.com/shinagawa-web/gomarklint
 go 1.23.0
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.9.0
+	github.com/bmatcuk/doublestar/v4 v4.9.1
 	github.com/spf13/cobra v1.9.1
 )
 
