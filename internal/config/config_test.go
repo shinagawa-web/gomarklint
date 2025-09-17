@@ -81,6 +81,7 @@ func TestDefaultConfig(t *testing.T) {
 		Ignore:                      []string{},
 		OutputFormat:                "text",
 		EnableDuplicateHeadingCheck: true,
+		EnableHeadingLevelCheck:     true,
 	}
 
 	got := Default()

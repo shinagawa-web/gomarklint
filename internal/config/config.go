@@ -9,6 +9,7 @@ type Config struct {
 	Ignore                      []string `json:"ignore"`
 	OutputFormat                string   `json:"output"`
 	EnableDuplicateHeadingCheck bool     `json:"enableDuplicateHeadingCheck"`
+	EnableHeadingLevelCheck     bool     `json:"enableHeadingLevelCheck"`
 }
 
 func Default() Config {
@@ -20,5 +21,6 @@ func Default() Config {
 		Ignore:                      []string{},
 		OutputFormat:                "text",
 		EnableDuplicateHeadingCheck: true,
+		EnableHeadingLevelCheck:     true,
 	}
 }
