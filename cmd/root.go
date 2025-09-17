@@ -22,6 +22,8 @@ var enableLinkCheck bool
 var skipLinkPatterns []string
 var configFilePath string
 var outputFormat string
+var enableHeadingLevelCheck bool
+var enableDuplicateHeadingCheck bool
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint [files or directories]",
@@ -47,6 +49,12 @@ var rootCmd = &cobra.Command{
 		if cmd.Flags().Changed("enable-link-check") {
 			cfg.EnableLinkCheck = enableLinkCheck
 		}
+		if cmd.Flags().Changed("enable-heading-level-check") {
+			cfg.EnableHeadingLevelCheck = enableHeadingLevelCheck
+		}
+		if cmd.Flags().Changed("enable-duplicate-heading-check") {
+			cfg.EnableDuplicateHeadingCheck = enableDuplicateHeadingCheck
+		}
 		if cmd.Flags().Changed("skip-link-patterns") {
 			cfg.SkipLinkPatterns = skipLinkPatterns
 		}
@@ -63,6 +71,8 @@ var rootCmd = &cobra.Command{
 		minHeadingLevel = cfg.MinHeadingLevel
 		enableLinkCheck = cfg.EnableLinkCheck
 		skipLinkPatterns = cfg.SkipLinkPatterns
+		enableHeadingLevelCheck = cfg.EnableHeadingLevelCheck
+		enableDuplicateHeadingCheck = cfg.EnableDuplicateHeadingCheck
 
 		if len(args) == 0 {
 			if len(cfg.Include) > 0 {
@@ -127,10 +137,12 @@ var rootCmd = &cobra.Command{
 
 func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp) ([]rule.LintError, int) {
 	var allErrors []rule.LintError
-	allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, cfg.MinHeadingLevel)...)
 	allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
 	allErrors = append(allErrors, rule.CheckEmptyAltText(path, content)...)
+	if cfg.EnableHeadingLevelCheck {
+		allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, cfg.MinHeadingLevel)...)
+	}
 	if cfg.EnableDuplicateHeadingCheck {
 		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, content)...)
 	}
@@ -213,6 +225,8 @@ func init() {
 
 	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
 	rootCmd.Flags().BoolVar(&enableLinkCheck, "enable-link-check", false, "enable external link checking")
+	rootCmd.Flags().BoolVar(&enableHeadingLevelCheck, "enable-heading-level-check", true, "enable heading level check")
+	rootCmd.Flags().BoolVar(&enableDuplicateHeadingCheck, "enable-duplicate-heading-check", true, "enable duplicate heading check")
 	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
 	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text or json")
 

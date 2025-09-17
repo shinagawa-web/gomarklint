@@ -138,7 +138,13 @@ gomarklint ./docs --enable-link-check
 
 Options:
 
+- `--config` — Path to the config file. Defaults to `.gomarklint.json`.
+  - Example: `--config ./configs/gomarklint.json`
 - `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
+- `--enable-heading-level-check` — Enable heading-level validation (default: `true`).
+Ensures top-level sections start at or below `--min-heading` and don’t skip levels.
+- `--enable-duplicate-heading-check` — Enable duplicate heading detection within a file (default: `true`).
+Helps avoid ambiguous anchors and ToC collisions.
 - `--enable-link-check` — Check for broken external links (http/https) such as [text](https://...), ![alt](https://...), or bare URLs. Only runs when explicitly enabled.
   - Example: `[text](https://...)`, `![img](https://...)`, or bare URLs
 > 🕒 Note: With `--enable-link-check` enabled, performance depends on network conditions.
@@ -146,8 +152,8 @@ Options:
 
 - `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
   - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
-- `--output` — Set output format. Accepts `"text"` (default) or `"json"`.  Use `"json"` to generate structured output for CI tools, scripts, etc.
-  - Example: `--output=json`
+- `--output` — Output format: `"text"` (default) or `"json"`.
+Use `"json"` for CI ingestion and tooling.
 
 ## ⚙️ Configuration File
 
@@ -169,7 +175,8 @@ By default, if the file exists in the current directory, it will be loaded autom
   ],
   "ignore": ["doc.md"],
   "output": "text",
-  "enableDuplicateHeadingCheck": true
+  "enableDuplicateHeadingCheck": true,
+  "enableHeadingLevelCheck": true
 }
 
 ```
@@ -316,10 +323,38 @@ When specifying files or directories, `gomarklint` will:
 - Report all files, regardless of `.gitignore`
 - Silently skip missing files (`os.IsNotExist`)
 
+## 🛠 Local Development
+
+To set up a local development environment for `gomarklint`:
+
+```bash
+# Run all tests
+go test ./...
+
+# Show CLI help from local source
+go run . --help
+
+# Generate a default .gomarklint.json (from your local build)
+go run . init
+
+# Lint the included sample files in ./testdata
+go run . testdata
+```
+
+Notes:
+- `go run .` uses the local source directly, so you don’t need to `go install` during development.
+- When adding new CLI flags or config fields, confirm they appear in `--help` and the generated `.gomarklint.json`.
+- Tests should remain fast and self-contained — contributions that break this will be rejected.
+
+
 ## 🤝 Contributing
 
 Issues, suggestions, and PRs are welcome!
-This project is just getting started and will evolve step by step.
+Before submitting a pull request, please follow the guidelines below to ensure a smooth review process.
+
+Requirements:
+
+- Go version: Go `1.22+` (latest stable recommended)
 
 ## 📜 License
 
