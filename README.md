@@ -124,7 +124,7 @@ go install github.com/shinagawa-web/gomarklint@latest
 ```bash
 git clone https://github.com/shinagawa-web/gomarklint.git
 cd gomarklint
-go run main.go ./README.md
+go run . testdata
 ```
 
 ## 🚀 Usage
@@ -304,13 +304,31 @@ jobs:
 
 ```
 gomarklint/
-├── cmd/             # CLI entrypoint (Cobra)
+├── cmd/                    # CLI commands
+│   ├── init.go            # Configuration initialization
+│   └── root.go            # Root command and main logic
 ├── internal/
-│   ├── rule/        # Individual lint rules
-│   └── parser/      # Markdown parsing logic
-├── testdata/        # Sample Markdown files
-├── main.go
-└── README.md
+│   ├── config/            # Configuration management
+│   │   ├── config.go      # Config struct and defaults
+│   │   ├── config_test.go
+│   │   └── load.go        # Configuration loading
+│   ├── parser/            # Markdown parsing utilities
+│   │   ├── expand.go      # File expansion logic
+│   │   ├── external_link.go # External link handling
+│   │   ├── markdown.go    # Core markdown parsing
+│   │   └── strip_frontmatter.go # Frontmatter removal
+│   ├── rule/              # Lint rules implementation
+│   │   ├── code_block.go
+│   │   ├── duplicate_headings.go
+│   │   ├── empty_alt_text.go
+│   │   ├── external_link.go
+│   │   ├── final_blank_line.go
+│   │   └── heading_level.go
+│   ├── testutil/          # Testing utilities
+│   └── util/              # Common utilities
+├── testdata/              # Test fixtures
+├── main.go               # Application entry point
+└── doc.go                # Package documentation
 ```
 
 ## 📁 Path Handling
