@@ -6,36 +6,180 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/shinagawa-web/gomarklint.svg)](https://pkg.go.dev/github.com/shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> A fast and lightweight Markdown linter written in Go.
+> A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
 
-**gomarklint** checks your Markdown files for common issues such as heading structure problems, trailing blank lines, unclosed code blocks, and more. Designed to be minimal, fast, and CI-friendly.
+- Catch broken links and headings before your docs ship.
+- Enforce predictable structure (no more “why is this H4 under H2?”).
+- Output that’s friendly for both humans and machines (JSON).
 
----
+## Why
+
+Docs break quietly and trust erodes loudly.
+gomarklint focuses on reproducible rules that prevent “small but costly” failures:
+
+- Heading hierarchies that drift during edits
+- Duplicate headings that break anchor links
+- Subtle dead links (including internal anchors)
+- Large repos where “one-off checks” don’t scale
+
+> Goal: treat documentation quality like code quality—fast feedback locally, strict in CI, zero drama.
+
 
 ## ✨ Features
 
-- ✅ Lint individual `.md` files or entire directories
-- ✅ Checks for heading level consistency (`# → ## → ###`)
-- ✅ Detects duplicate headings (case-insensitive, trims trailing spaces)
-- ✅ Detects missing trailing blank lines
-- ✅ Detects unclosed code blocks
-- ✅ Ignores YAML frontmatter correctly when linting
-- ✅ Detects broken external links (e.g. `[text](https://...)`, `https://...`) with `--enable-link-check`
-- ✅ Supports config file (`.gomarklint.json`) to store default options
-- ✅ Supports ignore patterns (e.g. `**/CHANGELOG.md`) via config file
-- ✅ Supports structured JSON output via `--output=json`
-- ⚡️ Blazing fast — 157 files and 52,000+ lines scanned in under 50ms
-- 🐢 External link checking is slower (e.g. ~160s for 157 files), but optional and off by default
+
+- Recursive .md search (multi-file & multi-directory)
+- Frontmatter-aware parsing (YAML/TOML ignored when needed)
+- File name & line number in diagnostics
+- Human-readable and JSON outputs
+- Fast single-binary CLI (Go), ideal for CI/CD
+- Rules with clear rationales (see below)
+
+Planned/ongoing:
+
+- Severity levels per rule
+- Customizable rule enable/disable
+- VS Code extension for in-editor feedback
+
+## Quick Start
+
+```sh
+# install (choose one)
+go install github.com/shinagawa-web/gomarklint/cmd/gomarklint@latest
+
+# or clone and build manually
+git clone https://github.com/shinagawa-web/gomarklint
+cd gomarklint
+make build   # or: go build ./cmd/gomarklint
+```
+
+### 1) Initialize config (optional but recommended)
+
+```sh
+gomarklint init
+```
+
+This creates `.gomarklint.json` with sensible defaults:
 
 
-📝 **Note:** By default, `gomarklint` assumes heading levels start from `##` (H2), not `#` (H1), to align with common blog and static site conventions.
+```json
+{
+  "include": ["."],
+  "ignore": ["node_modules", "vendor"],
+  "minHeadingLevel": 2,
+  "enableHeadingLevelCheck": true,
+  "enableDuplicateHeadingCheck": true,
+  "enableLinkCheck": false,
+  "skipLinkPatterns": [],
+  "outputFormat": "text"
+}
+```
+
+You can edit it anytime — CLI flags override config values.
+
+### 2) Run it
+
+```sh
+# lint current directory recursively
+gomarklint ./...
+
+# lint specific targets
+gomarklint docs README.md internal/handbook
+```
+
+Exit code is non-zero on violations (configurable soon), so it plugs into CI trivially.
 
 
-## 📋 Example Output
+### 3) JSON output (for CI / tooling)
 
-### Text Output
+```sh
+gomarklint ./... --output json
+```
 
-```bash
+## Rules (current)
+
+`gomarklint` currently runs the following checks (ordered as executed):
+
+
+| Rule key              | What it detects                                        | Notes / Options                                                                                        |
+| --------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `final-blank-line`    | Missing final blank line at EOF                        | Always on                                                                                              |
+| `unclosed-code-block` | Unclosed fenced code blocks (````` / `~~~`)            | Always on                                                                                              |
+| `empty-alt-text`      | Image syntax with an empty alt text                    | Always on                                                                                              |
+| `heading-level`       | Invalid heading level progression (e.g., H2 → H4 skip) | Toggle: `--enable-heading-level-check` (default **on**) / `--min-heading` (default **2**)              |
+| `duplicate-heading`   | Duplicate headings within one file                     | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
+| `external-link`       | External links that fail validation                    | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
+
+
+Execution details:
+
+- Files/dirs are expanded with ignore patterns from config (see Configuration).
+- Per-file issues are sorted by line asc before printing.
+- Line count is computed as \n count + 1 for reporting.
+
+## CLI
+
+```sh
+gomarklint [files or directories] [flags]
+```
+
+If no paths are given, the tool will:
+
+- Use `include` from `.gomarklint.json` if present, otherwise error out with
+“please provide a markdown file or directory (or set 'include' in .gomarklint.json)”.
+
+
+### Flags
+
+| Flag                               | Type             | Default            | Description                                                                            |
+| ---------------------------------- | ---------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| `--config`                         | string           | `.gomarklint.json` | Path to config file. Loaded if the file exists.                                        |
+| `--min-heading`                    | int              | `2`                | Minimum heading level considered by the heading-level rule.                            |
+| `--enable-link-check`              | bool             | `false`            | Enable external link checking.                                                         |
+| `--enable-heading-level-check`     | bool             | `true`             | Enable heading level validation.                                                       |
+| `--enable-duplicate-heading-check` | bool             | `true`             | Enable duplicate heading detection.                                                    |
+| `--skip-link-patterns`             | string[] (regex) | `[]`               | Regex patterns; matching URLs are skipped by link check. Can be passed multiple times. |
+| `--output`                         | `text` | `json`  | `text`             | Output format. Any other value is rejected.                                            |
+
+Notes:
+
+- Flags override config values when explicitly provided.
+- Paths are expanded (globs/dirs) and filtered by ignore (from config).
+- Exit behavior: if any issues exist and GITHUB_ACTIONS=true, the command returns a non-nil error (non-zero exit); otherwise it prints results and exits zero. This makes it friendly locally while strict on CI.
+
+## Configuration
+
+A JSON config is read from the path given by --config (defaults to .gomarklint.json) if the file exists. Example:
+
+```json
+{
+  "include": ["docs", "README.md"],
+  "ignore": ["node_modules", "vendor"],
+  "outputFormat": "text",
+  "minHeadingLevel": 2,
+  "enableLinkCheck": false,
+  "enableHeadingLevelCheck": true,
+  "enableDuplicateHeadingCheck": true,
+  "skipLinkPatterns": [
+    "^https://localhost(:[0-9]+)?/",
+    "example\\.com"
+  ]
+}
+```
+
+Field effects:
+
+- If CLI flags are set, they take precedence over config.
+- If no CLI paths are provided, include (when present) becomes the target set.
+
+
+## Output
+
+### Human-readable (`--output text`, default)
+
+- Prints grouped file sections only when a file has issues:
+
+```sh
 ❯ gomarklint testdata/sample_links.md
 
 Errors in testdata/sample_links.md:
@@ -50,11 +194,12 @@ Errors in testdata/sample_links.md:
 ✓ Checked 1 file(s), 19 line(s) in 757ms
 ```
 
-### JSON Output
+- Summary and timing:
+  - If issues: `✖ N issues found`
+  - If none: `✔ No issues found`
+  - Always prints: `Checked <files>, <lines> in <Xms|Ys>` with colored ticks.
 
-```bash
-❯ gomarklint testdata/sample_links.md --output=json
-```
+### JSON (`--output json`)
 
 ```json
 {
@@ -94,102 +239,9 @@ Errors in testdata/sample_links.md:
 }
 ```
 
+- details maps file path → list of issues (`file`, `line`, `message`).
+- elapsed_ms is total wall time for the run.
 
-## 📦 Installation (for local linting)
-
-### Option 1: Pre-built Binaries (Recommended for most users)
-
-You can download the latest binary from GitHub Releases.
-
-```bash
-# Example (Linux, x86_64)
-curl -L -o gomarklint.tar.gz https://github.com/shinagawa-web/gomarklint/releases/latest/download/gomarklint_Linux_x86_64.tar.gz
-tar -xzf gomarklint.tar.gz
-mv gomarklint /usr/local/bin/
-```
-
-- Binaries for macOS, Linux, and Windows are available.
-- Windows users: download the `.zip` version and extract it manually
-- All binaries are statically compiled with `CGO_ENABLED=0`, so no external dependencies are required.
-
-
-### Option 2: go install (for Go users)
-
-```bash
-go install github.com/shinagawa-web/gomarklint@latest
-```
-
-### Option 3: Clone and run locally
-
-```bash
-git clone https://github.com/shinagawa-web/gomarklint.git
-cd gomarklint
-go run . testdata
-```
-
-## 🚀 Usage
-
-```bash
-gomarklint ./posts --min-heading 2
-gomarklint ./posts ./docs
-gomarklint ./content --ignore CHANGELOG.md --json
-gomarklint ./docs --enable-link-check
-```
-
-Options:
-
-- `--config` — Path to the config file. Defaults to `.gomarklint.json`.
-  - Example: `--config ./configs/gomarklint.json`
-- `--min-heading` — Set the minimum heading level to expect. Defaults to `2` (i.e. `##`), which aligns with common blogging/static site practices.
-- `--enable-heading-level-check` — Enable heading-level validation (default: `true`).
-Ensures top-level sections start at or below `--min-heading` and don’t skip levels.
-- `--enable-duplicate-heading-check` — Enable duplicate heading detection within a file (default: `true`).
-Helps avoid ambiguous anchors and ToC collisions.
-- `--enable-link-check` — Check for broken external links (http/https) such as [text](https://...), ![alt](https://...), or bare URLs. Only runs when explicitly enabled.
-  - Example: `[text](https://...)`, `![img](https://...)`, or bare URLs
-> 🕒 Note: With `--enable-link-check` enabled, performance depends on network conditions.
-> For example, checking 157 files (~52,000 lines) with link validation may take ~100s.
-
-- `--skip-link-patterns` — (optional) One or more regular expressions to exclude specific URLs from link checking. Useful for skipping `localhost`, internal domains, etc.
-  - Example: `--skip-link-patterns localhost --skip-link-patterns ^https://internal\.example\.com`
-- `--output` — Output format: `"text"` (default) or `"json"`.
-Use `"json"` for CI ingestion and tooling.
-
-## ⚙️ Configuration File
-
-`gomarklint` supports configuration via a `.gomarklint.json` file.
-
-By default, if the file exists in the current directory, it will be loaded automatically. You can also specify a custom path using the `--config` flag.
-
-```json
-{
-  "minHeadingLevel": 2,
-  "enableLinkCheck": false,
-  "skipLinkPatterns": [
-    "localhost",
-    "example.com"
-  ],
-  "include": [
-    "README.md",
-    "testdata"
-  ],
-  "ignore": ["doc.md"],
-  "output": "text",
-  "enableDuplicateHeadingCheck": true,
-  "enableHeadingLevelCheck": true
-}
-
-```
-
-- CLI flags override values in the config file.
-- Unknown fields in the JSON will cause an error (strict validation).
-- Valid values: `"text"` (default) or `"json"`
-
-you can generate a default config file using:
-
-```bash
-gomarklint init
-```
 
 ## ⚡️ Performance Tips
 
@@ -261,9 +313,6 @@ jobs:
 - [ ] `max-line-length`: Enforce maximum line width
 - [ ] `no-multiple-consecutive-blank-lines`: Disallow multiple blank lines
 - [ ] `image-alt-text` improvements: Enforce alt text style and length
-- [ ] `no-dead-anchor-links`: Ensure in-page anchor links point to valid headings
-- [ ] `title-case-heading`: Enforce consistent heading capitalization
-- [ ] Per-rule enable/disable configuration via `.gomarklint.json`
 - [ ] Rule severity levels (e.g. `warning`, `error`)
 
 ### 🧩 Extensibility
