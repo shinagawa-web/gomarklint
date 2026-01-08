@@ -1,3 +1,11 @@
 .gomarklint.json
 
+# Binary
+gomarklint
+
+# Build artifacts
 dist/
+
+# Coverage
+coverage.out
+coverage.html
