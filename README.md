@@ -394,19 +394,34 @@ When specifying files or directories, `gomarklint` will:
 
 To set up a local development environment for `gomarklint`:
 
+### Using Make (Recommended)
+
 ```bash
+# Show all available commands
+make help
+
+# Build the binary
+make build
+
 # Run all tests
-go test ./...
+make test
 
-# Show CLI help from local source
-go run . --help
-
-# Generate a default .gomarklint.json (from your local build)
-go run . init
+# Run tests with coverage report
+make test-coverage
 
 # Lint the included sample files in ./testdata
-go run . testdata
+make lint
+
+# Run gomarklint with custom arguments
+make run-dev ARGS="README.md"
+
+# Generate a default .gomarklint.json
+make init
+
+# Clean build artifacts
+make clean
 ```
+
 
 Notes:
 - `go run .` uses the local source directly, so you don’t need to `go install` during development.
