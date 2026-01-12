@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
 	"github.com/spf13/cobra"
+
+	"github.com/shinagawa-web/gomarklint/internal/config"
 )
 
 var initCmd = &cobra.Command{

@@ -46,7 +46,9 @@ func checkURL(client *http.Client, url string) (int, error) {
 
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 		return resp.StatusCode, nil
 	}
 
@@ -60,7 +62,9 @@ func checkURL(client *http.Client, url string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return resp.StatusCode, nil
 }
 

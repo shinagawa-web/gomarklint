@@ -11,10 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/shinagawa-web/gomarklint/internal/config"
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
-	"github.com/spf13/cobra"
 )
 
 var minHeadingLevel int
