@@ -1,8 +1,9 @@
 package rule
 
 import (
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 // CheckFinalBlankLine checks whether the Markdown content ends with a blank line.

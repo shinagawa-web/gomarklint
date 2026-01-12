@@ -20,7 +20,9 @@ func setupTestFiles(t *testing.T) string {
 
 	mustWrite := func(relPath, content string) {
 		full := filepath.Join(base, relPath)
-		os.MkdirAll(filepath.Dir(full), 0755)
+		if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
 		if err := os.WriteFile(full, []byte(content), 0644); err != nil {
 			t.Fatalf("failed to write test file: %v", err)
 		}
@@ -91,7 +93,9 @@ func TestExpandPaths(t *testing.T) {
 		if err := os.Chmod(badDir, 0000); err != nil {
 			t.Skipf("cannot make directory unreadable, skipping test: %v", err)
 		}
-		defer os.Chmod(badDir, 0755) // cleanup
+		defer func() {
+			_ = os.Chmod(badDir, 0755) // cleanup
+		}()
 
 		_, err := ExpandPaths([]string{base}, []string{})
 		if err != nil {

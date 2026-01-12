@@ -1,4 +1,4 @@
-.PHONY: build test clean install help lint run-dev
+.PHONY: build test clean install help lint run-dev static-lint lint-fix
 
 # Default target
 .DEFAULT_GOAL := help
@@ -9,6 +9,8 @@ BUILD_DIR=.
 
 # Go parameters
 GOCMD=go
+GOLINT=golangci-lint
+LINT_CONFIG=--config=./.golangci.yml
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 GORUN=$(GOCMD) run
@@ -43,6 +45,14 @@ install: ## Install the binary locally
 lint: ## Run gomarklint on testdata
 	@echo "Running gomarklint on testdata..."
 	$(GORUN) . testdata
+
+lint-fix: ## Run golangci-lint and fix issues automatically
+	@echo "Running golangci-lint fix..."
+	$(GOLINT) run $(LINT_CONFIG) --fix
+
+static-lint: ## Run golangci-lint for static analysis
+	@echo "Running golangci-lint..."
+	$(GOLINT) run $(LINT_CONFIG)
 
 run-dev: ## Run gomarklint with arguments (usage: make run-dev ARGS="path/to/file.md")
 	$(GORUN) . $(ARGS)

@@ -12,12 +12,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Build binary
         run: go build -o gomarklint
@@ -30,3 +31,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: shinagawa-web/gomarklint
+          files: ./coverage.txt
+          fail_ci_if_error: true

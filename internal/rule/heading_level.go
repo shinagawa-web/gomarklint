@@ -2,9 +2,10 @@ package rule
 
 import (
 	"fmt"
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"regexp"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 type LintError struct {

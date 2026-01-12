@@ -1,0 +1,29 @@
+name: golang-ci
+on:
+  pull_request:
+    paths:
+      - "**.go"
+      - .github/workflows/golangci.yml
+      - .golangci.yml
+
+jobs:
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          golangci_lint_flags: "--config=./.golangci.yml" 
+          fail_level: error
+          reporter: "github-pr-review"

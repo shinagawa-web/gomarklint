@@ -1,8 +1,9 @@
 package rule
 
 import (
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 // CheckUnclosedCodeBlocks detects any unclosed fenced code blocks (e.g., ```)

@@ -1,0 +1,33 @@
+version: 2
+
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - unused
+    - errcheck
+    - gocognit
+    - gocyclo
+    - govet
+    - staticcheck
+    - whitespace
+    - misspell
+
+linters-settings:
+  govet:
+    disable:
+      - shadow
+  gocyclo:
+    min-complexity: 15
+  misspell:
+    locale: US
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: github.com/shinagawa-web
