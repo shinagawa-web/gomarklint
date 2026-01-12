@@ -45,7 +45,7 @@ Planned/ongoing:
 
 ```sh
 # install (choose one)
-go install github.com/shinagawa-web/gomarklint/cmd/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint@latest
 
 # or clone and build manually
 git clone https://github.com/shinagawa-web/gomarklint
