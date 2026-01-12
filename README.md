@@ -101,14 +101,15 @@ gomarklint ./... --output json
 `gomarklint` currently runs the following checks (ordered as executed):
 
 
-| Rule key              | What it detects                                        | Notes / Options                                                                                        |
-| --------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `final-blank-line`    | Missing final blank line at EOF                        | Always on                                                                                              |
-| `unclosed-code-block` | Unclosed fenced code blocks (````` / `~~~`)            | Always on                                                                                              |
-| `empty-alt-text`      | Image syntax with an empty alt text                    | Always on                                                                                              |
-| `heading-level`       | Invalid heading level progression (e.g., H2 → H4 skip) | Toggle: `--enable-heading-level-check` (default **on**) / `--min-heading` (default **2**)              |
-| `duplicate-heading`   | Duplicate headings within one file                     | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
-| `external-link`       | External links that fail validation                    | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
+| Rule key                       | What it detects                                        | Notes / Options                                                                                        |
+| ------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `final-blank-line`             | Missing final blank line at EOF                        | Always on                                                                                              |
+| `unclosed-code-block`          | Unclosed fenced code blocks (````` / `~~~`)            | Always on                                                                                              |
+| `empty-alt-text`               | Image syntax with an empty alt text                    | Always on                                                                                              |
+| `heading-level`                | Invalid heading level progression (e.g., H2 → H4 skip) | Toggle: `--enable-heading-level-check` (default **on**) / `--min-heading` (default **2**)              |
+| `duplicate-heading`            | Duplicate headings within one file                     | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
+| `no-multiple-blank-lines`      | Multiple consecutive blank lines                       | Toggle: `--enable-no-multiple-blank-lines-check` (default **on**)                                      |
+| `external-link`                | External links that fail validation                    | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
 
 
 Execution details:
@@ -311,7 +312,7 @@ jobs:
 ### ✅ Core Quality & Rule Expansion
 
 - [ ] `max-line-length`: Enforce maximum line width
-- [ ] `no-multiple-consecutive-blank-lines`: Disallow multiple blank lines
+- [x] `no-multiple-consecutive-blank-lines`: Disallow multiple blank lines
 - [ ] `image-alt-text` improvements: Enforce alt text style and length
 - [ ] Rule severity levels (e.g. `warning`, `error`)
 
