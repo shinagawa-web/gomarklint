@@ -7,5 +7,7 @@
   ],
   "ignore": [],
   "output": "text",
-  "enableDuplicateHeadingCheck": true
+  "enableDuplicateHeadingCheck": true,
+  "enableHeadingLevelCheck": true,
+  "enableNoMultipleBlankLinesCheck": true
 }
