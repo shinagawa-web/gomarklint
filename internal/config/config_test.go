@@ -74,14 +74,15 @@ func TestLoadConfig_InvalidJSON(t *testing.T) {
 
 func TestDefaultConfig(t *testing.T) {
 	want := Config{
-		MinHeadingLevel:             2,
-		EnableLinkCheck:             false,
-		SkipLinkPatterns:            []string{},
-		Include:                     []string{"README.md", "testdata"},
-		Ignore:                      []string{},
-		OutputFormat:                "text",
-		EnableDuplicateHeadingCheck: true,
-		EnableHeadingLevelCheck:     true,
+		MinHeadingLevel:                 2,
+		EnableLinkCheck:                 false,
+		SkipLinkPatterns:                []string{},
+		Include:                         []string{"README.md", "testdata"},
+		Ignore:                          []string{},
+		OutputFormat:                    "text",
+		EnableDuplicateHeadingCheck:     true,
+		EnableHeadingLevelCheck:         true,
+		EnableNoMultipleBlankLinesCheck: true,
 	}
 
 	got := Default()
