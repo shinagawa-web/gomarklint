@@ -13,6 +13,7 @@ linters:
     - govet
     - staticcheck
     - whitespace
+    - misspell
 
 linters-settings:
   govet:
