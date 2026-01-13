@@ -1,41 +1,71 @@
 package rule
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
 	"testing"
 )
-
-func getTestFilePath(rel string) string {
-	_, filename, _, _ := runtime.Caller(0)
-	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	return filepath.Join(projectRoot, rel)
-}
 
 func TestCheckFinalBlankLine(t *testing.T) {
 	tests := []struct {
 		name     string
-		filepath string
-		wantErr  bool
+		content  string
+		wantErrs []LintError
 	}{
-		{"with_blank", "testdata/final_blank/with_blank.md", false},
-		{"no_blank", "testdata/final_blank/no_blank.md", true},
-		{"frontmatter_with_blank", "testdata/final_blank/frontmatter_with_blank.md", false},
-		{"frontmatter_no_blank", "testdata/final_blank/frontmatter_no_blank.md", true},
+		{
+			name:     "with blank line",
+			content:  "# Hello\nWorld\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "no blank line",
+			content: "# Hello\nWorld",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "Missing final blank line"},
+			},
+		},
+		{
+			name:    "empty file",
+			content: "",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "Missing final blank line"},
+			},
+		},
+		{
+			name:     "single newline",
+			content:  "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "frontmatter with blank",
+			content:  "---\ntitle: Test\n---\n\n# Hello\n\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "frontmatter no blank",
+			content: "---\ntitle: Test\n---\n\n# Hello",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 5, Message: "Missing final blank line"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := getTestFilePath(tt.filepath)
-			println("Testing file:", path)
-			data, err := os.ReadFile(path)
-			if err != nil {
-				t.Fatalf("failed to read test file: %v", err)
+			got := CheckFinalBlankLine("test.md", tt.content)
+
+			if len(got) != len(tt.wantErrs) {
+				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
 			}
-			errors := CheckFinalBlankLine(path, string(data))
-			if (len(errors) > 0) != tt.wantErr {
-				t.Errorf("expected error: %v, got %v", tt.wantErr, errors)
+
+			for i := range got {
+				if got[i].File != tt.wantErrs[i].File {
+					t.Errorf("error %d: got file %q, want %q", i, got[i].File, tt.wantErrs[i].File)
+				}
+				if got[i].Line != tt.wantErrs[i].Line {
+					t.Errorf("error %d: got line %d, want %d", i, got[i].Line, tt.wantErrs[i].Line)
+				}
+				if got[i].Message != tt.wantErrs[i].Message {
+					t.Errorf("error %d: got message %q, want %q", i, got[i].Message, tt.wantErrs[i].Message)
+				}
 			}
 		})
 	}
