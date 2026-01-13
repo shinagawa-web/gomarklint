@@ -109,7 +109,7 @@ var rootCmd = &cobra.Command{
 		totalLines := 0
 		results := map[string][]rule.LintError{}
 		orderedPaths := make([]string, 0, len(files))
-		
+
 		var mu sync.Mutex
 		var wg sync.WaitGroup
 
@@ -117,14 +117,14 @@ var rootCmd = &cobra.Command{
 			wg.Add(1)
 			go func(p string) {
 				defer wg.Done()
-				
+
 				content, err := parser.ReadFile(p)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
 					return
 				}
 				errors, lineCount := collectErrors(p, content, cfg, compiledPatterns)
-				
+
 				mu.Lock()
 				results[p] = errors
 				orderedPaths = append(orderedPaths, p)
@@ -133,9 +133,9 @@ var rootCmd = &cobra.Command{
 				mu.Unlock()
 			}(path)
 		}
-		
+
 		wg.Wait()
-		
+
 		// Sort paths to ensure consistent output order
 		sort.Strings(orderedPaths)
 
