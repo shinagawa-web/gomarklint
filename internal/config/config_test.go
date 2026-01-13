@@ -76,6 +76,7 @@ func TestDefaultConfig(t *testing.T) {
 	want := Config{
 		MinHeadingLevel:                 2,
 		EnableLinkCheck:                 false,
+		LinkCheckTimeoutSeconds:         10,
 		SkipLinkPatterns:                []string{},
 		Include:                         []string{"README.md", "testdata"},
 		Ignore:                          []string{},

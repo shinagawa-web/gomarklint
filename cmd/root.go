@@ -173,7 +173,7 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
 	}
 	if cfg.EnableLinkCheck {
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {

@@ -11,15 +11,19 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
-func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp) []LintError {
+func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 	var errs []LintError
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
+	if timeoutSeconds <= 0 {
+		timeoutSeconds = 10
+	}
+
 	client := &http.Client{
-		Timeout: 3 * time.Second,
+		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
 	for _, link := range links {

@@ -30,7 +30,7 @@ func TestCheckExternalLinks(t *testing.T) {
 `, ts.URL, ts.URL)
 
 		file := "mock.md"
-		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{})
+		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{}, 10)
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error, got %d", len(results))
@@ -57,7 +57,7 @@ func TestCheckExternalLinks(t *testing.T) {
 			regexp.MustCompile(`localhost`),
 		}
 
-		results := rule.CheckExternalLinks("mock.md", markdown, skip)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
@@ -70,7 +70,7 @@ func TestCheckExternalLinks(t *testing.T) {
 		markdown := fmt.Sprintf("```\n[code link](%s/in-code)\n```\n[real link](%s/fail)\n", ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
 		}
@@ -96,7 +96,7 @@ Line 8 [link8](%s/fail8)
 `, ts.URL, ts.URL, ts.URL, ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 errors, got %d", len(results))
@@ -108,6 +108,22 @@ Line 8 [link8](%s/fail8)
 			if result.Line != expectedLines[i] {
 				t.Errorf("expected error at line %d, got line %d", expectedLines[i], result.Line)
 			}
+		}
+	})
+
+	t.Run("timeout defaults to 10 seconds when zero or negative", func(t *testing.T) {
+		markdown := fmt.Sprintf(`[link](%s/ok)`, ts.URL)
+
+		// Test with 0 timeout - should use default 10 seconds
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 0)
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors with timeout=0, got %d", len(results))
+		}
+
+		// Test with negative timeout - should use default 10 seconds
+		results = rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, -5)
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors with timeout=-5, got %d", len(results))
 		}
 	})
 }

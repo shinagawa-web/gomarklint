@@ -4,6 +4,7 @@ package config
 type Config struct {
 	MinHeadingLevel                 int      `json:"minHeadingLevel"`
 	EnableLinkCheck                 bool     `json:"enableLinkCheck"`
+	LinkCheckTimeoutSeconds         int      `json:"linkCheckTimeoutSeconds"`
 	SkipLinkPatterns                []string `json:"skipLinkPatterns"`
 	Include                         []string `json:"include"`
 	Ignore                          []string `json:"ignore"`
@@ -17,6 +18,7 @@ func Default() Config {
 	return Config{
 		MinHeadingLevel:                 2,
 		EnableLinkCheck:                 false,
+		LinkCheckTimeoutSeconds:         10,
 		SkipLinkPatterns:                []string{},
 		Include:                         []string{"README.md", "testdata"},
 		Ignore:                          []string{},
