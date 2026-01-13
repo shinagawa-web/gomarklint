@@ -1,6 +1,0 @@
----
-title: Test
----
-
-# Hello
-World.

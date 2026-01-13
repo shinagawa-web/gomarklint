@@ -1,3 +1,0 @@
-# Wrong Start
-
-## Next Heading

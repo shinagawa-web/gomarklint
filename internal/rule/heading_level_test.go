@@ -1,62 +1,87 @@
 package rule
 
 import (
-	"os"
 	"testing"
 )
 
 func TestCheckHeadingLevels(t *testing.T) {
 	tests := []struct {
 		name     string
-		filepath string
+		content  string
 		minLevel int
-		wantErr  bool
+		wantErrs []LintError
 	}{
 		{
-			name:     "valid heading levels",
-			filepath: "testdata/heading_level/valid.md",
+			name:     "valid simple headings",
+			content:  "## Heading 2\n### Heading 3\n## Another 2",
 			minLevel: 2,
-			wantErr:  false,
+			wantErrs: nil,
 		},
 		{
-			name:     "invalid jump in heading levels",
-			filepath: "testdata/heading_level/invalid_jump.md",
+			name:     "first heading too low",
+			content:  "### Heading 3\n## Heading 2",
 			minLevel: 2,
-			wantErr:  true,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "First heading should be level 2 (found level 3)"},
+			},
 		},
 		{
-			name:     "invalid first heading level",
-			filepath: "testdata/heading_level/invalid_first.md",
+			name:     "skip heading level",
+			content:  "## Level 2\n#### Level 4 (skipped 3)",
 			minLevel: 2,
-			wantErr:  true,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "Heading level jumped from 2 to 4"},
+			},
 		},
 		{
-			name:     "invalid first heading level with frontmatter",
-			filepath: "testdata/heading_level/with_frontmatter.md",
-			minLevel: 2,
-			wantErr:  true,
+			name:     "heading level 1 allowed when minLevel is 1",
+			content:  "# Heading 1\n## Heading 2",
+			minLevel: 1,
+			wantErrs: nil,
 		},
 		{
-			name:     "valid heading levels with code block",
-			filepath: "testdata/heading_level/with_codeblock.md",
+			name:     "with frontmatter",
+			content:  "---\ntitle: Test\n---\n\n# Heading 1\n## Heading 2",
 			minLevel: 2,
-			wantErr:  false,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 5, Message: "First heading should be level 2 (found level 1)"},
+			},
+		},
+		{
+			name:     "multiple jumps",
+			content:  "## Intro\n#### Skip to 4\n### Back to 3\n##### Skip to 5",
+			minLevel: 2,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "Heading level jumped from 2 to 4"},
+				{File: "test.md", Line: 4, Message: "Heading level jumped from 3 to 5"},
+			},
+		},
+		{
+			name:     "ignore headings in code blocks",
+			content:  "## Introduction\n\n```\n# Skipped Level\n\n```\n\n### Normal Again",
+			minLevel: 2,
+			wantErrs: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := getTestFilePath(tt.filepath)
-			t.Logf("Testing file: %s", path)
+			got := CheckHeadingLevels("test.md", tt.content, tt.minLevel)
 
-			data, err := os.ReadFile(path)
-			if err != nil {
-				t.Fatalf("failed to read test file: %v", err)
+			if len(got) != len(tt.wantErrs) {
+				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
 			}
 
-			errors := CheckHeadingLevels(tt.filepath, string(data), tt.minLevel)
-			if (len(errors) > 0) != tt.wantErr {
-				t.Errorf("expected error: %v, got: %v", tt.wantErr, errors)
+			for i := range got {
+				if got[i].File != tt.wantErrs[i].File {
+					t.Errorf("error %d: got file %q, want %q", i, got[i].File, tt.wantErrs[i].File)
+				}
+				if got[i].Line != tt.wantErrs[i].Line {
+					t.Errorf("error %d: got line %d, want %d", i, got[i].Line, tt.wantErrs[i].Line)
+				}
+				if got[i].Message != tt.wantErrs[i].Message {
+					t.Errorf("error %d: got message %q, want %q", i, got[i].Message, tt.wantErrs[i].Message)
+				}
 			}
 		})
 	}
