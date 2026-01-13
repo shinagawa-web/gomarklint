@@ -81,4 +81,33 @@ func TestCheckExternalLinks(t *testing.T) {
 			t.Errorf("expected line 4 for real link, got: %d", results[0].Line)
 		}
 	})
+
+	t.Run("parallel check returns errors in line number order", func(t *testing.T) {
+		// Create markdown with multiple failing links with different URLs
+		// to avoid deduplication in parser
+		markdown := fmt.Sprintf(`Line 1 [link1](%s/fail1)
+Line 2 OK text
+Line 3 [link3](%s/fail3)
+Line 4 OK text
+Line 5 [link5](%s/fail5)
+Line 6 [link6](%s/fail6)
+Line 7 OK text
+Line 8 [link8](%s/fail8)
+`, ts.URL, ts.URL, ts.URL, ts.URL, ts.URL)
+
+		skip := []*regexp.Regexp{}
+		results := rule.CheckExternalLinks("mock.md", markdown, skip)
+
+		if len(results) != 5 {
+			t.Fatalf("expected 5 errors, got %d", len(results))
+		}
+
+		// Verify errors are returned in ascending line number order
+		expectedLines := []int{1, 3, 5, 6, 8}
+		for i, result := range results {
+			if result.Line != expectedLines[i] {
+				t.Errorf("expected error at line %d, got line %d", expectedLines[i], result.Line)
+			}
+		}
+	})
 }

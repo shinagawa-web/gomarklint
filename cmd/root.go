@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -108,19 +109,35 @@ var rootCmd = &cobra.Command{
 		totalLines := 0
 		results := map[string][]rule.LintError{}
 		orderedPaths := make([]string, 0, len(files))
+		
+		var mu sync.Mutex
+		var wg sync.WaitGroup
 
 		for _, path := range files {
-			content, err := parser.ReadFile(path)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
-				continue
-			}
-			errors, lineCount := collectErrors(path, content, cfg, compiledPatterns)
-			results[path] = errors
-			orderedPaths = append(orderedPaths, path)
-			totalErrors += len(errors)
-			totalLines += lineCount
+			wg.Add(1)
+			go func(p string) {
+				defer wg.Done()
+				
+				content, err := parser.ReadFile(p)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
+					return
+				}
+				errors, lineCount := collectErrors(p, content, cfg, compiledPatterns)
+				
+				mu.Lock()
+				results[p] = errors
+				orderedPaths = append(orderedPaths, p)
+				totalErrors += len(errors)
+				totalLines += lineCount
+				mu.Unlock()
+			}(path)
 		}
+		
+		wg.Wait()
+		
+		// Sort paths to ensure consistent output order
+		sort.Strings(orderedPaths)
 
 		elapsed := time.Since(start)
 
