@@ -247,7 +247,7 @@ Errors in testdata/sample_links.md:
 ## ⚡️ Performance Tips
 
 `gomarklint` is built for speed.  
-For example, scanning **157 files and 52,000+ lines** takes under **50ms** when external link checking is disabled.
+For example, scanning **185 files and 104,000+ lines** takes under **60ms** when external link checking is disabled.
 
 However, when using `--enable-link-check`, performance may slow down because:
 
