@@ -110,4 +110,20 @@ Line 8 [link8](%s/fail8)
 			}
 		}
 	})
+
+	t.Run("timeout defaults to 10 seconds when zero or negative", func(t *testing.T) {
+		markdown := fmt.Sprintf(`[link](%s/ok)`, ts.URL)
+
+		// Test with 0 timeout - should use default 10 seconds
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 0)
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors with timeout=0, got %d", len(results))
+		}
+
+		// Test with negative timeout - should use default 10 seconds
+		results = rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, -5)
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors with timeout=-5, got %d", len(results))
+		}
+	})
 }
