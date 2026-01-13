@@ -82,7 +82,7 @@ func TestCheckExternalLinks(t *testing.T) {
 		}
 	})
 
-	t.Run("parallel check returns errors in line number order", func(t *testing.T) {
+	t.Run("parallel check finds all errors", func(t *testing.T) {
 		// Create markdown with multiple failing links with different URLs
 		// to avoid deduplication in parser
 		markdown := fmt.Sprintf(`Line 1 [link1](%s/fail1)
@@ -102,12 +102,16 @@ Line 8 [link8](%s/fail8)
 			t.Fatalf("expected 5 errors, got %d", len(results))
 		}
 
-		// Verify errors are returned in ascending line number order
-		expectedLines := []int{1, 3, 5, 6, 8}
-		for i, result := range results {
-			if result.Line != expectedLines[i] {
-				t.Errorf("expected error at line %d, got line %d", expectedLines[i], result.Line)
+		// Verify all expected lines have errors (order doesn't matter)
+		expectedLines := map[int]bool{1: true, 3: true, 5: true, 6: true, 8: true}
+		for _, result := range results {
+			if !expectedLines[result.Line] {
+				t.Errorf("unexpected error at line %d", result.Line)
 			}
+			delete(expectedLines, result.Line)
+		}
+		if len(expectedLines) > 0 {
+			t.Errorf("missing errors at lines: %v", expectedLines)
 		}
 	})
 

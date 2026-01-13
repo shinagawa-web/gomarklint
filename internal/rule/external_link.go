@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sort"
 	"sync"
 	"time"
 
@@ -52,11 +51,6 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	}
 
 	wg.Wait()
-
-	// Sort errors by line number to ensure consistent output
-	sort.Slice(errs, func(i, j int) bool {
-		return errs[i].Line < errs[j].Line
-	})
 
 	return errs
 }
