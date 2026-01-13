@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
@@ -13,9 +15,11 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 	var errs []LintError
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 
 	for _, link := range links {
@@ -26,15 +30,30 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 			continue
 		}
 
-		status, err := checkURL(client, link.URL)
-		if err != nil || status >= 400 {
-			errs = append(errs, LintError{
-				File:    path,
-				Line:    link.Line,
-				Message: formatLinkError(link.URL),
-			})
-		}
+		wg.Add(1)
+		go func(l parser.ExtractedLink) {
+			defer wg.Done()
+
+			status, err := checkURL(client, l.URL)
+			if err != nil || status >= 400 {
+				mu.Lock()
+				errs = append(errs, LintError{
+					File:    path,
+					Line:    l.Line,
+					Message: formatLinkError(l.URL),
+				})
+				mu.Unlock()
+			}
+		}(link)
 	}
+
+	wg.Wait()
+
+	// Sort errors by line number to ensure consistent output
+	sort.Slice(errs, func(i, j int) bool {
+		return errs[i].Line < errs[j].Line
+	})
+
 	return errs
 }
 
