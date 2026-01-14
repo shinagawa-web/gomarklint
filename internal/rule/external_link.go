@@ -48,7 +48,13 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 			var err error
 
 			if cachedStatus, ok := urlCache.Load(url); ok {
-				status = cachedStatus.(int)
+				if cachedInt, ok := cachedStatus.(int); ok {
+					status = cachedInt
+				} else {
+					// Cache contained unexpected type, re-check the URL
+					status, err = checkURL(client, url, retryDelayMs)
+					urlCache.Store(url, status)
+				}
 			} else {
 				status, err = checkURL(client, url, retryDelayMs)
 				urlCache.Store(url, status)
