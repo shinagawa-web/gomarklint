@@ -408,3 +408,36 @@ func TestCheckExternalLinks_CacheErrorState(t *testing.T) {
 		t.Errorf("error messages differ: first=%q, second=%q", results1[0].Message, results2[0].Message)
 	}
 }
+
+func TestCheckExternalLinks_CacheInvalidType(t *testing.T) {
+	// Test that when cache contains an unexpected type, it re-checks the URL
+	ts := setupTestServer()
+	defer ts.Close()
+
+	markdown := fmt.Sprintf("[link](%s/fail)", ts.URL)
+	fileName := "invalid-cache.md"
+	urlCache := &sync.Map{}
+
+	// Pre-populate cache with invalid type (string instead of cacheResult)
+	testURL := ts.URL + "/fail"
+	urlCache.Store(testURL, "invalid type")
+
+	// Call CheckExternalLinks - should detect invalid cache type and re-check
+	results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, 10, urlCache)
+
+	// Should still get error because URL returns 404
+	if len(results) != 1 {
+		t.Fatalf("expected 1 error after re-checking invalid cache, got %d", len(results))
+	}
+
+	// Verify that cache was updated with correct type
+	if cached, ok := urlCache.Load(testURL); ok {
+		// Just verify something is stored - we can't access the private type from test
+		if cached == nil {
+			t.Error("cache entry is nil after re-check")
+		}
+		// The fact that it didn't panic and produced correct results proves it worked
+	} else {
+		t.Error("cache entry was not found after re-check")
+	}
+}

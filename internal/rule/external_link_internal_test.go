@@ -73,6 +73,73 @@ func Test_checkURL(t *testing.T) {
 	}
 }
 
+func Test_performCheck(t *testing.T) {
+	t.Run("invalid URL returns error", func(t *testing.T) {
+		client := &http.Client{}
+		// Use a URL that will cause http.NewRequest to fail
+		// URLs with control characters or invalid schemes cause errors
+		invalidURLs := []string{
+			"ht tp://example.com",     // space in scheme
+			"http://exa mple.com",     // space in host
+			"http://example.com/\x00", // null byte
+			string([]byte{0x7f}),      // invalid characters
+		}
+
+		for _, invalidURL := range invalidURLs {
+			status, err := performCheck(client, invalidURL)
+			if err == nil {
+				t.Errorf("expected error for invalid URL %q, but got none", invalidURL)
+			}
+			if status != 0 {
+				t.Errorf("expected status 0 for invalid URL %q, got %d", invalidURL, status)
+			}
+		}
+	})
+
+	t.Run("HEAD success", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == "HEAD" {
+				w.WriteHeader(http.StatusOK)
+			}
+		}))
+		defer ts.Close()
+
+		status, err := performCheck(ts.Client(), ts.URL)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if status != http.StatusOK {
+			t.Errorf("expected status 200, got %d", status)
+		}
+	})
+
+	t.Run("HEAD fails, GET succeeds", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == "HEAD" {
+				// Close connection to simulate HEAD failure
+				hj, ok := w.(http.Hijacker)
+				if ok {
+					conn, _, _ := hj.Hijack()
+					_ = conn.Close()
+				}
+				return
+			}
+			if r.Method == "GET" {
+				w.WriteHeader(http.StatusOK)
+			}
+		}))
+		defer ts.Close()
+
+		status, err := performCheck(ts.Client(), ts.URL)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if status != http.StatusOK {
+			t.Errorf("expected status 200, got %d", status)
+		}
+	})
+}
+
 func Test_formatLinkError(t *testing.T) {
 	tests := []struct {
 		url      string
