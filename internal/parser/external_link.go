@@ -30,20 +30,21 @@ func ExtractExternalLinksWithLineNumbers(content string) []ExtractedLink {
 	}
 
 	var results []ExtractedLink
-	seen := map[string]bool{}
 
 	for i, line := range lines {
+		seenInLine := make(map[string]bool) // Track URLs found in this line
 		for _, re := range patterns {
 			matches := re.FindAllStringSubmatch(line, -1)
 			for _, match := range matches {
 				if len(match) > 1 {
 					url := match[1]
-					if !seen[url] {
+					// Only add if not already seen in this line
+					if !seenInLine[url] {
 						results = append(results, ExtractedLink{
 							URL:  url,
 							Line: i + 1, // 1-based line number
 						})
-						seen[url] = true
+						seenInLine[url] = true
 					}
 				}
 			}

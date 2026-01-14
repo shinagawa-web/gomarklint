@@ -18,7 +18,7 @@ func Default() Config {
 	return Config{
 		MinHeadingLevel:                 2,
 		EnableLinkCheck:                 false,
-		LinkCheckTimeoutSeconds:         10,
+		LinkCheckTimeoutSeconds:         5,
 		SkipLinkPatterns:                []string{},
 		Include:                         []string{"README.md", "testdata"},
 		Ignore:                          []string{},

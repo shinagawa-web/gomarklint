@@ -42,7 +42,7 @@ Check this out: https://example.com/docs
 			},
 		},
 		{
-			name: "duplicates (should only take first occurrence)",
+			name: "duplicates (returns all occurrences)",
 			input: `
 [Link1](https://dup.com)
 [Link2](https://dup.com)
@@ -50,6 +50,8 @@ https://dup.com
 `,
 			expected: []parser.ExtractedLink{
 				{URL: "https://dup.com", Line: 2},
+				{URL: "https://dup.com", Line: 3},
+				{URL: "https://dup.com", Line: 4},
 			},
 		},
 		{
@@ -70,6 +72,59 @@ https://also.valid.com
 			expected: []parser.ExtractedLink{
 				{URL: "https://valid.com", Line: 2},
 				{URL: "https://also.valid.com", Line: 4},
+			},
+		},
+		{
+			name: "same URL in same line (inline and bare) - deduplicated",
+			input: `
+Check [this](https://example.com) and also https://example.com
+`,
+			expected: []parser.ExtractedLink{
+				{URL: "https://example.com", Line: 2},
+			},
+		},
+		{
+			name: "multiple different URLs in same line",
+			input: `
+See [link1](https://first.com) and [link2](https://second.com)
+`,
+			expected: []parser.ExtractedLink{
+				{URL: "https://first.com", Line: 2},
+				{URL: "https://second.com", Line: 2},
+			},
+		},
+		{
+			name: "http and https",
+			input: `
+[Secure](https://secure.example.com)
+[Insecure](http://insecure.example.com)
+`,
+			expected: []parser.ExtractedLink{
+				{URL: "https://secure.example.com", Line: 2},
+				{URL: "http://insecure.example.com", Line: 3},
+			},
+		},
+		{
+			name:     "empty input",
+			input:    ``,
+			expected: nil,
+		},
+		{
+			name: "only whitespace",
+			input: `
+
+   
+
+`,
+			expected: nil,
+		},
+		{
+			name: "image and inline link with same URL in same line",
+			input: `
+![image](https://example.com/img.png) and [link](https://example.com/img.png)
+`,
+			expected: []parser.ExtractedLink{
+				{URL: "https://example.com/img.png", Line: 2},
 			},
 		},
 	}

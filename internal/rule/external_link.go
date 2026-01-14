@@ -4,64 +4,125 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sort"
 	"sync"
 	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
-func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int) []LintError {
+type cacheResult struct {
+	status int
+	err    error
+}
+
+const (
+	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
+	DefaultRetryDelayMs = 1000
+)
+
+func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
+
+	urlToLines := make(map[string][]int)
+	for _, link := range links {
+		if isInCodeBlock(link.Line, codeBlockRanges) || shouldSkipLink(link.URL, skipPatterns) {
+			continue
+		}
+		urlToLines[link.URL] = append(urlToLines[link.URL], link.Line)
+	}
+
 	var errs []LintError
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	if timeoutSeconds <= 0 {
-		timeoutSeconds = 10
-	}
+	const maxConcurrency = 10
+	sem := make(chan struct{}, maxConcurrency)
 
 	client := &http.Client{
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
-	for _, link := range links {
-		if isInCodeBlock(link.Line, codeBlockRanges) {
-			continue
-		}
-		if shouldSkipLink(link.URL, skipPatterns) {
-			continue
-		}
-
+	for u, lines := range urlToLines {
 		wg.Add(1)
-		go func(l parser.ExtractedLink) {
+		sem <- struct{}{}
+		go func(url string, lns []int) {
 			defer wg.Done()
+			defer func() { <-sem }()
+			var status int
+			var err error
 
-			status, err := checkURL(client, l.URL)
+			if cached, ok := urlCache.Load(url); ok {
+				if result, ok := cached.(cacheResult); ok {
+					status = result.status
+					err = result.err
+				} else {
+					// Cache contained unexpected type, re-check the URL
+					status, err = checkURL(client, url, retryDelayMs)
+					urlCache.Store(url, cacheResult{status: status, err: err})
+				}
+			} else {
+				status, err = checkURL(client, url, retryDelayMs)
+				urlCache.Store(url, cacheResult{status: status, err: err})
+			}
+
 			if err != nil || status >= 400 {
 				mu.Lock()
-				errs = append(errs, LintError{
-					File:    path,
-					Line:    l.Line,
-					Message: formatLinkError(l.URL),
-				})
+				for _, line := range lns {
+					errs = append(errs, LintError{
+						File:    path,
+						Line:    line,
+						Message: formatLinkError(url),
+					})
+				}
 				mu.Unlock()
 			}
-		}(link)
+		}(u, lines)
 	}
 
 	wg.Wait()
-
-	// Sort errors by line number to ensure consistent output
-	sort.Slice(errs, func(i, j int) bool {
-		return errs[i].Line < errs[j].Line
-	})
-
 	return errs
 }
 
-func checkURL(client *http.Client, url string) (int, error) {
+// checkURL performs the URL check with retry logic.
+func checkURL(client *http.Client, url string, retryDelayMs int) (int, error) {
+	const maxRetries = 2
+	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
+
+	var status int
+	var err error
+
+	for i := 0; i <= maxRetries; i++ {
+		if i > 0 {
+			// Wait a bit before retrying (simple backoff)
+			time.Sleep(retryDelay * time.Duration(i))
+		}
+
+		status, err = performCheck(client, url)
+
+		// Success: 2xx or 3xx
+		if err == nil && status < 400 {
+			return status, nil
+		}
+
+		// Permanent failures: Don't bother retrying if it's 404 (Not Found) or 401 (Unauthorized)
+		if err == nil && (status == http.StatusNotFound || status == http.StatusUnauthorized) {
+			return status, nil
+		}
+
+		// If it's the last attempt, don't log "retrying"
+		if i == maxRetries {
+			break
+		}
+
+		// Optional: You could log that you're retrying here
+	}
+
+	return status, err
+}
+
+// performCheck contains the core HEAD -> GET fallback logic.
+func performCheck(client *http.Client, url string) (int, error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return 0, err

@@ -107,11 +107,14 @@ var rootCmd = &cobra.Command{
 
 		totalErrors := 0
 		totalLines := 0
+		totalLinksChecked := 0
 		results := map[string][]rule.LintError{}
 		orderedPaths := make([]string, 0, len(files))
 
 		var mu sync.Mutex
 		var wg sync.WaitGroup
+
+		urlCache := &sync.Map{}
 
 		for _, path := range files {
 			wg.Add(1)
@@ -123,13 +126,14 @@ var rootCmd = &cobra.Command{
 					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
 					return
 				}
-				errors, lineCount := collectErrors(p, content, cfg, compiledPatterns)
+				errors, lineCount, linksChecked := collectErrors(p, content, cfg, compiledPatterns, urlCache)
 
 				mu.Lock()
 				results[p] = errors
 				orderedPaths = append(orderedPaths, p)
 				totalErrors += len(errors)
 				totalLines += lineCount
+				totalLinksChecked += linksChecked
 				mu.Unlock()
 			}(path)
 		}
@@ -142,9 +146,9 @@ var rootCmd = &cobra.Command{
 		elapsed := time.Since(start)
 
 		if outputFormat == "json" {
-			printJSONOutput(results, len(files), totalLines, totalErrors, elapsed)
+			printJSONOutput(results, len(files), totalLines, totalErrors, totalLinksChecked, cfg.EnableLinkCheck, elapsed)
 		} else {
-			printHumanOutput(orderedPaths, results, len(files), totalLines, totalErrors, elapsed)
+			printHumanOutput(orderedPaths, results, len(files), totalLines, totalErrors, totalLinksChecked, cfg.EnableLinkCheck, elapsed)
 		}
 
 		onCI := os.Getenv("GITHUB_ACTIONS") == "true"
@@ -158,7 +162,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp) ([]rule.LintError, int) {
+func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
 	var allErrors []rule.LintError
 	allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
@@ -172,8 +176,17 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 	if cfg.EnableNoMultipleBlankLinesCheck {
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
 	}
+
+	linksChecked := 0
 	if cfg.EnableLinkCheck {
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds)...)
+		links := parser.ExtractExternalLinksWithLineNumbers(content)
+		// Count unique URLs
+		uniqueURLs := make(map[string]bool)
+		for _, link := range links {
+			uniqueURLs[link.URL] = true
+		}
+		linksChecked = len(uniqueURLs)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {
@@ -181,22 +194,27 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 	})
 
 	lineCount := strings.Count(content, "\n") + 1
-	return allErrors, lineCount
+	return allErrors, lineCount, linksChecked
 }
 
-func printJSONOutput(results map[string][]rule.LintError, totalFiles, totalLines, totalErrors int, duration time.Duration) {
+func printJSONOutput(results map[string][]rule.LintError, totalFiles, totalLines, totalErrors, totalLinksChecked int, linkCheckEnabled bool, duration time.Duration) {
 	output := struct {
-		Files       int                         `json:"files"`
-		Lines       int                         `json:"lines"`
-		Errors      int                         `json:"errors"`
-		ElapsedMS   int64                       `json:"elapsed_ms"`
-		ErrorDetail map[string][]rule.LintError `json:"details"`
+		Files        int                         `json:"files"`
+		Lines        int                         `json:"lines"`
+		Errors       int                         `json:"errors"`
+		LinksChecked *int                        `json:"links_checked,omitempty"`
+		ElapsedMS    int64                       `json:"elapsed_ms"`
+		ErrorDetail  map[string][]rule.LintError `json:"details"`
 	}{
 		Files:       totalFiles,
 		Lines:       totalLines,
 		Errors:      totalErrors,
 		ElapsedMS:   duration.Milliseconds(),
 		ErrorDetail: results,
+	}
+
+	if linkCheckEnabled {
+		output.LinksChecked = &totalLinksChecked
 	}
 
 	enc := json.NewEncoder(os.Stdout)
@@ -209,7 +227,8 @@ func printJSONOutput(results map[string][]rule.LintError, totalFiles, totalLines
 func printHumanOutput(
 	orderedPaths []string,
 	results map[string][]rule.LintError,
-	totalFiles, totalLines, totalErrors int,
+	totalFiles, totalLines, totalErrors, totalLinksChecked int,
+	linkCheckEnabled bool,
 	duration time.Duration,
 ) {
 	red := "\033[31m"
@@ -235,12 +254,22 @@ func printHumanOutput(
 		fmt.Printf("\n%s✔ No issues found%s\n", green, reset)
 	}
 
-	if duration < time.Second {
-		fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%dms%s\n",
-			green, reset, totalFiles, totalLines, gray, duration.Milliseconds(), reset)
+	if linkCheckEnabled {
+		if duration < time.Second {
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s), %d link(s) in %s%dms%s\n",
+				green, reset, totalFiles, totalLines, totalLinksChecked, gray, duration.Milliseconds(), reset)
+		} else {
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s), %d link(s) in %s%.1fs%s\n",
+				green, reset, totalFiles, totalLines, totalLinksChecked, gray, duration.Seconds(), reset)
+		}
 	} else {
-		fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%.1fs%s\n",
-			green, reset, totalFiles, totalLines, gray, duration.Seconds(), reset)
+		if duration < time.Second {
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%dms%s\n",
+				green, reset, totalFiles, totalLines, gray, duration.Milliseconds(), reset)
+		} else {
+			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%.1fs%s\n",
+				green, reset, totalFiles, totalLines, gray, duration.Seconds(), reset)
+		}
 	}
 }
 

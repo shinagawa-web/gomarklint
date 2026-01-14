@@ -26,6 +26,10 @@ func LoadConfig(path string) (Config, error) {
 		// Fallback to default if not set in config file
 		cfg.OutputFormat = "text"
 	}
+	if cfg.LinkCheckTimeoutSeconds <= 0 {
+		// Fallback to default if not set or invalid in config file
+		cfg.LinkCheckTimeoutSeconds = 5
+	}
 
 	return cfg, nil
 }
