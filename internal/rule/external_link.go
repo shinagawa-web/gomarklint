@@ -10,48 +10,56 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
-func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int) []LintError {
+func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, urlCache *sync.Map) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
+
+	urlToLines := make(map[string][]int)
+	for _, link := range links {
+		if isInCodeBlock(link.Line, codeBlockRanges) || shouldSkipLink(link.URL, skipPatterns) {
+			continue
+		}
+		urlToLines[link.URL] = append(urlToLines[link.URL], link.Line)
+	}
+
 	var errs []LintError
 	var mu sync.Mutex
 	var wg sync.WaitGroup
-
-	if timeoutSeconds <= 0 {
-		timeoutSeconds = 10
-	}
 
 	client := &http.Client{
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
-	for _, link := range links {
-		if isInCodeBlock(link.Line, codeBlockRanges) {
-			continue
-		}
-		if shouldSkipLink(link.URL, skipPatterns) {
-			continue
-		}
-
+	for u, lines := range urlToLines {
 		wg.Add(1)
-		go func(l parser.ExtractedLink) {
+		go func(url string, lns []int) {
 			defer wg.Done()
 
-			status, err := checkURL(client, l.URL)
+			var status int
+			var err error
+
+			if cachedStatus, ok := urlCache.Load(url); ok {
+				status = cachedStatus.(int)
+			} else {
+				status, err = checkURL(client, url)
+				urlCache.Store(url, status)
+			}
+
 			if err != nil || status >= 400 {
 				mu.Lock()
-				errs = append(errs, LintError{
-					File:    path,
-					Line:    l.Line,
-					Message: formatLinkError(l.URL),
-				})
+				for _, line := range lns {
+					errs = append(errs, LintError{
+						File:    path,
+						Line:    line,
+						Message: formatLinkError(url),
+					})
+				}
 				mu.Unlock()
 			}
-		}(link)
+		}(u, lines)
 	}
 
 	wg.Wait()
-
 	return errs
 }
 

@@ -113,6 +113,8 @@ var rootCmd = &cobra.Command{
 		var mu sync.Mutex
 		var wg sync.WaitGroup
 
+		urlCache := &sync.Map{}
+
 		for _, path := range files {
 			wg.Add(1)
 			go func(p string) {
@@ -123,7 +125,7 @@ var rootCmd = &cobra.Command{
 					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
 					return
 				}
-				errors, lineCount := collectErrors(p, content, cfg, compiledPatterns)
+				errors, lineCount := collectErrors(p, content, cfg, compiledPatterns, urlCache)
 
 				mu.Lock()
 				results[p] = errors
@@ -158,7 +160,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp) ([]rule.LintError, int) {
+func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int) {
 	var allErrors []rule.LintError
 	allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
 	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
@@ -173,7 +175,7 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
 	}
 	if cfg.EnableLinkCheck {
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {

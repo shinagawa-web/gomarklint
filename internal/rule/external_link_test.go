@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/shinagawa-web/gomarklint/internal/rule"
@@ -30,7 +32,7 @@ func TestCheckExternalLinks(t *testing.T) {
 `, ts.URL, ts.URL)
 
 		file := "mock.md"
-		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{}, 10)
+		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error, got %d", len(results))
@@ -57,7 +59,7 @@ func TestCheckExternalLinks(t *testing.T) {
 			regexp.MustCompile(`localhost`),
 		}
 
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
@@ -70,7 +72,7 @@ func TestCheckExternalLinks(t *testing.T) {
 		markdown := fmt.Sprintf("```\n[code link](%s/in-code)\n```\n[real link](%s/fail)\n", ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
 		}
@@ -96,7 +98,7 @@ Line 8 [link8](%s/fail8)
 `, ts.URL, ts.URL, ts.URL, ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10)
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 errors, got %d", len(results))
@@ -119,15 +121,203 @@ Line 8 [link8](%s/fail8)
 		markdown := fmt.Sprintf(`[link](%s/ok)`, ts.URL)
 
 		// Test with 0 timeout - should use default 10 seconds
-		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 0)
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 0, &sync.Map{})
 		if len(results) != 0 {
 			t.Errorf("expected 0 errors with timeout=0, got %d", len(results))
 		}
 
 		// Test with negative timeout - should use default 10 seconds
-		results = rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, -5)
+		results = rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, -5, &sync.Map{})
 		if len(results) != 0 {
 			t.Errorf("expected 0 errors with timeout=-5, got %d", len(results))
+		}
+	})
+
+	t.Run("deduplication across multiple calls", func(t *testing.T) {
+		requestCount := 0
+		customTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount++
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer customTs.Close()
+
+		urlCache := &sync.Map{}
+		markdown := fmt.Sprintf("[link](%s/fail)", customTs.URL)
+
+		// First call - should trigger HTTP request
+		rule.CheckExternalLinks("file1.md", markdown, []*regexp.Regexp{}, 10, urlCache)
+		// Second call - should use cache
+		rule.CheckExternalLinks("file2.md", markdown, []*regexp.Regexp{}, 10, urlCache)
+
+		if requestCount != 1 {
+			t.Errorf("expected only 1 HTTP request due to caching, but got %d", requestCount)
+		}
+	})
+
+	t.Run("multiple occurrences in one file", func(t *testing.T) {
+		markdown := fmt.Sprintf("[fail](%s/fail)\n[fail again](%s/fail)", ts.URL, ts.URL)
+
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+
+		// Should report errors for each occurrence
+		if len(results) != 2 {
+			t.Fatalf("expected 2 errors for repeated link, got %d", len(results))
+		}
+		// Verify both lines have errors (order may vary due to parallel processing)
+		expectedLines := map[int]bool{1: true, 2: true}
+		for _, res := range results {
+			if !expectedLines[res.Line] {
+				t.Errorf("unexpected error on line %d", res.Line)
+			}
+			delete(expectedLines, res.Line)
+		}
+		if len(expectedLines) > 0 {
+			t.Errorf("missing errors at lines: %v", expectedLines)
+		}
+	})
+
+	t.Run("all links succeed - no errors", func(t *testing.T) {
+		markdown := fmt.Sprintf(`[link1](%s/ok)
+[link2](%s/ok)
+[link3](%s/ok)`, ts.URL, ts.URL, ts.URL)
+
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors for all successful links, got %d", len(results))
+		}
+	})
+
+	t.Run("HTTP status boundary - 399 success, 400 error", func(t *testing.T) {
+		boundaryTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/399":
+				w.WriteHeader(399)
+			case "/400":
+				w.WriteHeader(400)
+			}
+		}))
+		defer boundaryTs.Close()
+
+		markdown := fmt.Sprintf("[success](%s/399)\n[fail](%s/400)", boundaryTs.URL, boundaryTs.URL)
+		fileName := "boundary.md"
+
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error (only 400), got %d", len(results))
+		}
+
+		got := results[0]
+		if got.Line != 2 {
+			t.Errorf("expected error at line 2 (400 status), got line %d", got.Line)
+		}
+		if got.File != fileName {
+			t.Errorf("expected file %q, got %q", fileName, got.File)
+		}
+		if !strings.Contains(got.Message, boundaryTs.URL+"/400") {
+			t.Errorf("message %q does not contain URL %q", got.Message, boundaryTs.URL+"/400")
+		}
+	})
+
+	t.Run("multiple skip patterns", func(t *testing.T) {
+		markdown := `
+[localhost](http://localhost/skip)
+[example](http://example.com/skip)
+[test](http://test.internal/skip)
+[check](https://httpstat.us/404)
+`
+		fileName := "skip.md"
+		skip := []*regexp.Regexp{
+			regexp.MustCompile(`localhost`),
+			regexp.MustCompile(`example\.com`),
+			regexp.MustCompile(`\.internal`),
+		}
+
+		results := rule.CheckExternalLinks(fileName, markdown, skip, 10, &sync.Map{})
+
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error (only httpstat.us), got %d", len(results))
+		}
+
+		got := results[0]
+		if got.Line != 5 {
+			t.Errorf("expected error at line 5 (httpstat.us), got line %d", got.Line)
+		}
+		if got.File != fileName {
+			t.Errorf("expected file %q, got %q", fileName, got.File)
+		}
+		if !strings.Contains(got.Message, "httpstat.us") {
+			t.Errorf("message %q does not contain 'httpstat.us'", got.Message)
+		}
+	})
+
+	t.Run("network error - unreachable URL", func(t *testing.T) {
+		// Use an invalid/unreachable URL that will cause network error
+		markdown := "[unreachable](http://invalid.test.localhost.invalid:9999/path)"
+		fileName := "network.md"
+		unreachableURL := "http://invalid.test.localhost.invalid:9999/path"
+
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, &sync.Map{})
+
+		if len(results) != 1 {
+			t.Fatalf("expected 1 error for network failure, got %d", len(results))
+		}
+
+		got := results[0]
+		if got.Line != 1 {
+			t.Errorf("expected error at line 1, got line %d", got.Line)
+		}
+		if got.File != fileName {
+			t.Errorf("expected file %q, got %q", fileName, got.File)
+		}
+		if !strings.Contains(got.Message, unreachableURL) {
+			t.Errorf("message %q does not contain URL %q", got.Message, unreachableURL)
+		}
+	})
+
+	t.Run("different HTTP status codes", func(t *testing.T) {
+		statusTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/404":
+				w.WriteHeader(404)
+			case "/500":
+				w.WriteHeader(500)
+			case "/503":
+				w.WriteHeader(503)
+			}
+		}))
+		defer statusTs.Close()
+
+		markdown := fmt.Sprintf("[not-found](%s/404)\n[server-error](%s/500)\n[unavailable](%s/503)", statusTs.URL, statusTs.URL, statusTs.URL)
+		fileName := "test.md"
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+
+		if len(results) != 3 {
+			t.Fatalf("expected 3 errors, got %d", len(results))
+		}
+
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].Line < results[j].Line
+		})
+
+		expected := []struct {
+			line int
+			url  string
+		}{
+			{1, statusTs.URL + "/404"},
+			{2, statusTs.URL + "/500"},
+			{3, statusTs.URL + "/503"},
+		}
+
+		for i, exp := range expected {
+			got := results[i]
+			if got.Line != exp.line {
+				t.Errorf("Result[%d]: expected line %d, got %d", i, exp.line, got.Line)
+			}
+			if !strings.Contains(got.Message, exp.url) {
+				t.Errorf("Result[%d]: message %q does not contain URL %q", i, got.Message, exp.url)
+			}
 		}
 	})
 }
