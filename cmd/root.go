@@ -175,7 +175,7 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
 	}
 	if cfg.EnableLinkCheck {
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, urlCache)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, 1000, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {

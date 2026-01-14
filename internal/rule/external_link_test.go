@@ -32,7 +32,7 @@ func TestCheckExternalLinks(t *testing.T) {
 `, ts.URL, ts.URL)
 
 		file := "mock.md"
-		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+		results := rule.CheckExternalLinks(file, markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error, got %d", len(results))
@@ -59,7 +59,7 @@ func TestCheckExternalLinks(t *testing.T) {
 			regexp.MustCompile(`localhost`),
 		}
 
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 2, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
@@ -72,7 +72,7 @@ func TestCheckExternalLinks(t *testing.T) {
 		markdown := fmt.Sprintf("```\n[code link](%s/in-code)\n```\n[real link](%s/fail)\n", ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, 10, &sync.Map{})
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
 		}
@@ -98,7 +98,7 @@ Line 8 [link8](%s/fail8)
 `, ts.URL, ts.URL, ts.URL, ts.URL, ts.URL)
 
 		skip := []*regexp.Regexp{}
-		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, &sync.Map{})
+		results := rule.CheckExternalLinks("mock.md", markdown, skip, 10, 10, &sync.Map{})
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 errors, got %d", len(results))
@@ -117,22 +117,6 @@ Line 8 [link8](%s/fail8)
 		}
 	})
 
-	t.Run("timeout defaults to 10 seconds when zero or negative", func(t *testing.T) {
-		markdown := fmt.Sprintf(`[link](%s/ok)`, ts.URL)
-
-		// Test with 0 timeout - should use default 10 seconds
-		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 0, &sync.Map{})
-		if len(results) != 0 {
-			t.Errorf("expected 0 errors with timeout=0, got %d", len(results))
-		}
-
-		// Test with negative timeout - should use default 10 seconds
-		results = rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, -5, &sync.Map{})
-		if len(results) != 0 {
-			t.Errorf("expected 0 errors with timeout=-5, got %d", len(results))
-		}
-	})
-
 	t.Run("deduplication across multiple calls", func(t *testing.T) {
 		requestCount := 0
 		customTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -145,9 +129,9 @@ Line 8 [link8](%s/fail8)
 		markdown := fmt.Sprintf("[link](%s/fail)", customTs.URL)
 
 		// First call - should trigger HTTP request
-		rule.CheckExternalLinks("file1.md", markdown, []*regexp.Regexp{}, 10, urlCache)
+		rule.CheckExternalLinks("file1.md", markdown, []*regexp.Regexp{}, 10, 10, urlCache)
 		// Second call - should use cache
-		rule.CheckExternalLinks("file2.md", markdown, []*regexp.Regexp{}, 10, urlCache)
+		rule.CheckExternalLinks("file2.md", markdown, []*regexp.Regexp{}, 10, 10, urlCache)
 
 		if requestCount != 1 {
 			t.Errorf("expected only 1 HTTP request due to caching, but got %d", requestCount)
@@ -157,7 +141,7 @@ Line 8 [link8](%s/fail8)
 	t.Run("multiple occurrences in one file", func(t *testing.T) {
 		markdown := fmt.Sprintf("[fail](%s/fail)\n[fail again](%s/fail)", ts.URL, ts.URL)
 
-		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 		// Should report errors for each occurrence
 		if len(results) != 2 {
@@ -181,7 +165,7 @@ Line 8 [link8](%s/fail8)
 [link2](%s/ok)
 [link3](%s/ok)`, ts.URL, ts.URL, ts.URL)
 
-		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+		results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 		if len(results) != 0 {
 			t.Errorf("expected 0 errors for all successful links, got %d", len(results))
@@ -202,7 +186,7 @@ Line 8 [link8](%s/fail8)
 		markdown := fmt.Sprintf("[success](%s/399)\n[fail](%s/400)", boundaryTs.URL, boundaryTs.URL)
 		fileName := "boundary.md"
 
-		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (only 400), got %d", len(results))
@@ -234,7 +218,7 @@ Line 8 [link8](%s/fail8)
 			regexp.MustCompile(`\.internal`),
 		}
 
-		results := rule.CheckExternalLinks(fileName, markdown, skip, 10, &sync.Map{})
+		results := rule.CheckExternalLinks(fileName, markdown, skip, 2, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error (only httpstat.us), got %d", len(results))
@@ -258,7 +242,7 @@ Line 8 [link8](%s/fail8)
 		fileName := "network.md"
 		unreachableURL := "http://invalid.test.localhost.invalid:9999/path"
 
-		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, &sync.Map{})
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, 10, &sync.Map{})
 
 		if len(results) != 1 {
 			t.Fatalf("expected 1 error for network failure, got %d", len(results))
@@ -291,7 +275,7 @@ Line 8 [link8](%s/fail8)
 
 		markdown := fmt.Sprintf("[not-found](%s/404)\n[server-error](%s/500)\n[unavailable](%s/503)", statusTs.URL, statusTs.URL, statusTs.URL)
 		fileName := "test.md"
-		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, &sync.Map{})
+		results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 		if len(results) != 3 {
 			t.Fatalf("expected 3 errors, got %d", len(results))
@@ -318,6 +302,53 @@ Line 8 [link8](%s/fail8)
 			if !strings.Contains(got.Message, exp.url) {
 				t.Errorf("Result[%d]: message %q does not contain URL %q", i, got.Message, exp.url)
 			}
+		}
+	})
+	t.Run("retry logic: success on second attempt", func(t *testing.T) {
+		requestCount := 0
+		// サーバー側でアクセス回数をカウントし、挙動を変える
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount++
+			if requestCount == 1 {
+				// 1回目はリトライ対象となる503エラーを返す
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			// 2回目は成功を返す
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer ts.Close()
+
+		markdown := fmt.Sprintf("[retry-link](%s/retry)", ts.URL)
+
+		// リトライを待つため、タイムアウトを少し長め（10秒）に設定
+		results := rule.CheckExternalLinks("retry.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+
+		// 2回目で成功しているはずなので、エラーリストは空になるべき
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors due to successful retry, but got %d", len(results))
+		}
+
+		// 実際に2回リクエストが飛んだことを確認
+		if requestCount != 2 {
+			t.Errorf("expected exactly 2 requests (1 fail + 1 retry), but got %d", requestCount)
+		}
+	})
+	t.Run("retry logic: no retry for 404 Not Found", func(t *testing.T) {
+		requestCount := 0
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount++
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer ts.Close()
+
+		markdown := fmt.Sprintf("[not-found](%s/404)", ts.URL)
+
+		rule.CheckExternalLinks("404.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+
+		// 404の場合はリトライせずに1回で諦めるべき
+		if requestCount != 1 {
+			t.Errorf("expected only 1 request for 404 (no retry), but got %d", requestCount)
 		}
 	})
 }

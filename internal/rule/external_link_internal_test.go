@@ -59,7 +59,7 @@ func Test_checkURL(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			status, err := checkURL(ts.Client(), ts.URL)
+			status, err := checkURL(ts.Client(), ts.URL, 10)
 			if tt.expectError && err == nil {
 				t.Errorf("expected error but got none")
 			}

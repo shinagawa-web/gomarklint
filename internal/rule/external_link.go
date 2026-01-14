@@ -10,7 +10,7 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
-func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, urlCache *sync.Map) []LintError {
+func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 
@@ -41,7 +41,7 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 			if cachedStatus, ok := urlCache.Load(url); ok {
 				status = cachedStatus.(int)
 			} else {
-				status, err = checkURL(client, url)
+				status, err = checkURL(client, url, retryDelayMs)
 				urlCache.Store(url, status)
 			}
 
@@ -63,7 +63,45 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	return errs
 }
 
-func checkURL(client *http.Client, url string) (int, error) {
+// checkURL performs the URL check with retry logic.
+func checkURL(client *http.Client, url string, retryDelayMs int) (int, error) {
+	const maxRetries = 2
+	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
+
+	var status int
+	var err error
+
+	for i := 0; i <= maxRetries; i++ {
+		if i > 0 {
+			// Wait a bit before retrying (simple backoff)
+			time.Sleep(retryDelay * time.Duration(i))
+		}
+
+		status, err = performCheck(client, url)
+
+		// Success: 2xx or 3xx
+		if err == nil && status < 400 {
+			return status, nil
+		}
+
+		// Permanent failures: Don't bother retrying if it's 404 (Not Found) or 401 (Unauthorized)
+		if err == nil && (status == http.StatusNotFound || status == http.StatusUnauthorized) {
+			return status, nil
+		}
+
+		// If it's the last attempt, don't log "retrying"
+		if i == maxRetries {
+			break
+		}
+
+		// Optional: You could log that you're retrying here
+	}
+
+	return status, err
+}
+
+// performCheck contains the core HEAD -> GET fallback logic.
+func performCheck(client *http.Client, url string) (int, error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return 0, err

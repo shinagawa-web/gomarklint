@@ -33,6 +33,10 @@ func TestLoadConfig_ValidFile(t *testing.T) {
 	if len(cfg.SkipLinkPatterns) != 2 {
 		t.Errorf("expected 2 skip patterns, got %d", len(cfg.SkipLinkPatterns))
 	}
+	// LinkCheckTimeoutSeconds should use default if not specified
+	if cfg.LinkCheckTimeoutSeconds != 5 {
+		t.Errorf("expected LinkCheckTimeoutSeconds=5 (default), got %d", cfg.LinkCheckTimeoutSeconds)
+	}
 }
 
 func TestLoadConfig_InvalidField(t *testing.T) {
@@ -76,7 +80,7 @@ func TestDefaultConfig(t *testing.T) {
 	want := Config{
 		MinHeadingLevel:                 2,
 		EnableLinkCheck:                 false,
-		LinkCheckTimeoutSeconds:         10,
+		LinkCheckTimeoutSeconds:         5,
 		SkipLinkPatterns:                []string{},
 		Include:                         []string{"README.md", "testdata"},
 		Ignore:                          []string{},
