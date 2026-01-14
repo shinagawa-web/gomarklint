@@ -382,3 +382,29 @@ func TestCheckExternalLinks_ConcurrencyLimit(t *testing.T) {
 		t.Errorf("expected 0 errors, got %d", len(results))
 	}
 }
+
+func TestCheckExternalLinks_CacheErrorState(t *testing.T) {
+	// Test that network errors are cached and reported consistently across multiple calls
+	markdown := "[unreachable](http://invalid.test.localhost.invalid:9999/path)"
+	fileName := "cache-error.md"
+	urlCache := &sync.Map{}
+
+	// First call - should trigger network error
+	results1 := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, 10, urlCache)
+
+	if len(results1) != 1 {
+		t.Fatalf("first call: expected 1 error for network failure, got %d", len(results1))
+	}
+
+	// Second call with same cache - should use cached error and report the same error
+	results2 := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, 10, urlCache)
+
+	if len(results2) != 1 {
+		t.Fatalf("second call: expected 1 error from cache, got %d", len(results2))
+	}
+
+	// Verify both calls produce the same error
+	if results1[0].Message != results2[0].Message {
+		t.Errorf("error messages differ: first=%q, second=%q", results1[0].Message, results2[0].Message)
+	}
+}

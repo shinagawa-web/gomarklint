@@ -10,6 +10,11 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
+type cacheResult struct {
+	status int
+	err    error
+}
+
 const (
 	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
 	DefaultRetryDelayMs = 1000
@@ -47,17 +52,18 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 			var status int
 			var err error
 
-			if cachedStatus, ok := urlCache.Load(url); ok {
-				if cachedInt, ok := cachedStatus.(int); ok {
-					status = cachedInt
+			if cached, ok := urlCache.Load(url); ok {
+				if result, ok := cached.(cacheResult); ok {
+					status = result.status
+					err = result.err
 				} else {
 					// Cache contained unexpected type, re-check the URL
 					status, err = checkURL(client, url, retryDelayMs)
-					urlCache.Store(url, status)
+					urlCache.Store(url, cacheResult{status: status, err: err})
 				}
 			} else {
 				status, err = checkURL(client, url, retryDelayMs)
-				urlCache.Store(url, status)
+				urlCache.Store(url, cacheResult{status: status, err: err})
 			}
 
 			if err != nil || status >= 400 {
