@@ -358,7 +358,7 @@ func TestCheckExternalLinks_NoRetryFor404(t *testing.T) {
 
 	rule.CheckExternalLinks("404.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
-	// 404の場合はリトライせずに1回で諦めるべき
+	// For 404, there should be no retry; it should give up after a single request
 	if requestCount != 1 {
 		t.Errorf("expected only 1 request for 404 (no retry), but got %d", requestCount)
 	}
