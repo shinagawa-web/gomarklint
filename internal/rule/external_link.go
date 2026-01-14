@@ -26,15 +26,19 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
+	const maxConcurrency = 10
+	sem := make(chan struct{}, maxConcurrency)
+
 	client := &http.Client{
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
 	for u, lines := range urlToLines {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(url string, lns []int) {
 			defer wg.Done()
-
+			defer func() { <-sem }()
 			var status int
 			var err error
 

@@ -306,30 +306,24 @@ Line 8 [link8](%s/fail8)
 	})
 	t.Run("retry logic: success on second attempt", func(t *testing.T) {
 		requestCount := 0
-		// サーバー側でアクセス回数をカウントし、挙動を変える
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestCount++
 			if requestCount == 1 {
-				// 1回目はリトライ対象となる503エラーを返す
 				w.WriteHeader(http.StatusServiceUnavailable)
 				return
 			}
-			// 2回目は成功を返す
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer ts.Close()
 
 		markdown := fmt.Sprintf("[retry-link](%s/retry)", ts.URL)
 
-		// リトライを待つため、タイムアウトを少し長め（10秒）に設定
 		results := rule.CheckExternalLinks("retry.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
-		// 2回目で成功しているはずなので、エラーリストは空になるべき
 		if len(results) != 0 {
 			t.Errorf("expected 0 errors due to successful retry, but got %d", len(results))
 		}
 
-		// 実際に2回リクエストが飛んだことを確認
 		if requestCount != 2 {
 			t.Errorf("expected exactly 2 requests (1 fail + 1 retry), but got %d", requestCount)
 		}
@@ -349,6 +343,25 @@ Line 8 [link8](%s/fail8)
 		// 404の場合はリトライせずに1回で諦めるべき
 		if requestCount != 1 {
 			t.Errorf("expected only 1 request for 404 (no retry), but got %d", requestCount)
+		}
+	})
+	t.Run("concurrency limit handles links without timing out", func(t *testing.T) {
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer ts.Close()
+
+		var links []string
+		for i := range 100 {
+			links = append(links, fmt.Sprintf("[L%d](%s/%d)", i, ts.URL, i))
+		}
+		markdown := strings.Join(links, "\n")
+
+		results := rule.CheckExternalLinks("heavy.md", markdown, []*regexp.Regexp{}, 5, 10, &sync.Map{})
+
+		if len(results) != 0 {
+			t.Errorf("expected 0 errors, got %d", len(results))
 		}
 	})
 }
