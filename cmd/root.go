@@ -186,7 +186,7 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 			uniqueURLs[link.URL] = true
 		}
 		linksChecked = len(uniqueURLs)
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, 1000, urlCache)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {

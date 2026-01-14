@@ -10,6 +10,11 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
+const (
+	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
+	DefaultRetryDelayMs = 1000
+)
+
 func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
