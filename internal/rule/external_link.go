@@ -36,6 +36,7 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
+	// maxConcurrency limits the number of concurrent HTTP requests
 	const maxConcurrency = 10
 	sem := make(chan struct{}, maxConcurrency)
 
@@ -86,6 +87,7 @@ func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Rege
 
 // checkURL performs the URL check with retry logic.
 func checkURL(client *http.Client, url string, retryDelayMs int) (int, error) {
+	// maxRetries is the maximum number of retry attempts for failed requests
 	const maxRetries = 2
 	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
 
