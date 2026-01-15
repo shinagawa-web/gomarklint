@@ -77,6 +77,7 @@ gomarklint/
 - Use meaningful variable and function names
 - Keep functions focused and single-purpose
 - Add comments for exported functions and complex logic
+- **All comments must be in English** - no Japanese or other non-English comments
 
 ## Common Tasks
 

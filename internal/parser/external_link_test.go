@@ -133,7 +133,7 @@ See [link1](https://first.com) and [link2](https://second.com)
 		t.Run(tt.name, func(t *testing.T) {
 			got := parser.ExtractExternalLinksWithLineNumbers(tt.input)
 
-			// 並び順が関係しないようにソート（複数URLのケースに備えて）
+			// Sort to ensure order-independent comparison
 			sort.Slice(got, func(i, j int) bool {
 				return got[i].URL < got[j].URL
 			})
