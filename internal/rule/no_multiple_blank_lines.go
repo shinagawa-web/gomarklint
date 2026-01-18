@@ -13,7 +13,8 @@ import (
 // no more than one consecutive blank line appears in the document.
 //
 // It accounts for the presence of frontmatter, adjusting the reported
-// line numbers accordingly.
+// line numbers accordingly, and ignores multiple consecutive newlines in code
+// blocks.
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
@@ -24,12 +25,14 @@ import (
 func CheckNoMultipleBlankLines(filename, content string) []LintError {
 	body, offset := parser.StripFrontmatter(content)
 
+	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
+
 	var errs []LintError
 	lines := strings.Split(body, "\n")
 
 	consecutiveBlankCount := 0
 	for i, line := range lines {
-		if strings.TrimSpace(line) == "" {
+		if !isInCodeBlock(i+1, codeBlockRanges) && strings.TrimSpace(line) == "" {
 			consecutiveBlankCount++
 			if consecutiveBlankCount > 1 {
 				errs = append(errs, LintError{
