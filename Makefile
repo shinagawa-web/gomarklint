@@ -50,6 +50,10 @@ lint-fix: ## Run golangci-lint and fix issues automatically
 	@echo "Running golangci-lint fix..."
 	$(GOLINT) run $(LINT_CONFIG) --fix
 
+lint-self: ## Run gomarklint on the repo's README
+	@echo "Running gomarklint on README.md"
+	$(GORUN) . README.md --min-heading=1
+
 static-lint: ## Run golangci-lint for static analysis
 	@echo "Running golangci-lint..."
 	$(GOLINT) run $(LINT_CONFIG)

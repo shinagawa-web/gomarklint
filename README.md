@@ -24,9 +24,7 @@ gomarklint focuses on reproducible rules that prevent “small but costly” fai
 
 > Goal: treat documentation quality like code quality—fast feedback locally, strict in CI, zero drama.
 
-
 ## ✨ Features
-
 
 - Recursive .md search (multi-file & multi-directory)
 - Frontmatter-aware parsing (YAML/TOML ignored when needed)
@@ -61,7 +59,6 @@ gomarklint init
 
 This creates `.gomarklint.json` with sensible defaults:
 
-
 ```json
 {
   "include": ["."],
@@ -89,7 +86,6 @@ gomarklint docs README.md internal/handbook
 
 Exit code is non-zero on violations (configurable soon), so it plugs into CI trivially.
 
-
 ### 3) JSON output (for CI / tooling)
 
 ```sh
@@ -100,7 +96,6 @@ gomarklint ./... --output json
 
 `gomarklint` currently runs the following checks (ordered as executed):
 
-
 | Rule key                       | What it detects                                        | Notes / Options                                                                                        |
 | ------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | `final-blank-line`             | Missing final blank line at EOF                        | Always on                                                                                              |
@@ -110,7 +105,6 @@ gomarklint ./... --output json
 | `duplicate-heading`            | Duplicate headings within one file                     | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
 | `no-multiple-blank-lines`      | Multiple consecutive blank lines                       | Toggle: `--enable-no-multiple-blank-lines-check` (default **on**)                                      |
 | `external-link`                | External links that fail validation                    | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
-
 
 Execution details:
 
@@ -128,7 +122,6 @@ If no paths are given, the tool will:
 
 - Use `include` from `.gomarklint.json` if present, otherwise error out with
 “please provide a markdown file or directory (or set 'include' in .gomarklint.json)”.
-
 
 ### Flags
 
@@ -172,7 +165,6 @@ Field effects:
 
 - If CLI flags are set, they take precedence over config.
 - If no CLI paths are provided, include (when present) becomes the target set.
-
 
 ## Output
 
@@ -273,7 +265,6 @@ Errors in testdata/sample_links.md:
 
 ## 🧪 GitHub Actions Integration
 
-
 You can use gomarklint in your CI workflows using the official [GitHub Action](https://github.com/marketplace/actions/gomarklint-markdown-linter):
 
 > ⚠️ Note:
@@ -349,9 +340,7 @@ jobs:
 
 ---
 
-
 **Feel free to suggest more ideas by opening an issue or discussion on GitHub!**
-
 
 ## 📁 Project Structure
 
@@ -416,6 +405,9 @@ make test-coverage
 # Lint the included sample files in ./testdata
 make lint
 
+# Lint the repo's README
+make lint-self
+
 # Run gomarklint with custom arguments
 make run-dev ARGS="README.md"
 
@@ -426,12 +418,10 @@ make init
 make clean
 ```
 
-
 Notes:
 - `go run .` uses the local source directly, so you don’t need to `go install` during development.
 - When adding new CLI flags or config fields, confirm they appear in `--help` and the generated `.gomarklint.json`.
 - Tests should remain fast and self-contained — contributions that break this will be rejected.
-
 
 ## 🤝 Contributing
 

@@ -33,3 +33,6 @@ jobs:
           slug: shinagawa-web/gomarklint
           files: ./coverage.txt
           fail_ci_if_error: true
+
+      - name: Lint README
+        run: ./gomarklint README.md --min-heading=1
