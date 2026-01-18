@@ -27,6 +27,7 @@ var outputFormat string
 var enableHeadingLevelCheck bool
 var enableDuplicateHeadingCheck bool
 var enableNoMultipleBlankLinesCheck bool
+var enableNoSetextHeadingsCheck bool
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint [files or directories]",
@@ -61,6 +62,9 @@ var rootCmd = &cobra.Command{
 		if cmd.Flags().Changed("enable-no-multiple-blank-lines-check") {
 			cfg.EnableNoMultipleBlankLinesCheck = enableNoMultipleBlankLinesCheck
 		}
+		if cmd.Flags().Changed("enable-no-setext-headings-check") {
+			cfg.EnableNoSetextHeadingsCheck = enableNoSetextHeadingsCheck
+		}
 		if cmd.Flags().Changed("skip-link-patterns") {
 			cfg.SkipLinkPatterns = skipLinkPatterns
 		}
@@ -80,6 +84,7 @@ var rootCmd = &cobra.Command{
 		enableHeadingLevelCheck = cfg.EnableHeadingLevelCheck
 		enableDuplicateHeadingCheck = cfg.EnableDuplicateHeadingCheck
 		enableNoMultipleBlankLinesCheck = cfg.EnableNoMultipleBlankLinesCheck
+		enableNoSetextHeadingsCheck = cfg.EnableNoSetextHeadingsCheck
 
 		if len(args) == 0 {
 			if len(cfg.Include) > 0 {
@@ -175,6 +180,10 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 	}
 	if cfg.EnableNoMultipleBlankLinesCheck {
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
+	}
+
+	if cfg.EnableNoSetextHeadingsCheck {
+		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, content)...)
 	}
 
 	linksChecked := 0
@@ -283,6 +292,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&enableHeadingLevelCheck, "enable-heading-level-check", true, "enable heading level check")
 	rootCmd.Flags().BoolVar(&enableDuplicateHeadingCheck, "enable-duplicate-heading-check", true, "enable duplicate heading check")
 	rootCmd.Flags().BoolVar(&enableNoMultipleBlankLinesCheck, "enable-no-multiple-blank-lines-check", true, "enable no multiple blank lines check")
+	rootCmd.Flags().BoolVar(&enableNoSetextHeadingsCheck, "enable-no-setext-headings-check", true, "enable no setext headings check")
 	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
 	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text or json")
 
