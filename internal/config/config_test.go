@@ -88,6 +88,7 @@ func TestDefaultConfig(t *testing.T) {
 		EnableDuplicateHeadingCheck:     true,
 		EnableHeadingLevelCheck:         true,
 		EnableNoMultipleBlankLinesCheck: true,
+		EnableNoSetextHeadingsCheck:     true,
 	}
 
 	got := Default()
