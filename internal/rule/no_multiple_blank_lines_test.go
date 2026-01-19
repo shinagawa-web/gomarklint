@@ -57,6 +57,18 @@ func TestCheckNoMultipleBlankLines(t *testing.T) {
 				{File: "test.md", Line: 3, Message: "Multiple consecutive blank lines"},
 			},
 		},
+		{
+			name:     "code blocks",
+			content:  "I am text before a code block\n\n```\nI am in a code block\n\n\nMultiple consecutive blank lines should be ignored\n```",
+			wantErrs: nil,
+		},
+		{
+			name:    "blank lines after code blocks",
+			content: "I am text before a code block\n\n```\nI am in a code block\n\n\nMultiple consecutive blank lines should be ignored\n```\n\n\nBut the newlines before this one should be considered errors.",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 10, Message: "Multiple consecutive blank lines"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
