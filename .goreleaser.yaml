@@ -40,7 +40,28 @@ archives:
 
 changelog:
   sort: asc
+  use: github
+  groups:
+    - title: "Breaking Changes 🛠"
+      regexp: '^.*?(breaking|major).*?$'
+      order: 0
+    - title: "Exciting New Features 🎉"
+      regexp: '^.*?(feat|feature|enhancement|minor).*?$'
+      order: 1
+    - title: "Bug Fixes 🐛"
+      regexp: '^.*?(fix|bug).*?$'
+      order: 2
+    - title: "Documentation 📝"
+      regexp: '^.*?(docs?|documentation).*?$'
+      order: 3
+    - title: "Maintenance 🔧"
+      regexp: '^.*?chore.*?$'
+      order: 4
+    - title: "Dependencies Updates 📦"
+      regexp: '^.*?dependen.*?$'
+      order: 5
+    - title: "Other Changes"
+      order: 999
   filters:
     exclude:
-      - "^docs:"
       - "^test:"
