@@ -1,10 +1,11 @@
 name: golang-ci
 on:
+  push:
+    branches:
+      - main
   pull_request:
-    paths:
-      - "**.go"
-      - .github/workflows/golangci.yml
-      - .golangci.yml
+    branches:
+      - main
 
 jobs:
   golangci-lint:
