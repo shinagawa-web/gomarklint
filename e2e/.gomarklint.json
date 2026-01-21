@@ -4,6 +4,7 @@
   "minHeadingLevel": 2,
   "enableHeadingLevelCheck": true,
   "enableDuplicateHeadingCheck": true,
+  "enableNoMultipleBlankLinesCheck": true,
   "enableLinkCheck": false,
   "skipLinkPatterns": [],
   "output": "text"
