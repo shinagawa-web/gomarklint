@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"testing"
@@ -79,4 +80,39 @@ func TestE2E_DisableRuleViaFlag(t *testing.T) {
 	output := runTest(t, "fixtures/duplicate_headings.md", "--config", ".gomarklint.json", "--enable-duplicate-heading-check=false")
 	assertOutputContains(t, output, "No issues found")
 	assertOutputNotContains(t, output, "duplicate heading")
+}
+
+// TestE2E_TextFormat tests that text output format shows readable error messages
+func TestE2E_TextFormat(t *testing.T) {
+	output := runTest(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json", "--output", "text")
+	assertOutputContains(t, output, "Errors in fixtures/invalid_heading_level.md:")
+	assertOutputContains(t, output, "First heading should be level 2")
+	assertOutputContains(t, output, "fixtures/invalid_heading_level.md:1:")
+}
+
+// TestE2E_JSONFormat tests that JSON output format produces valid JSON with correct file paths and line numbers
+func TestE2E_JSONFormat(t *testing.T) {
+	output := runTest(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json", "--output", "json")
+
+	// Parse JSON to verify it's valid
+	var result map[string]any
+	err := json.Unmarshal(output, &result)
+	if err != nil {
+		t.Fatalf("expected valid JSON output, got error: %v\noutput: %s", err, output)
+	}
+
+	// Verify top-level fields exist
+	assertOutputContains(t, output, `"files"`)
+	assertOutputContains(t, output, `"errors"`)
+	assertOutputContains(t, output, `"details"`)
+	assertOutputContains(t, output, `"elapsed_ms"`)
+
+	// Verify correct file path is in JSON
+	assertOutputContains(t, output, `"File": "fixtures/invalid_heading_level.md"`)
+
+	// Verify line number is in JSON
+	assertOutputContains(t, output, `"Line": 1`)
+
+	// Verify error message is in JSON
+	assertOutputContains(t, output, `"Message": "First heading should be level 2`)
 }
