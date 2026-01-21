@@ -1,4 +1,4 @@
-# Valid Markdown File
+## Valid Markdown File
 
 This is a valid markdown file that should pass all linting checks.
 
@@ -17,4 +17,3 @@ Additional content with proper formatting.
 ## Images
 
 ![Alt text](image.png)
-

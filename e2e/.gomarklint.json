@@ -1,0 +1,10 @@
+{
+  "include": ["fixtures"],
+  "ignore": [],
+  "minHeadingLevel": 2,
+  "enableHeadingLevelCheck": true,
+  "enableDuplicateHeadingCheck": true,
+  "enableLinkCheck": false,
+  "skipLinkPatterns": [],
+  "output": "text"
+}

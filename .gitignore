@@ -1,4 +1,5 @@
 .gomarklint.json
+!e2e/.gomarklint.json
 
 # Binary
 gomarklint
