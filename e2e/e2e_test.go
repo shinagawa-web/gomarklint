@@ -116,3 +116,57 @@ func TestE2E_JSONFormat(t *testing.T) {
 	// Verify error message is in JSON
 	assertOutputContains(t, output, `"Message": "First heading should be level 2`)
 }
+
+// TestE2E_MultipleFiles tests that multiple files can be specified as arguments and all are checked
+func TestE2E_MultipleFiles(t *testing.T) {
+	output := runTest(t, "fixtures/valid.md", "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json")
+
+	// invalid_heading_level.md should have heading level error
+	assertOutputContains(t, output, "fixtures/invalid_heading_level.md")
+	assertOutputContains(t, output, "First heading should be level 2")
+
+	// Should report multiple files checked
+	assertOutputContains(t, output, "Checked 2 file(s)")
+}
+
+// TestE2E_DirectoryRecursion tests that directories are processed recursively
+func TestE2E_DirectoryRecursion(t *testing.T) {
+	output := runTest(t, "fixtures", "--config", ".gomarklint.json")
+
+	// Should process multiple files from fixtures directory
+	assertOutputContains(t, output, "fixtures/invalid_heading_level.md")
+	assertOutputContains(t, output, "fixtures/duplicate_headings.md")
+	assertOutputContains(t, output, "fixtures/multiple_blank_lines.md")
+
+	// Should verify specific error messages for each file
+	assertOutputContains(t, output, "First heading should be level 2")
+	assertOutputContains(t, output, "duplicate heading")
+	assertOutputContains(t, output, "Multiple consecutive blank lines")
+
+	// Should report total issues from all files
+	assertOutputContains(t, output, "4 issues found")
+
+	// Should report files checked (heading_level_one.md also has error)
+	assertOutputContains(t, output, "Checked 5 file(s)")
+}
+
+// TestE2E_ErrorsFromAllFiles tests that errors from multiple files are reported correctly
+func TestE2E_ErrorsFromAllFiles(t *testing.T) {
+	output := runTest(t, "fixtures/invalid_heading_level.md", "fixtures/duplicate_headings.md", "fixtures/multiple_blank_lines.md", "--config", ".gomarklint.json")
+
+	// invalid_heading_level.md has heading level error
+	assertOutputContains(t, output, "fixtures/invalid_heading_level.md")
+	assertOutputContains(t, output, "First heading should be level 2")
+
+	// duplicate_headings.md has duplicate heading error
+	assertOutputContains(t, output, "fixtures/duplicate_headings.md")
+	assertOutputContains(t, output, "duplicate heading")
+
+	// multiple_blank_lines.md has blank line error
+	assertOutputContains(t, output, "fixtures/multiple_blank_lines.md")
+	assertOutputContains(t, output, "Multiple consecutive blank lines")
+
+	// Should report multiple errors
+	assertOutputContains(t, output, "Checked 3 file(s)")
+	assertOutputContains(t, output, "3 issues found")
+}
