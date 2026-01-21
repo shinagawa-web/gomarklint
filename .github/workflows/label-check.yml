@@ -11,5 +11,5 @@ jobs:
       - name: Check for labels
         uses: docker://agilepathway/pull-request-label-checker:latest
         with:
-          one_of: bug,enhancement,breaking-change,dependencies,documentation
+          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore
           repo_token: ${{ secrets.GITHUB_TOKEN }}
