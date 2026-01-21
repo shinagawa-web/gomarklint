@@ -396,8 +396,14 @@ make help
 # Build the binary
 make build
 
-# Run all tests
+# Run unit tests
 make test
+
+# Run end-to-end tests
+make test-e2e
+
+# Run all tests (unit + E2E)
+make test-all
 
 # Run tests with coverage report
 make test-coverage

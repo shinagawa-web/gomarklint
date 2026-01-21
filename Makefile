@@ -1,10 +1,11 @@
-.PHONY: build test clean install help lint run-dev static-lint lint-fix
+.PHONY: build test test-e2e clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all
 
 # Default target
 .DEFAULT_GOAL := help
 
 # Binary name
 BINARY_NAME=gomarklint
+E2E_BINARY=gomarklint-e2e-test
 BUILD_DIR=.
 
 # Go parameters
@@ -24,7 +25,24 @@ build: ## Build the binary
 
 test: ## Run all tests
 	@echo "Running tests..."
-	$(GOTEST) ./... -v
+	$(GOTEST) ./... -v -skip TestE2E
+
+# E2E test binary
+test-e2e: build-e2e ## Run end-to-end tests
+	@echo "Running E2E tests..."
+	cd $(BUILD_DIR) && $(GOTEST) ./e2e/... -v
+	@$(MAKE) clean-e2e
+
+build-e2e: ## Build binary for E2E tests
+	@echo "Building E2E test binary..."
+	$(GOBUILD) -o e2e/$(E2E_BINARY) .
+
+clean-e2e: ## Clean E2E test binary
+	@echo "Cleaning E2E test binary..."
+	rm -f e2e/$(E2E_BINARY)
+
+test-all: test test-e2e ## Run all tests (unit + E2E)
+	@echo "All tests completed!"
 
 test-coverage: ## Run tests with coverage
 	@echo "Running tests with coverage..."

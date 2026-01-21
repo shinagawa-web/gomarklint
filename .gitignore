@@ -5,6 +5,7 @@ gomarklint
 
 # Build artifacts
 dist/
+e2e/gomarklint-e2e-test
 
 # Coverage
 coverage.out
