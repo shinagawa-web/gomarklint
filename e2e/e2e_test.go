@@ -109,3 +109,59 @@ func TestE2E_MultipleBlankLines(t *testing.T) {
 		t.Errorf("expected '1 issues found' in output, got: %s", output)
 	}
 }
+
+// TestE2E_CLIFlagsOverrideConfig tests that CLI flags override config file settings
+func TestE2E_CLIFlagsOverrideConfig(t *testing.T) {
+	binaryPath := "gomarklint-e2e-test"
+	fixturePath := "fixtures/heading_level_one.md"
+
+	// Check if binary exists
+	if _, err := os.Stat("./" + binaryPath); err != nil {
+		t.Fatalf("e2e test binary not found at %s: %v. Did build-e2e run successfully?", binaryPath, err)
+	}
+
+	cmd := exec.Command("./" + binaryPath)
+	cmd.Args = append(cmd.Args, fixturePath)
+	cmd.Args = append(cmd.Args, "--config", ".gomarklint.json")
+	// Override minHeadingLevel from 2 to 1 via CLI flag
+	cmd.Args = append(cmd.Args, "--min-heading", "1")
+	output, _ := cmd.CombinedOutput()
+
+	// With --min-heading 1, H1 should be allowed and no error should occur
+	if !bytes.Contains(output, []byte("No issues found")) {
+		t.Errorf("expected 'No issues found' when --min-heading 1 overrides config, got: %s", output)
+	}
+
+	// Should not contain heading level error
+	if bytes.Contains(output, []byte("First heading should be level")) {
+		t.Errorf("expected no heading level error with --min-heading 1, got: %s", output)
+	}
+}
+
+// TestE2E_DisableRuleViaFlag tests that rules can be disabled via CLI flags
+func TestE2E_DisableRuleViaFlag(t *testing.T) {
+	binaryPath := "gomarklint-e2e-test"
+	fixturePath := "fixtures/duplicate_headings.md"
+
+	// Check if binary exists
+	if _, err := os.Stat("./" + binaryPath); err != nil {
+		t.Fatalf("e2e test binary not found at %s: %v. Did build-e2e run successfully?", binaryPath, err)
+	}
+
+	cmd := exec.Command("./" + binaryPath)
+	cmd.Args = append(cmd.Args, fixturePath)
+	cmd.Args = append(cmd.Args, "--config", ".gomarklint.json")
+	// Disable duplicate heading check via CLI flag
+	cmd.Args = append(cmd.Args, "--enable-duplicate-heading-check=false")
+	output, _ := cmd.CombinedOutput()
+
+	// With duplicate heading check disabled, no error should occur
+	if !bytes.Contains(output, []byte("No issues found")) {
+		t.Errorf("expected 'No issues found' when duplicate heading check is disabled, got: %s", output)
+	}
+
+	// Should not contain duplicate heading error
+	if bytes.Contains(output, []byte("duplicate heading")) {
+		t.Errorf("expected no duplicate heading error when disabled, got: %s", output)
+	}
+}
