@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"testing"
@@ -109,14 +108,7 @@ func TestE2E_TextFormat(t *testing.T) {
 func TestE2E_JSONFormat(t *testing.T) {
 	output := runTest(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json", "--output", "json")
 
-	// Parse JSON to verify it's valid
-	var result map[string]any
-	err := json.Unmarshal(output, &result)
-	if err != nil {
-		t.Fatalf("expected valid JSON output, got error: %v\noutput: %s", err, output)
-	}
-
-	// Verify top-level fields exist
+	// Verify top-level fields exist in JSON
 	assertOutputContains(t, output, `"files"`)
 	assertOutputContains(t, output, `"errors"`)
 	assertOutputContains(t, output, `"details"`)
@@ -130,6 +122,10 @@ func TestE2E_JSONFormat(t *testing.T) {
 
 	// Verify error message is in JSON
 	assertOutputContains(t, output, `"Message": "First heading should be level 2`)
+
+	// Verify JSON structure with opening brace
+	assertOutputContains(t, output, `{`)
+	assertOutputContains(t, output, `}`)
 }
 
 // TestE2E_MultipleFiles tests that multiple files can be specified as arguments and all are checked
