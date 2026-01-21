@@ -41,6 +41,21 @@ func assertOutputNotContains(t *testing.T, output []byte, unexpected string) {
 	}
 }
 
+// runTestWithCmd runs the gomarklint binary and returns output and a flag indicating if binary executed
+func runTestWithCmd(t *testing.T, args ...string) ([]byte, error) {
+	binaryPath := "./" + binaryName
+
+	// Check if binary exists
+	if _, err := os.Stat(binaryPath); err != nil {
+		t.Fatalf("e2e test binary not found at %s: %v. Did build-e2e run successfully?", binaryName, err)
+	}
+
+	cmd := exec.Command(binaryPath)
+	cmd.Args = append(cmd.Args, args...)
+	output, err := cmd.CombinedOutput()
+	return output, err
+}
+
 // TestE2E_ValidMarkdown tests linting a valid markdown file
 func TestE2E_ValidMarkdown(t *testing.T) {
 	output := runTest(t, "fixtures/valid.md", "--config", ".gomarklint.json")
@@ -144,10 +159,10 @@ func TestE2E_DirectoryRecursion(t *testing.T) {
 	assertOutputContains(t, output, "Multiple consecutive blank lines")
 
 	// Should report total issues from all files
-	assertOutputContains(t, output, "4 issues found")
+	assertOutputContains(t, output, "5 issues found")
 
-	// Should report files checked (heading_level_one.md also has error)
-	assertOutputContains(t, output, "Checked 5 file(s)")
+	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line)
+	assertOutputContains(t, output, "Checked 7 file(s)")
 }
 
 // TestE2E_ErrorsFromAllFiles tests that errors from multiple files are reported correctly
@@ -169,4 +184,48 @@ func TestE2E_ErrorsFromAllFiles(t *testing.T) {
 	// Should report multiple errors
 	assertOutputContains(t, output, "Checked 3 file(s)")
 	assertOutputContains(t, output, "3 issues found")
+}
+
+// TestE2E_NonExistentFile tests that non-existent files are handled gracefully
+func TestE2E_NonExistentFile(t *testing.T) {
+	output := runTest(t, "fixtures/nonexistent.md", "--config", ".gomarklint.json")
+
+	// Non-existent file is skipped, resulting in no files checked
+	assertOutputContains(t, output, "Checked 0 file(s)")
+	assertOutputContains(t, output, "No issues found")
+}
+
+// TestE2E_InvalidConfigFile tests that invalid config files produce appropriate errors
+func TestE2E_InvalidConfigFile(t *testing.T) {
+	output, err := runTestWithCmd(t, "fixtures/valid.md", "--config", "invalid.json")
+
+	// Should have error
+	if err == nil {
+		t.Errorf("expected error for invalid config file, but command succeeded")
+	}
+
+	// Should contain error message about config
+	errorOutput := string(output)
+	if !bytes.Contains(output, []byte("error")) && !bytes.Contains(output, []byte("invalid")) {
+		t.Errorf("expected error message about invalid config, got: %s", errorOutput)
+	}
+}
+
+// TestE2E_EmptyFile tests that empty files are processed
+func TestE2E_EmptyFile(t *testing.T) {
+	output := runTest(t, "fixtures/empty.md", "--config", ".gomarklint.json")
+
+	// Empty file triggers final blank line check
+	assertOutputContains(t, output, "Missing final blank line")
+	assertOutputContains(t, output, "Checked 1 file(s)")
+	assertOutputContains(t, output, "1 issues found")
+}
+
+// TestE2E_FilesWithFrontmatter tests that files with frontmatter are correctly processed
+func TestE2E_FilesWithFrontmatter(t *testing.T) {
+	output := runTest(t, "fixtures/with_frontmatter.md", "--config", ".gomarklint.json")
+
+	// File with frontmatter should be stripped and processed (has H2 headings which are valid)
+	assertOutputContains(t, output, "No issues found")
+	assertOutputNotContains(t, output, "Errors")
 }
