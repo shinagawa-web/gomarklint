@@ -23,14 +23,14 @@ build: ## Build the binary
 	@echo "Building $(BINARY_NAME)..."
 	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) .
 
-test: ## Run all tests
+test: ## Run unit tests (excluding E2E)
 	@echo "Running tests..."
-	$(GOTEST) ./... -v -skip TestE2E
+	$(GOTEST) ./... -v -skip '^TestE2E'
 
 # E2E test binary
 test-e2e: build-e2e ## Run end-to-end tests
 	@echo "Running E2E tests..."
-	cd $(BUILD_DIR) && $(GOTEST) ./e2e/... -v
+	$(GOTEST) ./e2e/... -v
 	@$(MAKE) clean-e2e
 
 build-e2e: ## Build binary for E2E tests
