@@ -17,6 +17,10 @@ gomarklint/
 ├── cmd/                    # CLI commands
 │   ├── init.go            # Configuration initialization
 │   └── root.go            # Root command and main logic
+├── e2e/                    # End-to-end tests
+│   ├── e2e_test.go        # E2E test cases
+│   ├── fixtures/          # Test fixture markdown files
+│   └── .gomarklint.json   # Config for E2E tests
 ├── internal/
 │   ├── config/            # Configuration management
 │   │   ├── config.go      # Config struct and defaults
@@ -24,21 +28,42 @@ gomarklint/
 │   │   └── load.go        # Configuration loading
 │   ├── parser/            # Markdown parsing utilities
 │   │   ├── expand.go      # File expansion logic
+│   │   ├── expand_test.go
 │   │   ├── external_link.go # External link handling
+│   │   ├── external_link_test.go
 │   │   ├── markdown.go    # Core markdown parsing
-│   │   └── strip_frontmatter.go # Frontmatter removal
+│   │   ├── markdown_test.go
+│   │   ├── strip_frontmatter.go # Frontmatter removal
+│   │   └── strip_frontmatter_test.go
 │   ├── rule/              # Lint rules implementation
 │   │   ├── code_block.go
+│   │   ├── code_block_test.go
 │   │   ├── duplicate_headings.go
+│   │   ├── duplicate_headings_test.go
 │   │   ├── empty_alt_text.go
+│   │   ├── empty_alt_text_test.go
 │   │   ├── external_link.go
+│   │   ├── external_link_test.go
+│   │   ├── external_link_internal_test.go
 │   │   ├── final_blank_line.go
-│   │   └── heading_level.go
+│   │   ├── final_blank_line_test.go
+│   │   ├── heading_level.go
+│   │   ├── heading_level_test.go
+│   │   ├── no_multiple_blank_lines.go
+│   │   └── no_multiple_blank_lines_test.go
 │   ├── testutil/          # Testing utilities
+│   │   ├── path.go
+│   │   └── path_test.go
 │   └── util/              # Common utilities
-├── testdata/              # Test fixtures
+│       ├── pathutil.go
+│       └── pathutil_test.go
+├── testdata/              # Unit test fixtures
 ├── main.go               # Application entry point
-└── doc.go                # Package documentation
+├── doc.go                # Package documentation
+├── go.mod                # Go module definition
+├── go.sum                # Go module checksums
+├── Makefile              # Build and test targets
+└── README.md             # Project documentation
 ```
 
 ## Development Guidelines
@@ -59,7 +84,6 @@ gomarklint/
 
 ### Testing
 
-- Use `testdata/` directory for test fixtures
 - Follow Go testing conventions with `_test.go` files
 - Use table-driven tests where appropriate
 - Test both positive and negative cases
@@ -85,9 +109,10 @@ gomarklint/
 
 1. Create new file in `internal/rule/`
 2. Implement the check function returning `[]LintError`
-3. Add tests in corresponding `_test.go` file
+3. Add unit tests in corresponding `_test.go` file
 4. Add config option if needed in `internal/config/config.go`
 5. Integrate into main checking logic in `cmd/root.go`
+6. Add E2E test case in `e2e/e2e_test.go` with test fixture in `e2e/fixtures/` if applicable
 
 ### Adding Configuration Options
 
@@ -114,7 +139,7 @@ go run main.go ./README.md
 ## Key Dependencies
 
 - `github.com/spf13/cobra` - CLI framework
-- `gopkg.in/yaml.v3` - YAML parsing (for frontmatter)
+- `github.com/bmatcuk/doublestar` - Glob pattern matching
 - Standard library packages for file I/O, regex, HTTP
 
 ## 🛠 Local Development
@@ -122,23 +147,36 @@ go run main.go ./README.md
 To set up a local development environment for `gomarklint`:
 
 ```bash
-# Run all tests
-go test ./...
+# Run unit tests only
+make test
+
+# Run end-to-end tests
+make test-e2e
+
+# Run all tests (unit + E2E)
+make test-all
+
+# Build the binary
+make build
 
 # Show CLI help from local source
 go run . --help
 
 # Generate a default .gomarklint.json (from your local build)
 go run . init
-
-# Lint the included sample files in ./testdata
-go run . testdata
 ```
+
+### Testing Strategy
+
+- **Unit Tests**: Tests for individual rules and utilities are in `*_test.go` files alongside the code
+- **E2E Tests**: Integration tests in `e2e/e2e_test.go` test the full CLI behavior against fixture files in `e2e/fixtures/`
+- Run `make build-e2e` to build the binary for E2E tests (automatically done by `make test-e2e`)
 
 Notes:
 - `go run .` uses the local source directly, so you don't need to `go install` during development.
 - When adding new CLI flags or config fields, confirm they appear in `--help` and the generated `.gomarklint.json`.
 - Tests should remain fast and self-contained — contributions that break this will be rejected.
+- When adding new rules or CLI flags, add corresponding E2E tests in `e2e/e2e_test.go` and test fixtures in `e2e/fixtures/`
 
 ## Notes for AI Assistance
 

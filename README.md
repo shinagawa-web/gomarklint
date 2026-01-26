@@ -396,8 +396,14 @@ make help
 # Build the binary
 make build
 
-# Run all tests
+# Run unit tests
 make test
+
+# Run end-to-end tests
+make test-e2e
+
+# Run all tests (unit + E2E)
+make test-all
 
 # Run tests with coverage report
 make test-coverage
@@ -418,10 +424,35 @@ make init
 make clean
 ```
 
+### Testing Strategy
+
+#### Unit Tests
+Unit tests for individual rules and utilities are located in `*_test.go` files alongside the code they test:
+- `internal/rule/*_test.go` — Test individual lint rules
+- `internal/parser/*_test.go` — Test parsing utilities
+- `internal/config/*_test.go` — Test configuration loading
+- `internal/util/*_test.go` — Test utility functions
+
+Run with: `make test`
+
+#### End-to-End Tests
+E2E tests verify the complete CLI behavior by running the compiled binary against fixture files:
+- Located in `e2e/e2e_test.go`
+- Test fixtures in `e2e/fixtures/` (Markdown files with various rule violations)
+- Tests are organized into logical categories:
+  - Basic Functionality: Individual rule detection (heading levels, duplicates, blank lines, code blocks, alt text, external links)
+  - Configuration: CLI flag overrides and rule disabling
+  - Output Formats: Text and JSON output validation
+  - Multiple Files: Multi-file and directory recursion handling
+  - Edge Cases: Non-existent files, invalid configs, empty files, frontmatter handling, multiple violations in single file
+
+Run with: `make test-e2e`
+
 Notes:
-- `go run .` uses the local source directly, so you don’t need to `go install` during development.
+- `go run .` uses the local source directly, so you don't need to `go install` during development.
 - When adding new CLI flags or config fields, confirm they appear in `--help` and the generated `.gomarklint.json`.
 - Tests should remain fast and self-contained — contributions that break this will be rejected.
+- E2E tests may take longer due to external link validation; use `enableLinkCheck: false` in test config when testing rules unrelated to links.
 
 ## 🤝 Contributing
 
