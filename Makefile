@@ -30,8 +30,10 @@ test: ## Run unit tests (excluding E2E)
 # E2E test binary
 test-e2e: build-e2e ## Run end-to-end tests
 	@echo "Running E2E tests..."
-	$(GOTEST) ./e2e/... -v
-	@$(MAKE) clean-e2e
+	@$(GOTEST) ./e2e/... -v; \
+	EXIT_CODE=$$?; \
+	$(MAKE) clean-e2e; \
+	exit $$EXIT_CODE
 
 build-e2e: ## Build binary for E2E tests
 	@echo "Building E2E test binary..."

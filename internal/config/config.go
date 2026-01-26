@@ -12,6 +12,7 @@ type Config struct {
 	EnableDuplicateHeadingCheck     bool     `json:"enableDuplicateHeadingCheck"`
 	EnableHeadingLevelCheck         bool     `json:"enableHeadingLevelCheck"`
 	EnableNoMultipleBlankLinesCheck bool     `json:"enableNoMultipleBlankLinesCheck"`
+	EnableFinalBlankLineCheck       bool     `json:"enableFinalBlankLineCheck"`
 }
 
 func Default() Config {
@@ -26,5 +27,6 @@ func Default() Config {
 		EnableDuplicateHeadingCheck:     true,
 		EnableHeadingLevelCheck:         true,
 		EnableNoMultipleBlankLinesCheck: true,
+		EnableFinalBlankLineCheck:       true,
 	}
 }

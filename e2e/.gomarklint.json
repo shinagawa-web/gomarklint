@@ -5,6 +5,7 @@
   "enableHeadingLevelCheck": true,
   "enableDuplicateHeadingCheck": true,
   "enableNoMultipleBlankLinesCheck": true,
+  "enableFinalBlankLineCheck": true,
   "enableLinkCheck": true,
   "skipLinkPatterns": [],
   "output": "text"

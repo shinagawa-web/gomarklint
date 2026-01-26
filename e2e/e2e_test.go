@@ -114,6 +114,15 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "1 issues found")
 		})
+
+		t.Run("NoFinalBlankLine", func(t *testing.T) {
+			output := runTest(t, "fixtures/no_final_blank_line.md", "--config", ".gomarklint.json")
+			assertOutputContains(t, output, "Errors in fixtures/no_final_blank_line.md:")
+			assertOutputContains(t, output, "fixtures/no_final_blank_line.md:3:")
+			assertOutputContains(t, output, "Missing final blank line")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "1 issues found")
+		})
 	})
 
 	t.Run("Configuration", func(t *testing.T) {
@@ -130,6 +139,14 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "duplicate heading")
+			assertOutputNotContains(t, output, "Errors")
+		})
+
+		t.Run("DisableFinalBlankLineCheck", func(t *testing.T) {
+			output := runTest(t, "fixtures/no_final_blank_line.md", "--config", ".gomarklint.json", "--enable-final-blank-line-check=false")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "No issues found")
+			assertOutputNotContains(t, output, "Missing final blank line")
 			assertOutputNotContains(t, output, "Errors")
 		})
 	})
@@ -196,8 +213,8 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Missing final blank line")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
-			assertOutputContains(t, output, "13 issues found")
-			assertOutputContains(t, output, "Checked 11 file(s)")
+			assertOutputContains(t, output, "14 issues found")
+			assertOutputContains(t, output, "Checked 12 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		})
