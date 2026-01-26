@@ -25,7 +25,7 @@ build: ## Build the binary
 
 test: ## Run unit tests (excluding E2E)
 	@echo "Running tests..."
-	$(GOTEST) ./... -v -skip '^TestE2E'
+	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -v
 
 # E2E test binary
 test-e2e: build-e2e ## Run end-to-end tests
@@ -46,8 +46,8 @@ test-all: test test-e2e ## Run all tests (unit + E2E)
 
 test-coverage: ## Run tests with coverage
 	@echo "Running tests with coverage..."
-	$(GOTEST) ./... -coverprofile=coverage.out
-	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage.txt
+	$(GOCMD) tool cover -html=coverage.txt -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
 clean: ## Clean build artifacts
