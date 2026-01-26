@@ -150,6 +150,7 @@ func TestE2E_DirectoryRecursion(t *testing.T) {
 	assertOutputContains(t, output, "fixtures/multiple_blank_lines.md")
 	assertOutputContains(t, output, "fixtures/unclosed_code_block.md")
 	assertOutputContains(t, output, "fixtures/empty_alt_text.md")
+	assertOutputContains(t, output, "fixtures/invalid_external_link.md")
 
 	// Should verify specific error messages for each file
 	assertOutputContains(t, output, "First heading should be level 2")
@@ -157,12 +158,13 @@ func TestE2E_DirectoryRecursion(t *testing.T) {
 	assertOutputContains(t, output, "Multiple consecutive blank lines")
 	assertOutputContains(t, output, "Unclosed code block")
 	assertOutputContains(t, output, "empty alt text")
+	assertOutputContains(t, output, "Link unreachable")
 
 	// Should report total issues from all files
-	assertOutputContains(t, output, "7 issues found")
+	assertOutputContains(t, output, "8 issues found")
 
-	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line, unclosed_code_block.md has error, empty_alt_text.md has error)
-	assertOutputContains(t, output, "Checked 9 file(s)")
+	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line, unclosed_code_block.md has error, empty_alt_text.md has error, invalid_external_link.md has error)
+	assertOutputContains(t, output, "Checked 10 file(s)")
 }
 
 // TestE2E_ErrorsFromAllFiles tests that errors from multiple files are reported correctly
@@ -241,5 +243,14 @@ func TestE2E_UnclosedCodeBlock(t *testing.T) {
 func TestE2E_EmptyAltText(t *testing.T) {
 	output := runTest(t, "fixtures/empty_alt_text.md", "--config", ".gomarklint.json")
 	assertOutputContains(t, output, "empty alt text")
+	assertOutputContains(t, output, "1 issues found")
+}
+
+// TestE2E_InvalidExternalLink tests that invalid/unreachable external links are detected
+func TestE2E_InvalidExternalLink(t *testing.T) {
+	output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json")
+	assertOutputContains(t, output, "Link unreachable")
+	assertOutputContains(t, output, "https://this-domain-definitely-does-not-exist-12345.com")
+	assertOutputContains(t, output, "fixtures/invalid_external_link.md:9:")
 	assertOutputContains(t, output, "1 issues found")
 }
