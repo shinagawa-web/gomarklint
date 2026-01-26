@@ -27,7 +27,7 @@ jobs:
         run: make test-all
 
       - name: Generate coverage report
-        run: go test ./... -skip '^TestE2E' -coverprofile=coverage.txt
+        run: make test-coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
