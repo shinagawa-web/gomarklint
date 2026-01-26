@@ -1,4 +1,4 @@
-.PHONY: build test test-e2e clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all
+.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all
 
 # Default target
 .DEFAULT_GOAL := help
