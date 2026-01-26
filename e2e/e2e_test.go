@@ -22,6 +22,9 @@ func runTest(t *testing.T, args ...string) []byte {
 
 	cmd := exec.Command(binaryPath)
 	cmd.Args = append(cmd.Args, args...)
+	// We intentionally ignore the error here because CombinedOutput() errors on non-zero exit codes.
+	// For E2E tests, we want to capture output from both success (exit 0) and failure cases (exit 1+).
+	// The actual test assertions check the output content, not the exit code.
 	output, _ := cmd.CombinedOutput()
 	return output
 }
