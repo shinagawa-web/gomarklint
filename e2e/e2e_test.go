@@ -11,21 +11,10 @@ const (
 	binaryName = "gomarklint-e2e-test"
 )
 
-// runTest is a helper function to run the gomarklint binary with given arguments and return the output
+// runTest is a helper function to run the gomarklint binary and return only the output.
+// It ignores the exit code since E2E tests check output content, not exit status.
 func runTest(t *testing.T, args ...string) []byte {
-	binaryPath := "./" + binaryName
-
-	// Check if binary exists
-	if _, err := os.Stat(binaryPath); err != nil {
-		t.Fatalf("e2e test binary not found at %s: %v. Did build-e2e run successfully?", binaryName, err)
-	}
-
-	cmd := exec.Command(binaryPath)
-	cmd.Args = append(cmd.Args, args...)
-	// We intentionally ignore the error here because CombinedOutput() errors on non-zero exit codes.
-	// For E2E tests, we want to capture output from both success (exit 0) and failure cases (exit 1+).
-	// The actual test assertions check the output content, not the exit code.
-	output, _ := cmd.CombinedOutput()
+	output, _ := runTestWithCmd(t, args...)
 	return output
 }
 
@@ -43,7 +32,8 @@ func assertOutputNotContains(t *testing.T, output []byte, unexpected string) {
 	}
 }
 
-// runTestWithCmd runs the gomarklint binary and returns output and a flag indicating if binary executed
+// runTestWithCmd runs the gomarklint binary and returns output and exit code.
+// This is used when tests need to verify error conditions.
 func runTestWithCmd(t *testing.T, args ...string) ([]byte, error) {
 	binaryPath := "./" + binaryName
 
@@ -54,6 +44,8 @@ func runTestWithCmd(t *testing.T, args ...string) ([]byte, error) {
 
 	cmd := exec.Command(binaryPath)
 	cmd.Args = append(cmd.Args, args...)
+	// We capture the error here to return it to the caller.
+	// Some tests need to verify error conditions (e.g., invalid config files).
 	output, err := cmd.CombinedOutput()
 	return output, err
 }
