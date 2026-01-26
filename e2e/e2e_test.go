@@ -149,18 +149,20 @@ func TestE2E_DirectoryRecursion(t *testing.T) {
 	assertOutputContains(t, output, "fixtures/duplicate_headings.md")
 	assertOutputContains(t, output, "fixtures/multiple_blank_lines.md")
 	assertOutputContains(t, output, "fixtures/unclosed_code_block.md")
+	assertOutputContains(t, output, "fixtures/empty_alt_text.md")
 
 	// Should verify specific error messages for each file
 	assertOutputContains(t, output, "First heading should be level 2")
 	assertOutputContains(t, output, "duplicate heading")
 	assertOutputContains(t, output, "Multiple consecutive blank lines")
 	assertOutputContains(t, output, "Unclosed code block")
+	assertOutputContains(t, output, "empty alt text")
 
 	// Should report total issues from all files
-	assertOutputContains(t, output, "6 issues found")
+	assertOutputContains(t, output, "7 issues found")
 
-	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line, unclosed_code_block.md has error)
-	assertOutputContains(t, output, "Checked 8 file(s)")
+	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line, unclosed_code_block.md has error, empty_alt_text.md has error)
+	assertOutputContains(t, output, "Checked 9 file(s)")
 }
 
 // TestE2E_ErrorsFromAllFiles tests that errors from multiple files are reported correctly
@@ -232,5 +234,12 @@ func TestE2E_FilesWithFrontmatter(t *testing.T) {
 func TestE2E_UnclosedCodeBlock(t *testing.T) {
 	output := runTest(t, "fixtures/unclosed_code_block.md", "--config", ".gomarklint.json")
 	assertOutputContains(t, output, "Unclosed code block")
+	assertOutputContains(t, output, "1 issues found")
+}
+
+// TestE2E_EmptyAltText tests that images with empty alt text are detected
+func TestE2E_EmptyAltText(t *testing.T) {
+	output := runTest(t, "fixtures/empty_alt_text.md", "--config", ".gomarklint.json")
+	assertOutputContains(t, output, "empty alt text")
 	assertOutputContains(t, output, "1 issues found")
 }
