@@ -148,17 +148,19 @@ func TestE2E_DirectoryRecursion(t *testing.T) {
 	assertOutputContains(t, output, "fixtures/invalid_heading_level.md")
 	assertOutputContains(t, output, "fixtures/duplicate_headings.md")
 	assertOutputContains(t, output, "fixtures/multiple_blank_lines.md")
+	assertOutputContains(t, output, "fixtures/unclosed_code_block.md")
 
 	// Should verify specific error messages for each file
 	assertOutputContains(t, output, "First heading should be level 2")
 	assertOutputContains(t, output, "duplicate heading")
 	assertOutputContains(t, output, "Multiple consecutive blank lines")
+	assertOutputContains(t, output, "Unclosed code block")
 
 	// Should report total issues from all files
-	assertOutputContains(t, output, "5 issues found")
+	assertOutputContains(t, output, "6 issues found")
 
-	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line)
-	assertOutputContains(t, output, "Checked 7 file(s)")
+	// Should report files checked (heading_level_one.md also has error, empty.md missing final blank line, unclosed_code_block.md has error)
+	assertOutputContains(t, output, "Checked 8 file(s)")
 }
 
 // TestE2E_ErrorsFromAllFiles tests that errors from multiple files are reported correctly
@@ -224,4 +226,11 @@ func TestE2E_FilesWithFrontmatter(t *testing.T) {
 	// File with frontmatter should be stripped and processed (has H2 headings which are valid)
 	assertOutputContains(t, output, "No issues found")
 	assertOutputNotContains(t, output, "Errors")
+}
+
+// TestE2E_UnclosedCodeBlock tests that files with unclosed code blocks are detected
+func TestE2E_UnclosedCodeBlock(t *testing.T) {
+	output := runTest(t, "fixtures/unclosed_code_block.md", "--config", ".gomarklint.json")
+	assertOutputContains(t, output, "Unclosed code block")
+	assertOutputContains(t, output, "1 issues found")
 }
