@@ -199,8 +199,10 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Errors in fixtures/empty.md:")
 			assertOutputContains(t, output, "fixtures/empty.md:1:")
 			assertOutputContains(t, output, "Missing final blank line")
-			assertOutputContains(t, output, "8 issues found")
-			assertOutputContains(t, output, "Checked 10 file(s)")
+			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
+			assertOutputContains(t, output, "13 issues found")
+			assertOutputContains(t, output, "Checked 11 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		})
@@ -253,6 +255,43 @@ func TestE2E(t *testing.T) {
 			output := runTest(t, "fixtures/with_frontmatter.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "Errors")
+		})
+
+		t.Run("MultipleViolationsInSingleFile", func(t *testing.T) {
+			output, _ := runTestWithCmd(t, "fixtures/multiple_violations.md", "--config", ".gomarklint.json")
+
+			// Should return output showing errors (exit code behavior may vary)
+			// Just verify errors are reported
+
+			// All errors should be reported
+			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
+
+			// Heading level error (first heading is level 1, should be level 2)
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
+			assertOutputContains(t, output, "First heading should be level 2")
+
+			// Multiple blank lines error
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:5:")
+			assertOutputContains(t, output, "Multiple consecutive blank lines")
+
+			// Duplicate heading error (line 12)
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:12:")
+			assertOutputContains(t, output, "duplicate heading")
+			assertOutputContains(t, output, "section one")
+
+			// Empty alt text error
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:16:")
+			assertOutputContains(t, output, "image with empty alt text")
+
+			// Unclosed code block error
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:20:")
+			assertOutputContains(t, output, "Unclosed code block")
+
+			// File should have been checked
+			assertOutputContains(t, output, "Checked 1 file(s)")
+
+			// All 5 errors should be reported
+			assertOutputContains(t, output, "5 issues found")
 		})
 	})
 }
