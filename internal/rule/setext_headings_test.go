@@ -68,6 +68,30 @@ func TestCheckNoSetextHeadings(t *testing.T) {
 			content:  "I am not a heading\nAnd neither am I",
 			wantErrs: nil,
 		},
+		{
+			name:     "list item followed by hr should not be a heading",
+			content:  "- list item\n---",
+			wantErrs: nil, // リストの直後の --- は水平線として扱われるべき
+		},
+		{
+			name:    "multiple spaces before underline",
+			content: "Heading\n   ===", // 3つまでのスペースは許容される
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "Setext heading found (prefer ATX style instead)"},
+			},
+		},
+		{
+			name:     "too many spaces before underline is a code block",
+			content:  "Not a heading\n    ===", // 4つ以上のスペースはインデントされたコードブロック
+			wantErrs: nil,
+		},
+		{
+			name:    "setext heading with multiple lines of text",
+			content: "This is a\nmulti-line heading\n===",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 3, Message: "Setext heading found (prefer ATX style instead)"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
