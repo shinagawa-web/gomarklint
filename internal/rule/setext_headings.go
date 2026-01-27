@@ -34,20 +34,39 @@ func CheckNoSetextHeadings(filename, content string) []LintError {
 	// A line is considered empty if it is of either no length or contains
 	// only whitespace.
 	emptyLineRegex := regexp.MustCompile(`^\s*$`)
+	// List markers and blockquote markers
+	otherBlockRegex := regexp.MustCompile(`^ {0,3}(?:[*+-]|\d+[.)]|>)\s*`)
 
 	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
-	previousLineWasEmpty := true
+	isPrevLineEmpty := true
+	isPrevLineOtherBlock := false
+	isInLazyBlockquote := false
 
 	for i, line := range lines {
 		isUnderline := settextUnderlineRegex.MatchString(line)
-		if !isInCodeBlock(i+1, codeBlockRanges) && !previousLineWasEmpty && isUnderline {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    i + 1 + offset,
-				Message: "Setext heading found (prefer ATX style instead)",
-			})
+		isCurrentLineEmpty := emptyLineRegex.MatchString(line)
+		isCurrentLineOtherBlock := otherBlockRegex.MatchString(line)
+		if isUnderline && !isInCodeBlock(i+1, codeBlockRanges) {
+			if !isPrevLineEmpty && !isPrevLineOtherBlock && !isInLazyBlockquote {
+				errs = append(errs, LintError{
+					File:    filename,
+					Line:    i + 1 + offset,
+					Message: "Setext heading found (prefer ATX style instead)",
+				})
+			}
 		}
-		previousLineWasEmpty = emptyLineRegex.MatchString(line)
+		if isCurrentLineEmpty {
+			isPrevLineEmpty = true
+			isPrevLineOtherBlock = false
+			isInLazyBlockquote = false
+		} else if isCurrentLineOtherBlock {
+			isPrevLineEmpty = false
+			isPrevLineOtherBlock = true
+			isInLazyBlockquote = strings.HasPrefix(strings.TrimSpace(line), ">")
+		} else {
+			isPrevLineEmpty = false
+			isPrevLineOtherBlock = false
+		}
 	}
 
 	return errs
