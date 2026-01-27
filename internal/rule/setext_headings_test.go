@@ -92,6 +92,21 @@ func TestCheckNoSetextHeadings(t *testing.T) {
 				{File: "test.md", Line: 3, Message: "Setext heading found (prefer ATX style instead)"},
 			},
 		},
+		{
+			name:     "blockquote followed by hr should not be a heading",
+			content:  "> This is a blockquote\n---",
+			wantErrs: nil,
+		},
+		{
+			name:     "nested blockquote followed by hr should not be a heading",
+			content:  ">> Nested quote\n===",
+			wantErrs: nil,
+		},
+		{
+			name:     "lazy blockquote followed by hr should not be a heading",
+			content:  "> This is a\nquote\n---",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
