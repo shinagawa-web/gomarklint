@@ -67,6 +67,7 @@ This creates `.gomarklint.json` with sensible defaults:
   "enableHeadingLevelCheck": true,
   "enableDuplicateHeadingCheck": true,
   "enableLinkCheck": false,
+  "enableNoSetextHeadingsCheck": true,
   "skipLinkPatterns": [],
   "outputFormat": "text"
 }
@@ -105,6 +106,7 @@ gomarklint ./... --output json
 | `duplicate-heading`            | Duplicate headings within one file                     | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
 | `no-multiple-blank-lines`      | Multiple consecutive blank lines                       | Toggle: `--enable-no-multiple-blank-lines-check` (default **on**)                                      |
 | `external-link`                | External links that fail validation                    | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
+| `no-setext-headings`           | Setext heading used instead of ATX style               | Toggle: `--enable-no-setext-headings-check` (default **on**)                                           |
 
 Execution details:
 
