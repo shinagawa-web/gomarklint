@@ -28,6 +28,7 @@ var enableHeadingLevelCheck bool
 var enableDuplicateHeadingCheck bool
 var enableNoMultipleBlankLinesCheck bool
 var enableNoSetextHeadingsCheck bool
+var enableFinalBlankLineCheck bool
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint [files or directories]",
@@ -65,6 +66,9 @@ var rootCmd = &cobra.Command{
 		if cmd.Flags().Changed("enable-no-setext-headings-check") {
 			cfg.EnableNoSetextHeadingsCheck = enableNoSetextHeadingsCheck
 		}
+		if cmd.Flags().Changed("enable-final-blank-line-check") {
+			cfg.EnableFinalBlankLineCheck = enableFinalBlankLineCheck
+		}
 		if cmd.Flags().Changed("skip-link-patterns") {
 			cfg.SkipLinkPatterns = skipLinkPatterns
 		}
@@ -85,6 +89,7 @@ var rootCmd = &cobra.Command{
 		enableDuplicateHeadingCheck = cfg.EnableDuplicateHeadingCheck
 		enableNoMultipleBlankLinesCheck = cfg.EnableNoMultipleBlankLinesCheck
 		enableNoSetextHeadingsCheck = cfg.EnableNoSetextHeadingsCheck
+		enableFinalBlankLineCheck = cfg.EnableFinalBlankLineCheck
 
 		if len(args) == 0 {
 			if len(cfg.Include) > 0 {
@@ -169,7 +174,9 @@ var rootCmd = &cobra.Command{
 
 func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
 	var allErrors []rule.LintError
-	allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
+	if cfg.EnableFinalBlankLineCheck {
+		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
+	}
 	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
 	allErrors = append(allErrors, rule.CheckEmptyAltText(path, content)...)
 	if cfg.EnableHeadingLevelCheck {
@@ -293,6 +300,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&enableDuplicateHeadingCheck, "enable-duplicate-heading-check", true, "enable duplicate heading check")
 	rootCmd.Flags().BoolVar(&enableNoMultipleBlankLinesCheck, "enable-no-multiple-blank-lines-check", true, "enable no multiple blank lines check")
 	rootCmd.Flags().BoolVar(&enableNoSetextHeadingsCheck, "enable-no-setext-headings-check", true, "enable no setext headings check")
+	rootCmd.Flags().BoolVar(&enableFinalBlankLineCheck, "enable-final-blank-line-check", true, "enable final blank line check")
 	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
 	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text or json")
 
