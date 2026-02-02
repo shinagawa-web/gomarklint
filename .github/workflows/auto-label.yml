@@ -1,0 +1,61 @@
+name: "Auto Label PR"
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, labeled, unlabeled, synchronize]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Auto label based on PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+            const labels = [];
+            
+            // Conventional Commits pattern matching
+            if (title.startsWith('feat:') || title.startsWith('feat(')) {
+              labels.push('enhancement');
+            }
+            if (title.startsWith('fix:') || title.startsWith('fix(')) {
+              labels.push('bug');
+            }
+            if (title.startsWith('docs:') || title.startsWith('docs(')) {
+              labels.push('documentation');
+            }
+            if (title.startsWith('chore:') || title.startsWith('chore(')) {
+              labels.push('chore');
+            }
+            if (title.startsWith('deps:') || title.startsWith('deps(') || title.includes('dependencies')) {
+              labels.push('dependencies');
+            }
+            // Breaking change: matches conventional commit format (e.g., feat!:, fix(scope)!:)
+            if (/^[a-z]+(\([^)]+\))?!:/.test(title)) {
+              labels.push('breaking-change');
+            }
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: labels
+              });
+              console.log(`Added labels: ${labels.join(', ')}`);
+            } else {
+              console.log('No matching labels found for PR title');
+            }
+
+  check-labels:
+    runs-on: ubuntu-latest
+    needs: auto-label
+    steps:
+      - name: Check for labels
+        uses: docker://agilepathway/pull-request-label-checker:latest
+        with:
+          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
