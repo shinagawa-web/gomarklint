@@ -1,0 +1,45 @@
+name: "Auto Label PR"
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Auto label based on PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+            const labels = [];
+            
+            // Conventional Commits pattern matching
+            if (title.startsWith('feat:') || title.startsWith('feat(')) {
+              labels.push('enhancement');
+            } else if (title.startsWith('fix:') || title.startsWith('fix(')) {
+              labels.push('bug');
+            } else if (title.startsWith('docs:') || title.startsWith('docs(')) {
+              labels.push('documentation');
+            } else if (title.startsWith('chore:') || title.startsWith('chore(')) {
+              labels.push('chore');
+            } else if (title.startsWith('deps:') || title.startsWith('deps(') || title.includes('dependencies')) {
+              labels.push('dependencies');
+            } else if (title.includes('breaking') || title.includes('!:')) {
+              labels.push('breaking-change');
+            }
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: labels
+              });
+              console.log(`Added labels: ${labels.join(', ')}`);
+            } else {
+              console.log('No matching labels found for PR title');
+            }

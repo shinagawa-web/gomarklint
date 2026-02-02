@@ -2,7 +2,11 @@ name: "Label Check"
 
 on:
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    types: [labeled, unlabeled, synchronize]
+  workflow_run:
+    workflows: ["Auto Label PR"]
+    types:
+      - completed
 
 jobs:
   check-labels:
