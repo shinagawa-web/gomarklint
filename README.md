@@ -85,7 +85,7 @@ gomarklint ./...
 gomarklint docs README.md internal/handbook
 ```
 
-Exit code is non-zero on violations (configurable soon), so it plugs into CI trivially.
+Exit code is non-zero if any violations are found, zero otherwise.
 
 ### 3) JSON output (for CI / tooling)
 
@@ -141,7 +141,7 @@ Notes:
 
 - Flags override config values when explicitly provided.
 - Paths are expanded (globs/dirs) and filtered by ignore (from config).
-- Exit behavior: if any issues exist and GITHUB_ACTIONS=true, the command returns a non-nil error (non-zero exit); otherwise it prints results and exits zero. This makes it friendly locally while strict on CI.
+- Exit behavior: the command returns a non-nil error (non-zero exit), zero otherwise.
 
 ## Configuration
 

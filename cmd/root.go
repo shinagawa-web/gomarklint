@@ -161,12 +161,8 @@ var rootCmd = &cobra.Command{
 			printHumanOutput(orderedPaths, results, len(files), totalLines, totalErrors, totalLinksChecked, cfg.EnableLinkCheck, elapsed)
 		}
 
-		onCI := os.Getenv("GITHUB_ACTIONS") == "true"
 		if totalErrors > 0 {
-			if onCI {
-				return errors.New("")
-			}
-			return nil
+			return errors.New("")
 		}
 		return nil
 	},
