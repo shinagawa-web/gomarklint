@@ -10,11 +10,11 @@ import (
 func generateMarkdownWithCodeBlocks(blocks int) string {
 	var sb strings.Builder
 	languages := []string{"go", "python", "javascript", "bash"}
-	
+
 	for i := 1; i <= blocks; i++ {
 		sb.WriteString(fmt.Sprintf("## Code Example %d\n\n", i))
 		lang := languages[i%len(languages)]
-		
+
 		sb.WriteString(fmt.Sprintf("```%s\n", lang))
 		sb.WriteString("func example() {\n")
 		sb.WriteString("    return nil\n")

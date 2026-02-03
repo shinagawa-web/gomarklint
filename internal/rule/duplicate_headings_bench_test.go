@@ -10,7 +10,7 @@ import (
 func generateMarkdownWithDuplicates(blocks int) string {
 	var sb strings.Builder
 	headingNames := []string{"Introduction", "Overview", "Details", "Summary", "Conclusion"}
-	
+
 	for i := 1; i <= blocks; i++ {
 		heading := headingNames[i%len(headingNames)]
 		sb.WriteString(fmt.Sprintf("## %s\n\n", heading))

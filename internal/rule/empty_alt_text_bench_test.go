@@ -9,10 +9,10 @@ import (
 // generateMarkdownWithImages generates markdown content with image tags.
 func generateMarkdownWithImages(blocks int) string {
 	var sb strings.Builder
-	
+
 	for i := 1; i <= blocks; i++ {
 		sb.WriteString(fmt.Sprintf("## Section %d\n\n", i))
-		
+
 		// Mix of images with and without alt text
 		if i%2 == 0 {
 			sb.WriteString(fmt.Sprintf("![Image %d](image%d.png)\n\n", i, i))

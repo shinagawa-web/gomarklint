@@ -9,17 +9,17 @@ import (
 // generateMarkdownWithBlankLines generates markdown with various blank line patterns.
 func generateMarkdownWithBlankLines(blocks int) string {
 	var sb strings.Builder
-	
+
 	for i := 1; i <= blocks; i++ {
 		sb.WriteString(fmt.Sprintf("## Section %d\n\n", i))
 		sb.WriteString("First paragraph.\n")
-		
+
 		// Add varying numbers of blank lines
 		blankLines := (i % 3) + 1
 		for j := 0; j < blankLines; j++ {
 			sb.WriteString("\n")
 		}
-		
+
 		sb.WriteString("Second paragraph.\n\n")
 	}
 	return sb.String()

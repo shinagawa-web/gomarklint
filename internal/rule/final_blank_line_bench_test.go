@@ -9,7 +9,7 @@ import (
 // generateMarkdownContent generates generic markdown content.
 func generateMarkdownContent(lines int) string {
 	var sb strings.Builder
-	
+
 	for i := 1; i <= lines; i++ {
 		if i%10 == 1 {
 			sb.WriteString(fmt.Sprintf("# Heading %d\n", i))
