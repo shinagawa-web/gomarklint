@@ -1,0 +1,76 @@
+name: Benchmark
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for comparison
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
+
+      - name: Run benchmarks on PR branch
+        run: make bench | tee new-bench.txt
+
+      - name: Checkout main branch
+        run: |
+          git fetch origin main
+          git checkout origin/main
+
+      - name: Run benchmarks on main branch
+        run: make bench | tee old-bench.txt
+
+      - name: Compare benchmarks
+        id: benchmark_comparison
+        run: |
+          echo "## Benchmark Comparison" > comparison.txt
+          echo "" >> comparison.txt
+          echo "Comparing PR branch against main branch:" >> comparison.txt
+          echo "" >> comparison.txt
+          echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)" >> comparison.txt
+          echo "" >> comparison.txt
+          echo '```' >> comparison.txt
+          benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
+          .github/scripts/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
+          cat formatted-comparison.txt >> comparison.txt
+          echo '```' >> comparison.txt
+          cat comparison.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            old-bench.txt
+            new-bench.txt
+            comparison.txt
+
+      - name: Comment PR with benchmark results
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const comparison = fs.readFileSync('comparison.txt', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comparison
+            });
