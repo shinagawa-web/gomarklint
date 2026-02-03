@@ -21,7 +21,7 @@ jobs:
           cache: true
 
       - name: Install benchstat
-        run: go install golang.org/x/perf/cmd/benchstat@latest
+        run: go install golang.org/x/perf/cmd/benchstat@v0.0.0-20240604174448-3b48cf0e0164
 
       - name: Run benchmarks on PR branch
         run: make bench | tee new-bench.txt
