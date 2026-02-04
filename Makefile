@@ -1,4 +1,4 @@
-.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all
+.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench
 
 # Default target
 .DEFAULT_GOAL := help
@@ -51,6 +51,10 @@ test-coverage: ## Run tests with coverage
 	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage.txt
 	$(GOCMD) tool cover -html=coverage.txt -o coverage.html
 	@echo "Coverage report generated: coverage.html"
+
+bench: ## Run benchmark tests
+	@echo "Running benchmark tests..."
+	$(GOTEST) -bench=. -benchmem $(shell go list ./... | grep -v '/e2e') -run=^$$
 
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
