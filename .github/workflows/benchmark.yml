@@ -48,7 +48,7 @@ jobs:
           echo "" >> comparison.txt
           echo '```' >> comparison.txt
           benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-          .github/scripts/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
+          bash .github/scripts/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
           cat formatted-comparison.txt >> comparison.txt
           echo '```' >> comparison.txt
           cat comparison.txt
