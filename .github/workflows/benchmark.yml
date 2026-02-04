@@ -31,6 +31,9 @@ jobs:
           git fetch origin main
           git checkout origin/main
 
+      - name: Download dependencies for main branch
+        run: go mod download
+
       - name: Run benchmarks on main branch
         run: make bench | tee old-bench.txt
 
