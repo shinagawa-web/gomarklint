@@ -6,6 +6,19 @@ set -e
 INPUT_FILE="$1"
 OUTPUT_FILE="$2"
 
+# Validate input file exists
+if [[ ! -f "$INPUT_FILE" ]]; then
+  echo "Error: Input file '$INPUT_FILE' does not exist" >&2
+  exit 1
+fi
+
+# Check if input file has content
+if [[ ! -s "$INPUT_FILE" ]]; then
+  echo "Warning: Input file '$INPUT_FILE' is empty. No benchmark comparison available." >&2
+  echo "No benchmark comparison data available." > "$OUTPUT_FILE"
+  exit 0
+fi
+
 # Add status symbols based on delta percentage
 awk '
   NR==1 {print; next}  # Print header
