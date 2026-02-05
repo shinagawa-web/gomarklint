@@ -20,7 +20,6 @@ import (
 // Returns:
 //   - A slice of LintError entries for each detected duplicate heading (excluding the first occurrence).
 func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintError {
-
 	var errs []LintError
 	seen := map[string]int{}
 
