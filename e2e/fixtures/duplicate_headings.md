@@ -1,3 +1,8 @@
+---
+title: Duplicate Headings Test
+description: Test file with duplicate heading names
+---
+
 ## Section One
 
 Content here.

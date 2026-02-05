@@ -2,26 +2,21 @@ package rule
 
 import (
 	"strings"
-
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 // CheckUnclosedCodeBlocks detects any unclosed fenced code blocks (e.g., ```)
 // in the Markdown content. It ensures that every opening fence has a corresponding closing fence.
 //
-// It also handles frontmatter by skipping it and adjusting line numbers.
-//
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - content: the raw Markdown content as a string
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError indicating the location of any unclosed code block.
-func CheckUnclosedCodeBlocks(filename, content string) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-
+func CheckUnclosedCodeBlocks(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
-	_, unclosed := GetCodeBlockLineRanges(body)
+	_, unclosed := GetCodeBlockLineRanges(lines)
 
 	for _, start := range unclosed {
 		errs = append(errs, LintError{
@@ -34,8 +29,7 @@ func CheckUnclosedCodeBlocks(filename, content string) []LintError {
 	return errs
 }
 
-func GetCodeBlockLineRanges(content string) (closed [][2]int, unclosed []int) {
-	lines := strings.Split(content, "\n")
+func GetCodeBlockLineRanges(lines []string) (closed [][2]int, unclosed []int) {
 	inBlock := false
 	var start int
 	var closedRanges [][2]int

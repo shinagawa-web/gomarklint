@@ -1,3 +1,8 @@
+---
+title: Multiple Violations Test
+description: Test file with multiple types of errors
+---
+
 # First Heading
 
 Some content here.

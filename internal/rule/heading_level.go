@@ -3,9 +3,6 @@ package rule
 import (
 	"fmt"
 	"regexp"
-	"strings"
-
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 type LintError struct {
@@ -19,20 +16,20 @@ type LintError struct {
 // or heading levels that jump more than one level (e.g., from ## to ####).
 //
 // Parameters:
-//   - content: the raw Markdown content as a string
+//   - filename: the name of the file being checked (used in error reporting)
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //   - minLevel: the expected minimum level for the first heading (e.g., 2 for ##)
 //
 // Returns:
 //   - A slice of LintError containing the line number and description of each detected issue.
-func CheckHeadingLevels(filename, content string, minLevel int) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-	lines := strings.Split(body, "\n")
+func CheckHeadingLevels(filename string, lines []string, offset int, minLevel int) []LintError {
 	var errs []LintError
 
 	prevLevel := 0
 	headingRegex := regexp.MustCompile(`^(#{1,6})\s+`)
 
-	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
+	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 
 	for i, line := range lines {
 		if isInCodeBlock(i+1, codeBlockRanges) {

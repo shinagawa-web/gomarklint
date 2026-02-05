@@ -2,8 +2,12 @@ name: Check go install
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - '**.go'
+      - go.mod
+      - go.sum
 
 jobs:
   check-go-install:
@@ -20,5 +24,4 @@ jobs:
 
       - name: Try go install
         run: |
-          VERSION=$(git describe --tags --abbrev=0)
-          go install github.com/shinagawa-web/gomarklint@${VERSION}
+          go install github.com/shinagawa-web/gomarklint@latest

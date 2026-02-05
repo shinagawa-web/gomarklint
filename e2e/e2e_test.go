@@ -71,7 +71,7 @@ func TestE2E(t *testing.T) {
 		t.Run("DuplicateHeadings", func(t *testing.T) {
 			output := runTest(t, "fixtures/duplicate_headings.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/duplicate_headings.md:")
-			assertOutputContains(t, output, "fixtures/duplicate_headings.md:9:")
+			assertOutputContains(t, output, "fixtures/duplicate_headings.md:14:")
 			assertOutputContains(t, output, "duplicate heading")
 			assertOutputContains(t, output, "\"section one\"")
 			assertOutputContains(t, output, "Checked 1 file(s)")
@@ -109,7 +109,7 @@ func TestE2E(t *testing.T) {
 			// Enable link check explicitly to test external link validation
 			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json", "--enable-link-check=true")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
-			assertOutputContains(t, output, "fixtures/invalid_external_link.md:9:")
+			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable")
 			assertOutputContains(t, output, "https://this-domain-definitely-does-not-exist-12345.com")
 			assertOutputContains(t, output, "Checked 1 file(s)")
@@ -193,7 +193,7 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "fixtures/invalid_heading_level.md:1:")
 			assertOutputContains(t, output, "First heading should be level 2 (found level 1)")
 			assertOutputContains(t, output, "Errors in fixtures/duplicate_headings.md:")
-			assertOutputContains(t, output, "fixtures/duplicate_headings.md:9:")
+			assertOutputContains(t, output, "fixtures/duplicate_headings.md:14:")
 			assertOutputContains(t, output, "duplicate heading: \"section one\"")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_blank_lines.md:")
 			assertOutputContains(t, output, "fixtures/multiple_blank_lines.md:5:")
@@ -206,7 +206,7 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "image with empty alt text")
 			// External link check is enabled in the E2E config, so we should see link errors
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
-			assertOutputContains(t, output, "fixtures/invalid_external_link.md:9:")
+			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable: https://this-domain-definitely-does-not-exist-12345.com")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_external_links.md:")
 			assertOutputContains(t, output, "this-is-definitely-an-invalid-domain-12345.xyz")
@@ -217,7 +217,7 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "fixtures/empty.md:1:")
 			assertOutputContains(t, output, "Missing final blank line")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:6:")
 			// Count may vary, but should have checked all files
 			assertOutputContains(t, output, "Checked 17 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
@@ -234,7 +234,7 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "fixtures/invalid_heading_level.md:1:")
 			assertOutputContains(t, output, "First heading should be level 2")
 			assertOutputContains(t, output, "Errors in fixtures/duplicate_headings.md:")
-			assertOutputContains(t, output, "fixtures/duplicate_headings.md:9:")
+			assertOutputContains(t, output, "fixtures/duplicate_headings.md:14:")
 			assertOutputContains(t, output, "duplicate heading")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_blank_lines.md:")
 			assertOutputContains(t, output, "fixtures/multiple_blank_lines.md:5:")
@@ -288,24 +288,24 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
 
 			// Heading level error (first heading is level 1, should be level 2)
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:6:")
 			assertOutputContains(t, output, "First heading should be level 2")
 
 			// Multiple blank lines error
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:5:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:10:")
 			assertOutputContains(t, output, "Multiple consecutive blank lines")
 
-			// Duplicate heading error (line 12)
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:12:")
+			// Duplicate heading error (line 17)
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:17:")
 			assertOutputContains(t, output, "duplicate heading")
 			assertOutputContains(t, output, "section one")
 
 			// Empty alt text error
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:16:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:21:")
 			assertOutputContains(t, output, "image with empty alt text")
 
 			// Unclosed code block error
-			assertOutputContains(t, output, "fixtures/multiple_violations.md:20:")
+			assertOutputContains(t, output, "fixtures/multiple_violations.md:25:")
 			assertOutputContains(t, output, "Unclosed code block")
 
 			// File should have been checked

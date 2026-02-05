@@ -2,7 +2,6 @@ package parser
 
 import (
 	"regexp"
-	"strings"
 )
 
 var (
@@ -21,8 +20,9 @@ type ExtractedLink struct {
 	Line int
 }
 
-func ExtractExternalLinksWithLineNumbers(content string) []ExtractedLink {
-	lines := strings.Split(content, "\n")
+// ExtractExternalLinksWithLineNumbers extracts external links from the given lines.
+// The offset parameter is added to line numbers to account for stripped frontmatter.
+func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []ExtractedLink {
 	patterns := []*regexp.Regexp{
 		inlineLinkPattern,
 		imageLinkPattern,
@@ -42,7 +42,7 @@ func ExtractExternalLinksWithLineNumbers(content string) []ExtractedLink {
 					if !seenInLine[url] {
 						results = append(results, ExtractedLink{
 							URL:  url,
-							Line: i + 1, // 1-based line number
+							Line: i + 1 + offset, // 1-based line number + offset for frontmatter
 						})
 						seenInLine[url] = true
 					}

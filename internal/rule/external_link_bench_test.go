@@ -27,10 +27,12 @@ func generateMarkdownWithLinks(blocks int) string {
 
 func BenchmarkCheckExternalLinks(b *testing.B) {
 	content := generateMarkdownWithLinks(1000)
+	lines := strings.Split(content, "\n")
+	offset := 0
 	urlCache := &sync.Map{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckExternalLinks("test.md", content, nil, 0, 0, urlCache)
+		_ = CheckExternalLinks("test.md", lines, offset, nil, 0, 0, urlCache)
 	}
 }
