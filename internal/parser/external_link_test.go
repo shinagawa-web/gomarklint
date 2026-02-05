@@ -3,6 +3,7 @@ package parser_test
 import (
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/shinagawa-web/gomarklint/internal/parser"
@@ -131,7 +132,9 @@ See [link1](https://first.com) and [link2](https://second.com)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parser.ExtractExternalLinksWithLineNumbers(tt.input)
+			lines := strings.Split(tt.input, "\n")
+			offset := 0
+			got := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
 
 			// Sort to ensure order-independent comparison
 			sort.Slice(got, func(i, j int) bool {

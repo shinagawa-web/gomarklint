@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -40,14 +41,6 @@ func TestCheckHeadingLevels(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
-			name:     "with frontmatter",
-			content:  "---\ntitle: Test\n---\n\n# Heading 1\n## Heading 2",
-			minLevel: 2,
-			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "First heading should be level 2 (found level 1)"},
-			},
-		},
-		{
 			name:     "multiple jumps",
 			content:  "## Intro\n#### Skip to 4\n### Back to 3\n##### Skip to 5",
 			minLevel: 2,
@@ -66,7 +59,8 @@ func TestCheckHeadingLevels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CheckHeadingLevels("test.md", tt.content, tt.minLevel)
+			lines := strings.Split(tt.content, "\n")
+			got := CheckHeadingLevels("test.md", lines, 0, tt.minLevel)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)

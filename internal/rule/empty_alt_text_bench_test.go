@@ -25,9 +25,10 @@ func generateMarkdownWithImages(blocks int) string {
 
 func BenchmarkCheckEmptyAltText(b *testing.B) {
 	content := generateMarkdownWithImages(1000)
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckEmptyAltText("test.md", content)
+		_ = CheckEmptyAltText("test.md", lines, 0)
 	}
 }

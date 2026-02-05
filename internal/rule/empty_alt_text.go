@@ -1,25 +1,20 @@
 package rule
 
 import (
-	"github.com/shinagawa-web/gomarklint/internal/parser"
-
 	"regexp"
-	"strings"
 )
 
 // CheckEmptyAltText checks for image tags with empty alt text (![](...))
 //
 // Parameters:
 //   - filename: the name of the file being checked
-//   - content: the raw Markdown content
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError if any image has empty alt text.
-func CheckEmptyAltText(filename, content string) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-
+func CheckEmptyAltText(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
-	lines := strings.Split(body, "\n")
 	re := regexp.MustCompile(`!\[\s*\]\([^)]+\)`)
 
 	for i, line := range lines {

@@ -26,9 +26,10 @@ func generateMarkdownWithCodeBlocks(blocks int) string {
 
 func BenchmarkCheckCodeBlocks(b *testing.B) {
 	content := generateMarkdownWithCodeBlocks(1000)
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckUnclosedCodeBlocks("test.md", content)
+		_ = CheckUnclosedCodeBlocks("test.md", lines, 0)
 	}
 }

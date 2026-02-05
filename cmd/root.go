@@ -169,36 +169,39 @@ var rootCmd = &cobra.Command{
 }
 
 func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
+	body, offset := parser.StripFrontmatter(content)
+	lines := strings.Split(body, "\n")
+
 	var allErrors []rule.LintError
 	if cfg.EnableFinalBlankLineCheck {
-		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
+		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
 	}
-	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
-	allErrors = append(allErrors, rule.CheckEmptyAltText(path, content)...)
+	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
+	allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
 	if cfg.EnableHeadingLevelCheck {
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, cfg.MinHeadingLevel)...)
+		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, cfg.MinHeadingLevel)...)
 	}
 	if cfg.EnableDuplicateHeadingCheck {
-		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, content)...)
+		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
 	}
 	if cfg.EnableNoMultipleBlankLinesCheck {
-		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
+		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
 	}
 
 	if cfg.EnableNoSetextHeadingsCheck {
-		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, content)...)
+		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
 	}
 
 	linksChecked := 0
 	if cfg.EnableLinkCheck {
-		links := parser.ExtractExternalLinksWithLineNumbers(content)
+		links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
 		// Count unique URLs
 		uniqueURLs := make(map[string]bool)
 		for _, link := range links {
 			uniqueURLs[link.URL] = true
 		}
 		linksChecked = len(uniqueURLs)
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, lines, offset, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {

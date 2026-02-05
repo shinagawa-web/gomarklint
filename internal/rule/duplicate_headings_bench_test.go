@@ -21,9 +21,10 @@ func generateMarkdownWithDuplicates(blocks int) string {
 
 func BenchmarkCheckDuplicateHeadings(b *testing.B) {
 	content := generateMarkdownWithDuplicates(1000)
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckDuplicateHeadings("test.md", content)
+		_ = CheckDuplicateHeadings("test.md", lines, 0)
 	}
 }

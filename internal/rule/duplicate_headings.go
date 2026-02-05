@@ -1,8 +1,6 @@
 package rule
 
 import (
-	"github.com/shinagawa-web/gomarklint/internal/parser"
-
 	"fmt"
 	"strings"
 )
@@ -16,14 +14,12 @@ import (
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - content: the full Markdown content as a string
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError entries for each detected duplicate heading (excluding the first occurrence).
-func CheckDuplicateHeadings(filename, content string) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-	lines := strings.Split(body, "\n")
-
+func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 	seen := map[string]int{}
 

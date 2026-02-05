@@ -27,9 +27,10 @@ func generateMarkdownWithBlankLines(blocks int) string {
 
 func BenchmarkCheckNoMultipleBlankLines(b *testing.B) {
 	content := generateMarkdownWithBlankLines(1000)
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckNoMultipleBlankLines("test.md", content)
+		_ = CheckNoMultipleBlankLines("test.md", lines, 0)
 	}
 }

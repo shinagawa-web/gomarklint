@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -39,13 +40,6 @@ func TestCheckNoMultipleBlankLines(t *testing.T) {
 			},
 		},
 		{
-			name:    "with frontmatter",
-			content: "---\ntitle: Test\n---\n\n# Heading\n\n\nParagraph\n",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 7, Message: "Multiple consecutive blank lines"},
-			},
-		},
-		{
 			name:     "single line",
 			content:  "# Heading\n",
 			wantErrs: nil,
@@ -73,7 +67,8 @@ func TestCheckNoMultipleBlankLines(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CheckNoMultipleBlankLines("test.md", tt.content)
+			lines := strings.Split(tt.content, "\n")
+			got := CheckNoMultipleBlankLines("test.md", lines, 0)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)

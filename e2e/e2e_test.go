@@ -109,7 +109,7 @@ func TestE2E(t *testing.T) {
 			// Enable link check explicitly to test external link validation
 			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json", "--enable-link-check=true")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
-			assertOutputContains(t, output, "fixtures/invalid_external_link.md:9:")
+			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable")
 			assertOutputContains(t, output, "https://this-domain-definitely-does-not-exist-12345.com")
 			assertOutputContains(t, output, "Checked 1 file(s)")
@@ -206,7 +206,7 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "image with empty alt text")
 			// External link check is enabled in the E2E config, so we should see link errors
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
-			assertOutputContains(t, output, "fixtures/invalid_external_link.md:9:")
+			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable: https://this-domain-definitely-does-not-exist-12345.com")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_external_links.md:")
 			assertOutputContains(t, output, "this-is-definitely-an-invalid-domain-12345.xyz")

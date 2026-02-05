@@ -3,8 +3,6 @@ package rule
 import (
 	"regexp"
 	"strings"
-
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 // CheckNoSetextHeadings ensures that headings of the "setext" style are never
@@ -17,14 +15,13 @@ import (
 //
 // Parameters:
 //   - filename: the name of the file being linted as a string
-//   - content: the raw Markdown content as a string
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError containing the line number and description of each
 //     detected issue.
-func CheckNoSetextHeadings(filename, content string) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-	lines := strings.Split(body, "\n")
+func CheckNoSetextHeadings(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 
 	// According to the CommonMark spec, a setext heading underline is
@@ -37,7 +34,7 @@ func CheckNoSetextHeadings(filename, content string) []LintError {
 	// List markers and blockquote markers
 	otherBlockRegex := regexp.MustCompile(`^ {0,3}(?:[*+-]|\d+[.)]|>)\s*`)
 
-	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
+	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 	isPrevLineEmpty := true
 	isPrevLineOtherBlock := false
 	isInLazyBlockquote := false
