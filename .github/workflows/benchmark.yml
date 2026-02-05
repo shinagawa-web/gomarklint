@@ -30,6 +30,9 @@ jobs:
       - name: Run benchmarks on PR branch
         run: make bench | tee new-bench.txt
 
+      - name: Save benchmark script from PR branch
+        run: cp .github/scripts/format-benchmark.sh /tmp/format-benchmark.sh
+
       - name: Checkout main branch
         run: |
           git fetch origin main
@@ -52,7 +55,7 @@ jobs:
           echo "" >> comparison.txt
           echo '```' >> comparison.txt
           benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-          bash .github/scripts/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
+          bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
           cat formatted-comparison.txt >> comparison.txt
           echo '```' >> comparison.txt
           cat comparison.txt
