@@ -284,10 +284,9 @@ go test -bench=. -benchmem ./...
 
 ### Benchmark Coverage
 
-Benchmarks are available for all major components:
+Benchmarks are available for the main linting workflows:
 - **Lint rules**: Each rule has dedicated benchmarks (e.g., `BenchmarkCheckHeadingLevel`)
-- **Parser operations**: Markdown parsing, frontmatter stripping, external link extraction
-- **File operations**: File expansion and path utilities
+- **Full linting**: End-to-end benchmarks for running gomarklint across files (see `cmd/root_bench_test.go`)
 
 ### CI Integration
 
