@@ -1,14 +1,15 @@
 name: Check go install
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
     paths:
       - '**.go'
       - go.mod
       - go.sum
-  push:
-    tags:
-      - 'v*'
 
 jobs:
   check-go-install:
