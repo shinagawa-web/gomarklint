@@ -19,35 +19,33 @@ if [[ ! -s "$INPUT_FILE" ]]; then
   exit 0
 fi
 
-# Filter and format benchmark results
-# Remove unnecessary statistical notes and keep only meaningful metrics
+# Extract only geomean (summary) results for cleaner output
 awk '
-  # Skip noise lines (statistical notes)
-  /^¹/ || /^²/ || /^³/ {next}
-  
-  # Print system info and headers
-  /^goos:|^goarch:|^pkg:|^cpu:/ {print; next}
-  
-  # Print table headers
-  /^name/ || /│.*sec\/op.*│/ || /│.*B\/op.*│/ || /│.*allocs\/op.*│/ {
-    # Skip if this is a continuation of previous table header
-    if (prev_was_header && /^[[:space:]]*│/) {next}
+  # Print system info
+  /^goos:|^goarch:|^pkg:|^cpu:/ {
     print
-    prev_was_header = (/^name/ || /│.*sec\/op.*│/ || /│.*B\/op.*│/ || /│.*allocs\/op.*│/)
     next
   }
   
-  # Process benchmark result lines
-  {
-    prev_was_header = 0
+  # Print table separator headers for context
+  /│.*vs base.*│/ {
+    if (!header_printed) {
+      print
+      header_printed = 1
+    }
+    next
+  }
+  
+  # Process only geomean lines (summary statistics)
+  /^geomean/ {
+    # Remove statistical annotations like ± ∞ ¹ and (p=... n=...) ²
+    gsub(/[±∞¹²³⁴⁵⁶⁷⁸⁹⁰]+[[:space:]]*[0-9]*/, "")
+    gsub(/\([^)]*\)[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
     
-    # Skip empty lines
-    if (NF == 0) {next}
-    
+    # Extract delta percentage
     delta = $NF
     status = ""
     
-    # Extract percentage from delta (e.g., "+5.03%" -> 5.03)
     if (match(delta, /\+([0-9.]+)%/, arr)) {
       percent = arr[1]
       if (percent >= 50) {
@@ -58,14 +56,12 @@ awk '
         status = " ✅"
       }
     } else if (match(delta, /-([0-9.]+)%/, arr)) {
-      status = " ✅"  # Faster is good
+      status = " ✅"
     } else if (delta == "~") {
-      status = " ✅"  # No change is good
+      status = " ✅"
     }
     
-    # Only print lines with actual benchmark data
-    if (status != "") {
-      print $0 status
-    }
+    print $0 status
+    print ""  # Add blank line for readability
   }
 ' "$INPUT_FILE" > "$OUTPUT_FILE"
