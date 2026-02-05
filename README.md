@@ -26,6 +26,7 @@ gomarklint focuses on reproducible rules that prevent “small but costly” fai
 
 ## ✨ Features
 
+- **⚡️ Blazingly fast**: Process **100,000+ lines in ~170ms** (structural checks only, M4 Mac)
 - Recursive .md search (multi-file & multi-directory)
 - Frontmatter-aware parsing (YAML/TOML ignored when needed)
 - File name & line number in diagnostics

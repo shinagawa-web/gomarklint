@@ -22,22 +22,45 @@ fi
 # Extract only geomean (summary) results for cleaner output
 awk '
   # Print system info
-  /^goos:|^goarch:|^pkg:|^cpu:/ {
+  /^goos:|^goarch:|^cpu:/ {
     print
     next
   }
   
-  # Print table separator headers for context
-  /│.*vs base.*│/ {
-    if (!header_printed) {
+  # Track which package we are in
+  /^pkg:/ {
+    current_pkg = $0
+    # Only process cmd package
+    if ($0 ~ /\/cmd$/) {
+      in_cmd_pkg = 1
       print
-      header_printed = 1
+    } else {
+      in_cmd_pkg = 0
     }
     next
   }
   
-  # Process only geomean lines (summary statistics)
+  # Track which metric we are in (sec/op, B/op, allocs/op)
+  /│[[:space:]]*sec\/op[[:space:]]*│/ {
+    current_metric = "time"
+    next
+  }
+  /│[[:space:]]*B\/op[[:space:]]*│/ {
+    current_metric = "memory"
+    next
+  }
+  /│[[:space:]]*allocs\/op[[:space:]]*│/ {
+    current_metric = "allocs"
+    next
+  }
+  
+  # Process only geomean lines (summary statistics) for cmd package
   /^geomean/ {
+    # Skip if not in cmd package
+    if (!in_cmd_pkg) {
+      next
+    }
+    
     # Remove statistical annotations like ± ∞ ¹
     gsub(/±[[:space:]]*∞[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
     # Remove statistical notes like (p=... n=...) ²
@@ -71,7 +94,16 @@ awk '
       status = " ✅"
     }
     
-    print $0 status
-    print ""  # Add blank line for readability
+    # Add metric label
+    metric_label = ""
+    if (current_metric == "time") {
+      metric_label = " [time/op]"
+    } else if (current_metric == "memory") {
+      metric_label = " [memory/op]"
+    } else if (current_metric == "allocs") {
+      metric_label = " [allocs/op]"
+    }
+    
+    print $0 status metric_label
   }
 ' "$INPUT_FILE" > "$OUTPUT_FILE"
