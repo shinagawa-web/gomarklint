@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -39,18 +40,12 @@ func TestCheckUnclosedCodeBlocks(t *testing.T) {
 			content:  "# Just a heading\nSome text",
 			wantErrs: nil,
 		},
-		{
-			name:    "unclosed with frontmatter",
-			content: "---\ntitle: Test\n---\n\n## Heading\n\n```\ncode\n",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 7, Message: "Unclosed code block"},
-			},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CheckUnclosedCodeBlocks("test.md", tt.content)
+			lines := strings.Split(tt.content, "\n")
+			got := CheckUnclosedCodeBlocks("test.md", lines, 0)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)

@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -34,23 +35,12 @@ func TestCheckFinalBlankLine(t *testing.T) {
 			content:  "\n",
 			wantErrs: nil,
 		},
-		{
-			name:     "frontmatter with blank",
-			content:  "---\ntitle: Test\n---\n\n# Hello\n\n",
-			wantErrs: nil,
-		},
-		{
-			name:    "frontmatter no blank",
-			content: "---\ntitle: Test\n---\n\n# Hello",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "Missing final blank line"},
-			},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CheckFinalBlankLine("test.md", tt.content)
+			lines := strings.Split(tt.content, "\n")
+			got := CheckFinalBlankLine("test.md", lines, 0)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)

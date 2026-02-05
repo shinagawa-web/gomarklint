@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,7 +22,8 @@ const (
 )
 
 func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
-	codeBlockRanges, _ := GetCodeBlockLineRanges(content)
+	lines := strings.Split(content, "\n")
+	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 	links := parser.ExtractExternalLinksWithLineNumbers(content)
 
 	urlToLines := make(map[string][]int)

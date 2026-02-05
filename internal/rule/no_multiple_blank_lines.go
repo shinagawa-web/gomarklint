@@ -2,8 +2,6 @@ package rule
 
 import (
 	"strings"
-
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 )
 
 // CheckNoMultipleBlankLines checks whether the Markdown content contains
@@ -12,23 +10,19 @@ import (
 // This rule helps maintain consistency and readability by ensuring
 // no more than one consecutive blank line appears in the document.
 //
-// It accounts for the presence of frontmatter, adjusting the reported
-// line numbers accordingly, and ignores multiple consecutive newlines in code
-// blocks.
+// It ignores multiple consecutive newlines in code blocks.
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - content: the raw Markdown content as a string
+//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError with entries for each occurrence of multiple consecutive blank lines.
-func CheckNoMultipleBlankLines(filename, content string) []LintError {
-	body, offset := parser.StripFrontmatter(content)
-
-	codeBlockRanges, _ := GetCodeBlockLineRanges(body)
+func CheckNoMultipleBlankLines(filename string, lines []string, offset int) []LintError {
+	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 
 	var errs []LintError
-	lines := strings.Split(body, "\n")
 
 	consecutiveBlankCount := 0
 	for i, line := range lines {

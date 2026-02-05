@@ -22,9 +22,10 @@ func generateMarkdownContent(lines int) string {
 
 func BenchmarkCheckFinalBlankLine(b *testing.B) {
 	content := generateMarkdownContent(5000)
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckFinalBlankLine("test.md", content)
+		_ = CheckFinalBlankLine("test.md", lines, 0)
 	}
 }

@@ -23,9 +23,10 @@ func generateMarkdownWithHeadings(blocks int) string {
 func BenchmarkCheckHeadingLevel(b *testing.B) {
 	content := generateMarkdownWithHeadings(1000)
 	cfg := config.Default()
+	lines := strings.Split(content, "\n")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckHeadingLevels("test.md", content, cfg.MinHeadingLevel)
+		_ = CheckHeadingLevels("test.md", lines, 0, cfg.MinHeadingLevel)
 	}
 }

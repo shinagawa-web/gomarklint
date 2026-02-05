@@ -169,24 +169,27 @@ var rootCmd = &cobra.Command{
 }
 
 func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
+	body, offset := parser.StripFrontmatter(content)
+	lines := strings.Split(body, "\n")
+
 	var allErrors []rule.LintError
 	if cfg.EnableFinalBlankLineCheck {
-		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, content)...)
+		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
 	}
-	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, content)...)
-	allErrors = append(allErrors, rule.CheckEmptyAltText(path, content)...)
+	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
+	allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
 	if cfg.EnableHeadingLevelCheck {
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, content, cfg.MinHeadingLevel)...)
+		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, cfg.MinHeadingLevel)...)
 	}
 	if cfg.EnableDuplicateHeadingCheck {
-		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, content)...)
+		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
 	}
 	if cfg.EnableNoMultipleBlankLinesCheck {
-		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, content)...)
+		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
 	}
 
 	if cfg.EnableNoSetextHeadingsCheck {
-		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, content)...)
+		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
 	}
 
 	linksChecked := 0
