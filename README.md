@@ -26,6 +26,7 @@ gomarklint focuses on reproducible rules that prevent “small but costly” fai
 
 ## ✨ Features
 
+- **⚡️ Blazingly fast**: Process **100,000+ lines in ~170ms** (structural checks only, M4 Mac)
 - Recursive .md search (multi-file & multi-directory)
 - Frontmatter-aware parsing (YAML/TOML ignored when needed)
 - File name & line number in diagnostics
@@ -264,6 +265,38 @@ Errors in testdata/sample_links.md:
 
 > ⏱️ **TL;DR:**  
 > Fast enough for local dev (no link check), robust enough for CI (with link check).
+
+## 📊 Benchmarking
+
+`gomarklint` includes comprehensive benchmarks to track performance and prevent regressions.
+
+### Running Benchmarks Locally
+
+```bash
+# Run all benchmarks
+make bench
+
+# Run benchmarks for a specific package
+go test -bench=. ./internal/rule/
+
+# Run with memory profiling
+go test -bench=. -benchmem ./...
+```
+
+### Benchmark Coverage
+
+Benchmarks are available for the main linting workflows:
+- **Lint rules**: Each rule has dedicated benchmarks (e.g., `BenchmarkCheckHeadingLevel`)
+- **Full linting**: End-to-end benchmarks for running gomarklint across files (see `cmd/root_bench_test.go`)
+
+### CI Integration
+
+Pull requests automatically run benchmark comparisons against the main branch:
+- Shows performance differences for each benchmarked function
+- Highlights regressions with visual indicators (✅/⚠️/❌)
+- Results are posted as PR comments for easy review
+
+The benchmark workflow ensures performance remains stable across code changes.
 
 ## 🧪 GitHub Actions Integration
 

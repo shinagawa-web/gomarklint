@@ -19,17 +19,64 @@ if [[ ! -s "$INPUT_FILE" ]]; then
   exit 0
 fi
 
-# Add status symbols based on delta percentage
+# Extract only geomean (summary) results for cleaner output
 awk '
-  NR==1 {print; next}  # Print header
-  /^name/ {print; next}  # Print column names
-  {
+  # Print system info
+  /^goos:|^goarch:|^cpu:/ {
+    print
+    next
+  }
+  
+  # Track which package we are in
+  /^pkg:/ {
+    current_pkg = $0
+    # Only process cmd package
+    if ($0 ~ /\/cmd$/) {
+      in_cmd_pkg = 1
+      print
+    } else {
+      in_cmd_pkg = 0
+    }
+    next
+  }
+  
+  # Track which metric we are in (sec/op, B/op, allocs/op)
+  /│[[:space:]]*sec\/op[[:space:]]*│/ {
+    current_metric = "time"
+    next
+  }
+  /│[[:space:]]*B\/op[[:space:]]*│/ {
+    current_metric = "memory"
+    next
+  }
+  /│[[:space:]]*allocs\/op[[:space:]]*│/ {
+    current_metric = "allocs"
+    next
+  }
+  
+  # Process only geomean lines (summary statistics) for cmd package
+  /^geomean/ {
+    # Skip if not in cmd package
+    if (!in_cmd_pkg) {
+      next
+    }
+    
+    # Remove statistical annotations like ± ∞ ¹
+    gsub(/±[[:space:]]*∞[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
+    # Remove statistical notes like (p=... n=...) ²
+    gsub(/\([^)]*\)[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
+    
+    # Extract delta percentage from last field
     delta = $NF
     status = ""
     
-    # Extract percentage from delta (e.g., "+5.03%" -> 5.03)
-    if (match(delta, /\+([0-9.]+)%/, arr)) {
-      percent = arr[1]
+    # Check for positive change (+X.XX%)
+    if (delta ~ /^\+[0-9.]+%$/) {
+      # Extract the number
+      sub(/^\+/, "", delta)
+      sub(/%$/, "", delta)
+      percent = delta + 0
+      
       if (percent >= 50) {
         status = " ❌"
       } else if (percent >= 10) {
@@ -37,12 +84,26 @@ awk '
       } else {
         status = " ✅"
       }
-    } else if (match(delta, /-([0-9.]+)%/, arr)) {
+    } 
+    # Check for negative change (-X.XX%)
+    else if (delta ~ /^-[0-9.]+%$/) {
       status = " ✅"  # Faster is good
-    } else if (delta == "~") {
-      status = " ✅"  # No change is good
+    } 
+    # No change
+    else if (delta == "~") {
+      status = " ✅"
     }
     
-    print $0 status
+    # Add metric label
+    metric_label = ""
+    if (current_metric == "time") {
+      metric_label = " [time/op]"
+    } else if (current_metric == "memory") {
+      metric_label = " [memory/op]"
+    } else if (current_metric == "allocs") {
+      metric_label = " [allocs/op]"
+    }
+    
+    print $0 status metric_label
   }
 ' "$INPUT_FILE" > "$OUTPUT_FILE"
