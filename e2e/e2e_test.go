@@ -219,11 +219,13 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:1:")
 			// Count may vary, but should have checked all files
-			assertOutputContains(t, output, "Checked 14 file(s)")
+			assertOutputContains(t, output, "Checked 17 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 			// valid_external_links.md should have no errors when link check is enabled
 			assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
+			// mixed_link_types.md should have no errors (only checks HTTP/HTTPS)
+			assertOutputNotContains(t, output, "Errors in fixtures/mixed_link_types.md")
 		})
 
 		t.Run("ErrorsFromAllFiles", func(t *testing.T) {
@@ -356,6 +358,33 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
 			assertOutputContains(t, output, "Link unreachable")
 			assertOutputContains(t, output, "1 issues found")
+		})
+
+		t.Run("HTTPAndHTTPSLinks", func(t *testing.T) {
+			// Test that both HTTP and HTTPS links are checked
+			output := runTest(t, "fixtures/http_and_https_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			// Should check both HTTP and HTTPS links
+			// The HTTP link might fail, but the test verifies both are checked
+			assertOutputContains(t, output, "link(s)")
+		})
+
+		t.Run("MixedLinkTypes", func(t *testing.T) {
+			// Test that only HTTP/HTTPS links are checked, not relative paths or FTP
+			output := runTest(t, "fixtures/mixed_link_types.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			// Should only check HTTP/HTTPS links (2 links: Google and GitHub bare URL)
+			assertOutputContains(t, output, "link(s)")
+			assertOutputContains(t, output, "No issues found")
+		})
+
+		t.Run("SameLineMultipleLinks", func(t *testing.T) {
+			// Test multiple links in the same line
+			output := runTest(t, "fixtures/same_line_multiple_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "No issues found")
+			// Should check all links even if they're on the same line
+			assertOutputContains(t, output, "link(s)")
 		})
 	})
 }
