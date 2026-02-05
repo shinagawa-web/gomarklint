@@ -19,11 +19,31 @@ if [[ ! -s "$INPUT_FILE" ]]; then
   exit 0
 fi
 
-# Add status symbols based on delta percentage
+# Filter and format benchmark results
+# Remove unnecessary statistical notes and keep only meaningful metrics
 awk '
-  NR==1 {print; next}  # Print header
-  /^name/ {print; next}  # Print column names
+  # Skip noise lines (statistical notes)
+  /^¹/ || /^²/ || /^³/ {next}
+  
+  # Print system info and headers
+  /^goos:|^goarch:|^pkg:|^cpu:/ {print; next}
+  
+  # Print table headers
+  /^name/ || /│.*sec\/op.*│/ || /│.*B\/op.*│/ || /│.*allocs\/op.*│/ {
+    # Skip if this is a continuation of previous table header
+    if (prev_was_header && /^[[:space:]]*│/) {next}
+    print
+    prev_was_header = (/^name/ || /│.*sec\/op.*│/ || /│.*B\/op.*│/ || /│.*allocs\/op.*│/)
+    next
+  }
+  
+  # Process benchmark result lines
   {
+    prev_was_header = 0
+    
+    # Skip empty lines
+    if (NF == 0) {next}
+    
     delta = $NF
     status = ""
     
@@ -43,6 +63,9 @@ awk '
       status = " ✅"  # No change is good
     }
     
-    print $0 status
+    # Only print lines with actual benchmark data
+    if (status != "") {
+      print $0 status
+    }
   }
 ' "$INPUT_FILE" > "$OUTPUT_FILE"
