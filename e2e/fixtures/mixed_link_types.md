@@ -1,3 +1,8 @@
+---
+title: Mixed Link Types Test
+description: Test file with various types of links
+---
+
 ## Mixed Link Types
 
 This file contains various types of links:

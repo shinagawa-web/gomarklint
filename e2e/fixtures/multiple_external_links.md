@@ -1,3 +1,8 @@
+---
+title: Multiple External Links Test
+description: Test file with multiple valid and invalid external links
+---
+
 ## Multiple External Links
 
 Valid links:
