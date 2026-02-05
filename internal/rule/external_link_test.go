@@ -155,7 +155,6 @@ func TestCheckExternalLinks_MultipleOccurrences(t *testing.T) {
 
 	markdown := fmt.Sprintf("[fail](%s/fail)\n[fail again](%s/fail)", ts.URL, ts.URL)
 
-
 	results := rule.CheckExternalLinks("mock.md", markdown, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	// Should report errors for each occurrence
@@ -236,7 +235,6 @@ func TestCheckExternalLinks_MultipleSkipPatterns(t *testing.T) {
 		regexp.MustCompile(`\.internal`),
 	}
 
-
 	results := rule.CheckExternalLinks(fileName, markdown, skip, 2, 10, &sync.Map{})
 
 	if len(results) != 1 {
@@ -260,7 +258,6 @@ func TestCheckExternalLinks_NetworkError(t *testing.T) {
 	markdown := "[unreachable](http://invalid.test.localhost.invalid:9999/path)"
 	fileName := "network.md"
 	unreachableURL := "http://invalid.test.localhost.invalid:9999/path"
-
 
 	results := rule.CheckExternalLinks(fileName, markdown, []*regexp.Regexp{}, 1, 10, &sync.Map{})
 
