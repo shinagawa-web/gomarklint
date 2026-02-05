@@ -1,3 +1,8 @@
+---
+title: Invalid External Link Test
+description: Test file for external link validation
+---
+
 ## Links Section
 
 Here is a link to a valid site:

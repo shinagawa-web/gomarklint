@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,14 +20,17 @@ const (
 	DefaultRetryDelayMs = 1000
 )
 
-func CheckExternalLinks(path string, content string, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
-	lines := strings.Split(content, "\n")
+// CheckExternalLinks checks external links in the given lines.
+// The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
+func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
-	links := parser.ExtractExternalLinksWithLineNumbers(content)
+	links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
 
 	urlToLines := make(map[string][]int)
 	for _, link := range links {
-		if isInCodeBlock(link.Line, codeBlockRanges) || shouldSkipLink(link.URL, skipPatterns) {
+		// Adjust line number for code block check (relative to lines array)
+		relativeLineNum := link.Line - offset
+		if isInCodeBlock(relativeLineNum, codeBlockRanges) || shouldSkipLink(link.URL, skipPatterns) {
 			continue
 		}
 		urlToLines[link.URL] = append(urlToLines[link.URL], link.Line)

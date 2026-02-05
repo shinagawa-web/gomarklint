@@ -194,14 +194,14 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 
 	linksChecked := 0
 	if cfg.EnableLinkCheck {
-		links := parser.ExtractExternalLinksWithLineNumbers(content)
+		links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
 		// Count unique URLs
 		uniqueURLs := make(map[string]bool)
 		for _, link := range links {
 			uniqueURLs[link.URL] = true
 		}
 		linksChecked = len(uniqueURLs)
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, content, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
+		allErrors = append(allErrors, rule.CheckExternalLinks(path, lines, offset, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {
