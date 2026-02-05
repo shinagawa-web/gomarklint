@@ -38,16 +38,22 @@ awk '
   
   # Process only geomean lines (summary statistics)
   /^geomean/ {
-    # Remove statistical annotations like ± ∞ ¹ and (p=... n=...) ²
-    gsub(/[±∞¹²³⁴⁵⁶⁷⁸⁹⁰]+[[:space:]]*[0-9]*/, "")
+    # Remove statistical annotations like ± ∞ ¹
+    gsub(/±[[:space:]]*∞[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
+    # Remove statistical notes like (p=... n=...) ²
     gsub(/\([^)]*\)[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
     
-    # Extract delta percentage
+    # Extract delta percentage from last field
     delta = $NF
     status = ""
     
-    if (match(delta, /\+([0-9.]+)%/, arr)) {
-      percent = arr[1]
+    # Check for positive change (+X.XX%)
+    if (delta ~ /^\+[0-9.]+%$/) {
+      # Extract the number
+      sub(/^\+/, "", delta)
+      sub(/%$/, "", delta)
+      percent = delta + 0
+      
       if (percent >= 50) {
         status = " ❌"
       } else if (percent >= 10) {
@@ -55,9 +61,13 @@ awk '
       } else {
         status = " ✅"
       }
-    } else if (match(delta, /-([0-9.]+)%/, arr)) {
-      status = " ✅"
-    } else if (delta == "~") {
+    } 
+    # Check for negative change (-X.XX%)
+    else if (delta ~ /^-[0-9.]+%$/) {
+      status = " ✅"  # Faster is good
+    } 
+    # No change
+    else if (delta == "~") {
       status = " ✅"
     }
     
