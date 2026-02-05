@@ -1,11 +1,6 @@
 name: Check go install
 
 on:
-  pull_request:
-    paths:
-      - '**.go'
-      - go.mod
-      - go.sum
   push:
     tags:
       - 'v*'
@@ -25,9 +20,5 @@ jobs:
 
       - name: Try go install
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            VERSION=$(git describe --tags --abbrev=0)
-          else
-            VERSION="latest"
-          fi
+          VERSION=$(git describe --tags --abbrev=0)
           go install github.com/shinagawa-web/gomarklint@${VERSION}
