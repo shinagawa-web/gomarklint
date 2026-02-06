@@ -16,7 +16,6 @@ import (
 
 	"github.com/shinagawa-web/gomarklint/internal/config"
 	"github.com/shinagawa-web/gomarklint/internal/file"
-	"github.com/shinagawa-web/gomarklint/internal/parser"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
 )
 
@@ -195,7 +194,7 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 
 	linksChecked := 0
 	if cfg.EnableLinkCheck {
-		links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
+		links := rule.ExtractExternalLinksWithLineNumbers(lines, offset)
 		// Count unique URLs
 		uniqueURLs := make(map[string]bool)
 		for _, link := range links {
