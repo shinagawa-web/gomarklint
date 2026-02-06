@@ -593,10 +593,17 @@ See [link1](https://first.com) and [link2](https://second.com)
 			got := rule.ExtractExternalLinksWithLineNumbers(lines, offset)
 
 			// Sort to ensure order-independent comparison
+			// Sort by URL first, then by Line to ensure stable ordering
 			sort.Slice(got, func(i, j int) bool {
+				if got[i].URL == got[j].URL {
+					return got[i].Line < got[j].Line
+				}
 				return got[i].URL < got[j].URL
 			})
 			sort.Slice(tt.expected, func(i, j int) bool {
+				if tt.expected[i].URL == tt.expected[j].URL {
+					return tt.expected[i].Line < tt.expected[j].Line
+				}
 				return tt.expected[i].URL < tt.expected[j].URL
 			})
 
