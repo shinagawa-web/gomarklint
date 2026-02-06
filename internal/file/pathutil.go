@@ -1,4 +1,4 @@
-package util
+package file
 
 import (
 	"github.com/bmatcuk/doublestar/v4"

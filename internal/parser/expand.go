@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/shinagawa-web/gomarklint/internal/util"
+	"github.com/shinagawa-web/gomarklint/internal/file"
 )
 
 // ExpandPaths takes a list of file or directory paths and returns a slice of
@@ -37,7 +37,7 @@ func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
 			}
 			results = append(results, dirResults...)
 		} else if strings.HasSuffix(info.Name(), ".md") {
-			if !util.ShouldIgnore(p, ignorePatterns) {
+			if !file.ShouldIgnore(p, ignorePatterns) {
 				results = append(results, p)
 			}
 		}
@@ -61,7 +61,7 @@ func expandDirectory(root string, ignorePatterns []string) ([]string, error) {
 			return nil
 		}
 
-		if isMarkdownFile(d.Name()) && !util.ShouldIgnore(path, ignorePatterns) {
+		if isMarkdownFile(d.Name()) && !file.ShouldIgnore(path, ignorePatterns) {
 			results = append(results, path)
 		}
 		return nil
