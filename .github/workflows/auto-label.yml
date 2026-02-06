@@ -30,6 +30,9 @@ jobs:
             if (title.startsWith('chore:') || title.startsWith('chore(')) {
               labels.push('chore');
             }
+            if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
+              labels.push('refactor');
+            }
             if (title.startsWith('deps:') || title.startsWith('deps(') || title.includes('dependencies')) {
               labels.push('dependencies');
             }
@@ -57,5 +60,5 @@ jobs:
       - name: Check for labels
         uses: docker://agilepathway/pull-request-label-checker:latest
         with:
-          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore
+          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore,refactor
           repo_token: ${{ secrets.GITHUB_TOKEN }}
