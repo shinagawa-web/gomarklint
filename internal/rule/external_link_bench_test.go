@@ -33,6 +33,6 @@ func BenchmarkCheckExternalLinks(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckExternalLinks("test.md", lines, offset, nil, 0, 0, urlCache)
+		_, _ = CheckExternalLinks("test.md", lines, offset, nil, 0, 0, urlCache)
 	}
 }

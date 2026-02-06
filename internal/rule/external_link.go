@@ -66,7 +66,8 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 
 // CheckExternalLinks checks external links in the given lines.
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
-func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
+// Returns lint errors and the count of unique URLs checked.
+func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) ([]LintError, int) {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 	links := ExtractExternalLinksWithLineNumbers(lines, offset)
 
@@ -130,7 +131,7 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 	}
 
 	wg.Wait()
-	return errs
+	return errs, len(urlToLines)
 }
 
 // checkURL performs the URL check with retry logic.
