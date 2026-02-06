@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -41,7 +42,7 @@ func TestCheckExternalLinks_BasicSuccessFailure(t *testing.T) {
 
 	file := "mock.md"
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(file, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(file, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(results))
@@ -69,7 +70,7 @@ func TestCheckExternalLinks_SkipPattern(t *testing.T) {
 	}
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("mock.md", lines, offset, skip, 2, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 2, 10, &sync.Map{})
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
@@ -88,7 +89,7 @@ func TestCheckExternalLinks_IgnoreCodeBlocks(t *testing.T) {
 	skip := []*regexp.Regexp{}
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, &sync.Map{})
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
 	}
@@ -118,7 +119,7 @@ Line 8 [link8](%s/fail8)
 
 	skip := []*regexp.Regexp{}
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, &sync.Map{})
 
 	if len(results) != 5 {
 		t.Fatalf("expected 5 errors, got %d", len(results))
@@ -150,9 +151,9 @@ func TestCheckExternalLinks_Deduplication(t *testing.T) {
 	lines, offset := toLines(markdown)
 
 	// First call - should trigger HTTP request
-	rule.CheckExternalLinks("file1.md", lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
+	_, _ = rule.CheckExternalLinks("file1.md", lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
 	// Second call - should use cache
-	rule.CheckExternalLinks("file2.md", lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
+	_, _ = rule.CheckExternalLinks("file2.md", lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
 
 	if requestCount != 1 {
 		t.Errorf("expected only 1 HTTP request due to caching, but got %d", requestCount)
@@ -166,7 +167,7 @@ func TestCheckExternalLinks_MultipleOccurrences(t *testing.T) {
 	markdown := fmt.Sprintf("[fail](%s/fail)\n[fail again](%s/fail)", ts.URL, ts.URL)
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	// Should report errors for each occurrence
 	if len(results) != 2 {
@@ -194,7 +195,7 @@ func TestCheckExternalLinks_AllLinksSucceed(t *testing.T) {
 [link3](%s/ok)`, ts.URL, ts.URL, ts.URL)
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors for all successful links, got %d", len(results))
@@ -216,7 +217,7 @@ func TestCheckExternalLinks_HTTPStatusBoundary(t *testing.T) {
 	fileName := "boundary.md"
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only 400), got %d", len(results))
@@ -249,7 +250,7 @@ func TestCheckExternalLinks_MultipleSkipPatterns(t *testing.T) {
 	}
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(fileName, lines, offset, skip, 2, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, skip, 2, 10, &sync.Map{})
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only httpstat.us), got %d", len(results))
@@ -274,7 +275,7 @@ func TestCheckExternalLinks_NetworkError(t *testing.T) {
 	unreachableURL := "http://invalid.test.localhost.invalid:9999/path"
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, &sync.Map{})
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error for network failure, got %d", len(results))
@@ -308,7 +309,7 @@ func TestCheckExternalLinks_DifferentHTTPStatusCodes(t *testing.T) {
 	markdown := fmt.Sprintf("[not-found](%s/404)\n[server-error](%s/500)\n[unavailable](%s/503)", statusTs.URL, statusTs.URL, statusTs.URL)
 	fileName := "test.md"
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	if len(results) != 3 {
 		t.Fatalf("expected 3 errors, got %d", len(results))
@@ -353,7 +354,7 @@ func TestCheckExternalLinks_RetrySuccess(t *testing.T) {
 	markdown := fmt.Sprintf("[retry-link](%s/retry)", ts.URL)
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors due to successful retry, but got %d", len(results))
@@ -375,7 +376,7 @@ func TestCheckExternalLinks_NoRetryFor404(t *testing.T) {
 	markdown := fmt.Sprintf("[not-found](%s/404)", ts.URL)
 
 	lines, offset := toLines(markdown)
-	rule.CheckExternalLinks("404.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+	_, _ = rule.CheckExternalLinks("404.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
 
 	// For 404, there should be no retry; it should give up after a single request
 	if requestCount != 1 {
@@ -396,7 +397,7 @@ func TestCheckExternalLinks_ConcurrencyLimit(t *testing.T) {
 	markdown := strings.Join(links, "\n")
 
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 10, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 10, &sync.Map{})
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors, got %d", len(results))
@@ -411,14 +412,14 @@ func TestCheckExternalLinks_CacheErrorState(t *testing.T) {
 
 	// First call - should trigger network error
 	lines, offset := toLines(markdown)
-	results1 := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, urlCache)
+	results1, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, urlCache)
 
 	if len(results1) != 1 {
 		t.Fatalf("first call: expected 1 error for network failure, got %d", len(results1))
 	}
 
 	// Second call with same cache - should use cached error and report the same error
-	results2 := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, urlCache)
+	results2, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, urlCache)
 
 	if len(results2) != 1 {
 		t.Fatalf("second call: expected 1 error from cache, got %d", len(results2))
@@ -445,7 +446,7 @@ func TestCheckExternalLinks_CacheInvalidType(t *testing.T) {
 
 	// Call CheckExternalLinks - should detect invalid cache type and re-check
 	lines, offset := toLines(markdown)
-	results := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, urlCache)
 
 	// Should still get error because URL returns 404
 	if len(results) != 1 {
@@ -461,5 +462,154 @@ func TestCheckExternalLinks_CacheInvalidType(t *testing.T) {
 		// The fact that it didn't panic and produced correct results proves it worked
 	} else {
 		t.Error("cache entry was not found after re-check")
+	}
+}
+
+func TestExtractExternalLinksWithLineNumbers(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []rule.ExtractedLink
+	}{
+		{
+			name: "inline link",
+			input: `
+This is a [link](https://example.com/page).
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/page", Line: 2},
+			},
+		},
+		{
+			name: "image link",
+			input: `
+Here is an image: ![logo](https://example.com/logo.png)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/logo.png", Line: 2},
+			},
+		},
+		{
+			name: "bare url",
+			input: `
+Check this out: https://example.com/docs
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/docs", Line: 2},
+			},
+		},
+		{
+			name: "duplicates (returns all occurrences)",
+			input: `
+[Link1](https://dup.com)
+[Link2](https://dup.com)
+https://dup.com
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://dup.com", Line: 2},
+				{URL: "https://dup.com", Line: 3},
+				{URL: "https://dup.com", Line: 4},
+			},
+		},
+		{
+			name: "non-http links ignored",
+			input: `
+[Local](/relative/path)
+[FTP](ftp://example.com)
+`,
+			expected: nil,
+		},
+		{
+			name: "mixed valid and invalid",
+			input: `
+Here's something: [Valid](https://valid.com)
+Here's something: [Local](/not-checked)
+https://also.valid.com
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://valid.com", Line: 2},
+				{URL: "https://also.valid.com", Line: 4},
+			},
+		},
+		{
+			name: "same URL in same line (inline and bare) - deduplicated",
+			input: `
+Check [this](https://example.com) and also https://example.com
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com", Line: 2},
+			},
+		},
+		{
+			name: "multiple different URLs in same line",
+			input: `
+See [link1](https://first.com) and [link2](https://second.com)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://first.com", Line: 2},
+				{URL: "https://second.com", Line: 2},
+			},
+		},
+		{
+			name: "http and https",
+			input: `
+[Secure](https://secure.example.com)
+[Insecure](http://insecure.example.com)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://secure.example.com", Line: 2},
+				{URL: "http://insecure.example.com", Line: 3},
+			},
+		},
+		{
+			name:     "empty input",
+			input:    ``,
+			expected: nil,
+		},
+		{
+			name: "only whitespace",
+			input: `
+
+   
+
+`,
+			expected: nil,
+		},
+		{
+			name: "image and inline link with same URL in same line",
+			input: `
+![image](https://example.com/img.png) and [link](https://example.com/img.png)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/img.png", Line: 2},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := strings.Split(tt.input, "\n")
+			offset := 0
+			got := rule.ExtractExternalLinksWithLineNumbers(lines, offset)
+
+			// Sort to ensure order-independent comparison
+			// Sort by URL first, then by Line to ensure stable ordering
+			sort.Slice(got, func(i, j int) bool {
+				if got[i].URL == got[j].URL {
+					return got[i].Line < got[j].Line
+				}
+				return got[i].URL < got[j].URL
+			})
+			sort.Slice(tt.expected, func(i, j int) bool {
+				if tt.expected[i].URL == tt.expected[j].URL {
+					return tt.expected[i].Line < tt.expected[j].Line
+				}
+				return tt.expected[i].URL < tt.expected[j].URL
+			})
+
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("got = %#v, want = %#v", got, tt.expected)
+			}
+		})
 	}
 }

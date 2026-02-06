@@ -1,8 +1,18 @@
-package parser
+package file
 
 import (
+	"os"
 	"strings"
 )
+
+// ReadFile reads the content of a file and returns it as a string.
+func ReadFile(path string) (string, error) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
 
 // StripFrontmatter removes the YAML frontmatter and returns the remaining content and the number of lines stripped.
 func StripFrontmatter(content string) (string, int) {

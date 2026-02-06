@@ -6,8 +6,13 @@ import (
 	"regexp"
 	"sync"
 	"time"
+)
 
-	"github.com/shinagawa-web/gomarklint/internal/parser"
+var (
+	// Link pattern matchers
+	inlineLinkPattern = regexp.MustCompile(`\[[^\]]*\]\((https?://[^\s)]+)\)`)
+	imageLinkPattern  = regexp.MustCompile(`!\[[^\]]*\]\((https?://[^\s)]+)\)`)
+	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://[^\s<>()]+).*?$`)
 )
 
 type cacheResult struct {
@@ -15,16 +20,56 @@ type cacheResult struct {
 	err    error
 }
 
+// ExtractedLink represents an external link found in markdown content
+type ExtractedLink struct {
+	URL  string
+	Line int
+}
+
 const (
 	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
 	DefaultRetryDelayMs = 1000
 )
 
+// ExtractExternalLinksWithLineNumbers extracts external links from the given lines.
+// The offset parameter is added to line numbers to account for stripped frontmatter.
+func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []ExtractedLink {
+	patterns := []*regexp.Regexp{
+		inlineLinkPattern,
+		imageLinkPattern,
+		bareURLPattern,
+	}
+
+	var results []ExtractedLink
+
+	for i, line := range lines {
+		seenInLine := make(map[string]bool) // Track URLs found in this line
+		for _, re := range patterns {
+			matches := re.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) > 1 {
+					url := match[1]
+					// Only add if not already seen in this line
+					if !seenInLine[url] {
+						results = append(results, ExtractedLink{
+							URL:  url,
+							Line: i + 1 + offset, // 1-based line number + offset for frontmatter
+						})
+						seenInLine[url] = true
+					}
+				}
+			}
+		}
+	}
+	return results
+}
+
 // CheckExternalLinks checks external links in the given lines.
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
-func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) []LintError {
+// Returns lint errors and the count of unique URLs checked.
+func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, urlCache *sync.Map) ([]LintError, int) {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
-	links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
+	links := ExtractExternalLinksWithLineNumbers(lines, offset)
 
 	urlToLines := make(map[string][]int)
 	for _, link := range links {
@@ -86,7 +131,7 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 	}
 
 	wg.Wait()
-	return errs
+	return errs, len(urlToLines)
 }
 
 // checkURL performs the URL check with retry logic.

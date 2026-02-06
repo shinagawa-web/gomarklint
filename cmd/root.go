@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/shinagawa-web/gomarklint/internal/config"
-	"github.com/shinagawa-web/gomarklint/internal/parser"
+	"github.com/shinagawa-web/gomarklint/internal/file"
 	"github.com/shinagawa-web/gomarklint/internal/rule"
 )
 
@@ -99,7 +99,7 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		files, err := parser.ExpandPaths(args, cfg.Ignore)
+		files, err := file.ExpandPaths(args, cfg.Ignore)
 		if err != nil {
 			return fmt.Errorf("failed to expand paths: %w", err)
 		}
@@ -131,7 +131,7 @@ var rootCmd = &cobra.Command{
 			go func(p string) {
 				defer wg.Done()
 
-				content, err := parser.ReadFile(p)
+				content, err := file.ReadFile(p)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
 					return
@@ -169,7 +169,7 @@ var rootCmd = &cobra.Command{
 }
 
 func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
-	body, offset := parser.StripFrontmatter(content)
+	body, offset := file.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")
 
 	var allErrors []rule.LintError
@@ -194,14 +194,9 @@ func collectErrors(path string, content string, cfg config.Config, patterns []*r
 
 	linksChecked := 0
 	if cfg.EnableLinkCheck {
-		links := parser.ExtractExternalLinksWithLineNumbers(lines, offset)
-		// Count unique URLs
-		uniqueURLs := make(map[string]bool)
-		for _, link := range links {
-			uniqueURLs[link.URL] = true
-		}
-		linksChecked = len(uniqueURLs)
-		allErrors = append(allErrors, rule.CheckExternalLinks(path, lines, offset, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)...)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)
+		allErrors = append(allErrors, errors...)
+		linksChecked = count
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {
