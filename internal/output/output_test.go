@@ -18,6 +18,25 @@ func (ew *errorWriter) Write(p []byte) (n int, err error) {
 	return 0, errors.New("write error")
 }
 
+// limitedErrorWriter allows a certain number of bytes to be written before failing
+type limitedErrorWriter struct {
+	limit   int
+	written int
+}
+
+func (lw *limitedErrorWriter) Write(p []byte) (n int, err error) {
+	if lw.written >= lw.limit {
+		return 0, errors.New("write limit exceeded")
+	}
+	remaining := lw.limit - lw.written
+	if len(p) <= remaining {
+		lw.written += len(p)
+		return len(p), nil
+	}
+	lw.written += remaining
+	return remaining, errors.New("write limit exceeded")
+}
+
 func TestTextFormatter_Format_NoErrors(t *testing.T) {
 	formatter := NewTextFormatter()
 	result := &Result{
@@ -350,5 +369,201 @@ func TestTextFormatter_Format_ErrorInStats(t *testing.T) {
 	err := formatter.Format(ew, result)
 	if err == nil {
 		t.Error("expected error when writing stats to errorWriter")
+	}
+}
+func TestTextFormatter_Format_ErrorInErrorDetailsHeader(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:  1,
+		Lines:  10,
+		Errors: 1,
+		Details: map[string][]rule.LintError{
+			"test.md": {
+				{File: "test.md", Line: 5, Message: "Test error"},
+			},
+		},
+		OrderedPaths: []string{"test.md"},
+		Duration:     100 * time.Millisecond,
+	}
+
+	// Fail immediately when trying to write "Errors in test.md:"
+	ew := &errorWriter{}
+	err := formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing error details header")
+	}
+}
+
+func TestTextFormatter_Format_ErrorInErrorDetailsLine(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:  1,
+		Lines:  10,
+		Errors: 1,
+		Details: map[string][]rule.LintError{
+			"test.md": {
+				{File: "test.md", Line: 5, Message: "Test error"},
+			},
+		},
+		OrderedPaths: []string{"test.md"},
+		Duration:     100 * time.Millisecond,
+	}
+
+	// Allow "Errors in test.md:\n" but fail on error line
+	lw := &limitedErrorWriter{limit: 18}
+	err := formatter.Format(lw, result)
+	if err == nil {
+		t.Error("expected error when writing error line")
+	}
+}
+
+func TestTextFormatter_Format_ErrorInErrorDetailsNewline(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:  1,
+		Lines:  10,
+		Errors: 1,
+		Details: map[string][]rule.LintError{
+			"test.md": {
+				{File: "test.md", Line: 5, Message: "Test error"},
+			},
+		},
+		OrderedPaths: []string{"test.md"},
+		Duration:     100 * time.Millisecond,
+	}
+
+	// Allow header and error line but fail on final newline
+	lw := &limitedErrorWriter{limit: 50}
+	err := formatter.Format(lw, result)
+	if err == nil {
+		t.Error("expected error when writing final newline after errors")
+	}
+}
+
+func TestTextFormatter_Format_ErrorInSummaryWithErrors(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:        1,
+		Lines:        10,
+		Errors:       1,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+		Duration:     100 * time.Millisecond,
+	}
+
+	ew := &errorWriter{}
+	err := formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing summary with errors")
+	}
+}
+
+func TestTextFormatter_Format_StatsWithLinksShortDuration(t *testing.T) {
+	formatter := NewTextFormatter()
+	linksChecked := 5
+	result := &Result{
+		Files:        2,
+		Lines:        50,
+		Errors:       0,
+		LinksChecked: &linksChecked,
+		Duration:     500 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	var buf bytes.Buffer
+	err := formatter.Format(&buf, result)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "500ms") {
+		t.Errorf("expected 500ms duration, got: %s", output)
+	}
+	if !strings.Contains(output, "5 link(s)") {
+		t.Errorf("expected 5 links checked, got: %s", output)
+	}
+}
+
+func TestTextFormatter_Format_StatsWithLinksLongDuration(t *testing.T) {
+	formatter := NewTextFormatter()
+	linksChecked := 10
+	result := &Result{
+		Files:        3,
+		Lines:        100,
+		Errors:       0,
+		LinksChecked: &linksChecked,
+		Duration:     2500 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	var buf bytes.Buffer
+	err := formatter.Format(&buf, result)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "2.5s") {
+		t.Errorf("expected 2.5s duration, got: %s", output)
+	}
+	if !strings.Contains(output, "10 link(s)") {
+		t.Errorf("expected 10 links checked, got: %s", output)
+	}
+}
+
+func TestTextFormatter_Format_StatsWithoutLinksShortDuration(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:        1,
+		Lines:        25,
+		Errors:       0,
+		LinksChecked: nil,
+		Duration:     300 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	var buf bytes.Buffer
+	err := formatter.Format(&buf, result)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "300ms") {
+		t.Errorf("expected 300ms duration, got: %s", output)
+	}
+	if strings.Contains(output, "link(s)") {
+		t.Errorf("should not mention links when not checked, got: %s", output)
+	}
+}
+
+func TestTextFormatter_Format_StatsWithoutLinksLongDuration(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:        2,
+		Lines:        75,
+		Errors:       0,
+		LinksChecked: nil,
+		Duration:     1500 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	var buf bytes.Buffer
+	err := formatter.Format(&buf, result)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "1.5s") {
+		t.Errorf("expected 1.5s duration, got: %s", output)
+	}
+	if strings.Contains(output, "link(s)") {
+		t.Errorf("should not mention links when not checked, got: %s", output)
 	}
 }
