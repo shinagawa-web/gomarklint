@@ -3,12 +3,20 @@ package output
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/shinagawa-web/gomarklint/internal/rule"
 )
+
+// errorWriter simulates a writer that always fails
+type errorWriter struct{}
+
+func (ew *errorWriter) Write(p []byte) (n int, err error) {
+	return 0, errors.New("write error")
+}
 
 func TestTextFormatter_Format_NoErrors(t *testing.T) {
 	formatter := NewTextFormatter()
@@ -302,5 +310,22 @@ func TestJSONFormatter_Format_ValidJSON(t *testing.T) {
 	}
 	if _, ok := decoded["links_checked"]; !ok {
 		t.Error("missing 'links_checked' field in JSON output")
+	}
+}
+
+func TestJSONFormatter_Format_WriteError(t *testing.T) {
+	formatter := NewJSONFormatter()
+	result := &Result{
+		Files:    1,
+		Lines:    10,
+		Errors:   0,
+		Duration: 100 * time.Millisecond,
+		Details:  map[string][]rule.LintError{},
+	}
+
+	ew := &errorWriter{}
+	err := formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing to errorWriter")
 	}
 }

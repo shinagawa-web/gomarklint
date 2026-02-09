@@ -238,3 +238,123 @@ func TestRun_FileReadError(t *testing.T) {
 		t.Errorf("expected no results for non-existent file, got %d", len(result.Errors))
 	}
 }
+
+func TestRun_DuplicateHeadings(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = true
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "duplicate.md")
+	content := "# Title\n\n## Section\n\n## Section\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for duplicate headings")
+	}
+}
+
+func TestRun_NoMultipleBlankLines(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = true
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "blank.md")
+	content := "# Title\n\n\n\nContent\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for multiple blank lines")
+	}
+}
+
+func TestRun_NoSetextHeadings(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = true
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "setext.md")
+	content := "Title\n=====\n\nContent\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for setext headings")
+	}
+}
+
+func TestRun_FinalBlankLine(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = true
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "nofinal.md")
+	content := "# Title\n\nContent"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for missing final blank line")
+	}
+}
