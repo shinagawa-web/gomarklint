@@ -17,7 +17,6 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 	if linter == nil {
 		t.Fatal("expected linter to be non-nil")
 	}

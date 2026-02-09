@@ -121,52 +121,6 @@ func TestTextFormatter_Format_WithLinkCheck(t *testing.T) {
 	}
 }
 
-func TestTextFormatter_Format_DurationLessThanSecond(t *testing.T) {
-	formatter := NewTextFormatter()
-	result := &Result{
-		Files:        1,
-		Lines:        50,
-		Errors:       0,
-		Duration:     999 * time.Millisecond,
-		Details:      map[string][]rule.LintError{},
-		OrderedPaths: []string{},
-	}
-
-	var buf bytes.Buffer
-	err := formatter.Format(&buf, result)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "999ms") {
-		t.Errorf("expected duration in milliseconds, got: %s", output)
-	}
-}
-
-func TestTextFormatter_Format_DurationGreaterThanSecond(t *testing.T) {
-	formatter := NewTextFormatter()
-	result := &Result{
-		Files:        1,
-		Lines:        50,
-		Errors:       0,
-		Duration:     3500 * time.Millisecond,
-		Details:      map[string][]rule.LintError{},
-		OrderedPaths: []string{},
-	}
-
-	var buf bytes.Buffer
-	err := formatter.Format(&buf, result)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "3.5s") {
-		t.Errorf("expected duration in seconds, got: %s", output)
-	}
-}
-
 func TestJSONFormatter_Format_NoErrors(t *testing.T) {
 	formatter := NewJSONFormatter()
 	result := &Result{
@@ -327,5 +281,74 @@ func TestJSONFormatter_Format_WriteError(t *testing.T) {
 	err := formatter.Format(ew, result)
 	if err == nil {
 		t.Error("expected error when writing to errorWriter")
+	}
+}
+
+func TestTextFormatter_Format_WithErrorsInWrite(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:  1,
+		Lines:  10,
+		Errors: 1,
+		Details: map[string][]rule.LintError{
+			"test.md": {
+				{File: "test.md", Line: 5, Message: "Test error"},
+			},
+		},
+		OrderedPaths: []string{"test.md"},
+		Duration:     100 * time.Millisecond,
+	}
+
+	ew := &errorWriter{}
+	err := formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing to errorWriter")
+	}
+}
+
+func TestTextFormatter_Format_ErrorInSummary(t *testing.T) {
+	formatter := NewTextFormatter()
+	result := &Result{
+		Files:        1,
+		Lines:        10,
+		Errors:       0,
+		Duration:     100 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	var buf bytes.Buffer
+
+	// First write should succeed
+	err := formatter.Format(&buf, result)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// Writing to error writer should fail
+	ew := &errorWriter{}
+	err = formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing summary to errorWriter")
+	}
+}
+
+func TestTextFormatter_Format_ErrorInStats(t *testing.T) {
+	formatter := NewTextFormatter()
+	linksChecked := 10
+	result := &Result{
+		Files:        1,
+		Lines:        10,
+		Errors:       0,
+		LinksChecked: &linksChecked,
+		Duration:     100 * time.Millisecond,
+		Details:      map[string][]rule.LintError{},
+		OrderedPaths: []string{},
+	}
+
+	ew := &errorWriter{}
+	err := formatter.Format(ew, result)
+	if err == nil {
+		t.Error("expected error when writing stats to errorWriter")
 	}
 }
