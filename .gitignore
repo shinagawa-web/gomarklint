@@ -9,6 +9,4 @@ dist/
 e2e/gomarklint-e2e-test
 
 # Coverage
-coverage.out
-coverage.txt
-coverage.html
+/coverage/
