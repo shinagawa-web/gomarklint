@@ -28,6 +28,7 @@ type Result struct {
 	TotalErrors       int                         // Total number of errors
 	TotalLines        int                         // Total number of lines checked
 	TotalLinksChecked int                         // Total number of links checked
+	FailedFiles       map[string]error            // Files that failed to read
 }
 
 // New creates a new Linter with the given configuration.
@@ -53,8 +54,19 @@ func New(cfg config.Config) (*Linter, error) {
 
 // Run performs linting on the given file paths concurrently.
 func (l *Linter) Run(filePaths []string) (*Result, error) {
+	// Deduplicate file paths to prevent double-counting
+	uniquePaths := make(map[string]struct{})
+	for _, p := range filePaths {
+		uniquePaths[p] = struct{}{}
+	}
+	deduped := make([]string, 0, len(uniquePaths))
+	for p := range uniquePaths {
+		deduped = append(deduped, p)
+	}
+
 	results := map[string][]rule.LintError{}
-	orderedPaths := make([]string, 0, len(filePaths))
+	orderedPaths := make([]string, 0, len(deduped))
+	failedFiles := map[string]error{}
 	totalErrors := 0
 	totalLines := 0
 	totalLinksChecked := 0
@@ -62,13 +74,16 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	for _, path := range filePaths {
+	for _, path := range deduped {
 		wg.Add(1)
 		go func(p string) {
 			defer wg.Done()
 
 			content, err := file.ReadFile(p)
 			if err != nil {
+				mu.Lock()
+				failedFiles[p] = err
+				mu.Unlock()
 				fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
 				return
 			}
@@ -95,6 +110,7 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 		TotalErrors:       totalErrors,
 		TotalLines:        totalLines,
 		TotalLinksChecked: totalLinksChecked,
+		FailedFiles:       failedFiles,
 	}, nil
 }
 

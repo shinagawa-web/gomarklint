@@ -230,6 +230,14 @@ func TestRun_FileReadError(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
+	if len(result.FailedFiles) != 1 {
+		t.Errorf("expected 1 failed file, got %d", len(result.FailedFiles))
+	}
+
+	if _, exists := result.FailedFiles["/non/existent/file.md"]; !exists {
+		t.Error("expected /non/existent/file.md in FailedFiles")
+	}
+
 	if len(result.Errors) != 0 {
 		t.Errorf("expected no results for non-existent file, got %d", len(result.Errors))
 	}
@@ -352,5 +360,108 @@ func TestRun_FinalBlankLine(t *testing.T) {
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for missing final blank line")
+	}
+}
+
+func TestRun_LinkCheck(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+	cfg.EnableLinkCheck = true
+	cfg.LinkCheckTimeoutSeconds = 5
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "links.md")
+	content := "# Test\n\n[Valid Link](https://example.com)\n\n[Another Link](https://www.ietf.org/rfc/rfc2606.txt)\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalLinksChecked != 2 {
+		t.Errorf("expected 2 links checked, got %d", result.TotalLinksChecked)
+	}
+}
+
+func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+	cfg.EnableLinkCheck = true
+	cfg.SkipLinkPatterns = []string{"https://example\\.com/.*"}
+	cfg.LinkCheckTimeoutSeconds = 5
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "links.md")
+	content := "# Test\n\n[Skipped](https://example.com/skip)\n\n[Checked](https://www.ietf.org/rfc/rfc2606.txt)\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalLinksChecked != 1 {
+		t.Errorf("expected 1 link checked (skipped link not counted), got %d", result.TotalLinksChecked)
+	}
+}
+
+func TestRun_DuplicatePaths(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.md")
+	content := "# Test\n\nContent\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	// Pass the same file multiple times
+	result, err := linter.Run([]string{testFile, testFile, testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should only process once
+	if len(result.OrderedPaths) != 1 {
+		t.Errorf("expected 1 unique path, got %d", len(result.OrderedPaths))
+	}
+
+	// Should count lines only once
+	expectedLines := 4
+	if result.TotalLines != expectedLines {
+		t.Errorf("expected %d lines (counted once), got %d", expectedLines, result.TotalLines)
 	}
 }

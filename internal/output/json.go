@@ -23,13 +23,13 @@ func (f *JSONFormatter) Format(w io.Writer, result *Result) error {
 		Errors       int                         `json:"errors"`
 		LinksChecked *int                        `json:"links_checked,omitempty"`
 		ElapsedMS    int64                       `json:"elapsed_ms"`
-		ErrorDetail  map[string][]rule.LintError `json:"details"`
+		Details      map[string][]rule.LintError `json:"details"`
 	}{
-		Files:       result.Files,
-		Lines:       result.Lines,
-		Errors:      result.Errors,
-		ElapsedMS:   result.Duration.Milliseconds(),
-		ErrorDetail: result.Details,
+		Files:     result.Files,
+		Lines:     result.Lines,
+		Errors:    result.Errors,
+		ElapsedMS: result.Duration.Milliseconds(),
+		Details:   result.Details,
 	}
 
 	if result.LinksChecked != nil {
