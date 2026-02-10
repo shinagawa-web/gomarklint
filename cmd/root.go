@@ -1,22 +1,17 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
-	"regexp"
-	"sort"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/shinagawa-web/gomarklint/internal/config"
 	"github.com/shinagawa-web/gomarklint/internal/file"
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/internal/linter"
+	"github.com/shinagawa-web/gomarklint/internal/output"
 )
 
 var minHeadingLevel int
@@ -35,252 +30,96 @@ var rootCmd = &cobra.Command{
 	Short: "A fast markdown linter written in Go",
 	Long:  "gomarklint checks markdown files for common issues like heading structure, blank lines, and more.",
 	Args:  cobra.MinimumNArgs(0),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println()
+	RunE:  runLint,
+}
 
-		start := time.Now()
-		cfg := config.Default()
-		if _, err := os.Stat(configFilePath); err == nil {
-			c, err := config.LoadConfig(configFilePath)
-			if err != nil {
-				return err
-			}
-			cfg = c
-		}
+func runLint(cmd *cobra.Command, args []string) error {
+	fmt.Println()
+	start := time.Now()
 
-		if cmd.Flags().Changed("min-heading") {
-			cfg.MinHeadingLevel = minHeadingLevel
-		}
-		if cmd.Flags().Changed("enable-link-check") {
-			cfg.EnableLinkCheck = enableLinkCheck
-		}
-		if cmd.Flags().Changed("enable-heading-level-check") {
-			cfg.EnableHeadingLevelCheck = enableHeadingLevelCheck
-		}
-		if cmd.Flags().Changed("enable-duplicate-heading-check") {
-			cfg.EnableDuplicateHeadingCheck = enableDuplicateHeadingCheck
-		}
-		if cmd.Flags().Changed("enable-no-multiple-blank-lines-check") {
-			cfg.EnableNoMultipleBlankLinesCheck = enableNoMultipleBlankLinesCheck
-		}
-		if cmd.Flags().Changed("enable-no-setext-headings-check") {
-			cfg.EnableNoSetextHeadingsCheck = enableNoSetextHeadingsCheck
-		}
-		if cmd.Flags().Changed("enable-final-blank-line-check") {
-			cfg.EnableFinalBlankLineCheck = enableFinalBlankLineCheck
-		}
-		if cmd.Flags().Changed("skip-link-patterns") {
-			cfg.SkipLinkPatterns = skipLinkPatterns
-		}
+	// Load and merge configuration
+	cfg, err := config.LoadOrDefault(configFilePath)
+	if err != nil {
+		return err
+	}
 
-		if cmd.Flags().Changed("output") {
-			cfg.OutputFormat = outputFormat
-		}
-		outputFormat = cfg.OutputFormat
+	flags := config.FlagValues{
+		MinHeadingLevel:                 minHeadingLevel,
+		EnableLinkCheck:                 enableLinkCheck,
+		EnableHeadingLevelCheck:         enableHeadingLevelCheck,
+		EnableDuplicateHeadingCheck:     enableDuplicateHeadingCheck,
+		EnableNoMultipleBlankLinesCheck: enableNoMultipleBlankLinesCheck,
+		EnableNoSetextHeadingsCheck:     enableNoSetextHeadingsCheck,
+		EnableFinalBlankLineCheck:       enableFinalBlankLineCheck,
+		SkipLinkPatterns:                skipLinkPatterns,
+		OutputFormat:                    outputFormat,
+	}
+	cfg = config.MergeFlags(cfg, cmd, flags)
 
-		if outputFormat != "text" && outputFormat != "json" {
-			return fmt.Errorf("invalid --output value: %q (must be 'text' or 'json')", outputFormat)
-		}
+	if err := config.Validate(cfg); err != nil {
+		return err
+	}
 
-		minHeadingLevel = cfg.MinHeadingLevel
-		enableLinkCheck = cfg.EnableLinkCheck
-		skipLinkPatterns = cfg.SkipLinkPatterns
-		enableHeadingLevelCheck = cfg.EnableHeadingLevelCheck
-		enableDuplicateHeadingCheck = cfg.EnableDuplicateHeadingCheck
-		enableNoMultipleBlankLinesCheck = cfg.EnableNoMultipleBlankLinesCheck
-		enableNoSetextHeadingsCheck = cfg.EnableNoSetextHeadingsCheck
-		enableFinalBlankLineCheck = cfg.EnableFinalBlankLineCheck
-
-		if len(args) == 0 {
-			if len(cfg.Include) > 0 {
-				args = cfg.Include
-			} else {
-				return fmt.Errorf("please provide a markdown file or directory (or set 'include' in .gomarklint.json)")
-			}
-		}
-
-		files, err := file.ExpandPaths(args, cfg.Ignore)
-		if err != nil {
-			return fmt.Errorf("failed to expand paths: %w", err)
-		}
-		compiledPatterns := []*regexp.Regexp{}
-		if enableLinkCheck {
-			for _, pat := range skipLinkPatterns {
-				re, err := regexp.Compile(pat)
-				if err != nil {
-					log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
-					continue
-				}
-				compiledPatterns = append(compiledPatterns, re)
-			}
-		}
-
-		totalErrors := 0
-		totalLines := 0
-		totalLinksChecked := 0
-		results := map[string][]rule.LintError{}
-		orderedPaths := make([]string, 0, len(files))
-
-		var mu sync.Mutex
-		var wg sync.WaitGroup
-
-		urlCache := &sync.Map{}
-
-		for _, path := range files {
-			wg.Add(1)
-			go func(p string) {
-				defer wg.Done()
-
-				content, err := file.ReadFile(p)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", p, err)
-					return
-				}
-				errors, lineCount, linksChecked := collectErrors(p, content, cfg, compiledPatterns, urlCache)
-
-				mu.Lock()
-				results[p] = errors
-				orderedPaths = append(orderedPaths, p)
-				totalErrors += len(errors)
-				totalLines += lineCount
-				totalLinksChecked += linksChecked
-				mu.Unlock()
-			}(path)
-		}
-
-		wg.Wait()
-
-		// Sort paths to ensure consistent output order
-		sort.Strings(orderedPaths)
-
-		elapsed := time.Since(start)
-
-		if outputFormat == "json" {
-			printJSONOutput(results, len(files), totalLines, totalErrors, totalLinksChecked, cfg.EnableLinkCheck, elapsed)
+	// Determine files to check
+	if len(args) == 0 {
+		if len(cfg.Include) > 0 {
+			args = cfg.Include
 		} else {
-			printHumanOutput(orderedPaths, results, len(files), totalLines, totalErrors, totalLinksChecked, cfg.EnableLinkCheck, elapsed)
+			return fmt.Errorf("please provide a markdown file or directory (or set 'include' in .gomarklint.json)")
 		}
+	}
 
-		if totalErrors > 0 {
-			return errors.New("")
-		}
-		return nil
-	},
+	files, err := file.ExpandPaths(args, cfg.Ignore)
+	if err != nil {
+		return fmt.Errorf("failed to expand paths: %w", err)
+	}
+
+	// Run linter
+	lint, err := linter.New(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create linter: %w", err)
+	}
+
+	result, err := lint.Run(files)
+	if err != nil {
+		return err
+	}
+
+	// Format and output results
+	if err := formatOutput(cfg, result, len(files), time.Since(start)); err != nil {
+		return err
+	}
+
+	if result.TotalErrors > 0 {
+		return errors.New("")
+	}
+	return nil
 }
 
-func collectErrors(path string, content string, cfg config.Config, patterns []*regexp.Regexp, urlCache *sync.Map) ([]rule.LintError, int, int) {
-	body, offset := file.StripFrontmatter(content)
-	lines := strings.Split(body, "\n")
-
-	var allErrors []rule.LintError
-	if cfg.EnableFinalBlankLineCheck {
-		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
-	}
-	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
-	allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
-	if cfg.EnableHeadingLevelCheck {
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, cfg.MinHeadingLevel)...)
-	}
-	if cfg.EnableDuplicateHeadingCheck {
-		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
-	}
-	if cfg.EnableNoMultipleBlankLinesCheck {
-		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
-	}
-
-	if cfg.EnableNoSetextHeadingsCheck {
-		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
-	}
-
-	linksChecked := 0
-	if cfg.EnableLinkCheck {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, patterns, cfg.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, urlCache)
-		allErrors = append(allErrors, errors...)
-		linksChecked = count
-	}
-
-	sort.Slice(allErrors, func(i, j int) bool {
-		return allErrors[i].Line < allErrors[j].Line
-	})
-
-	lineCount := strings.Count(content, "\n") + 1
-	return allErrors, lineCount, linksChecked
-}
-
-func printJSONOutput(results map[string][]rule.LintError, totalFiles, totalLines, totalErrors, totalLinksChecked int, linkCheckEnabled bool, duration time.Duration) {
-	output := struct {
-		Files        int                         `json:"files"`
-		Lines        int                         `json:"lines"`
-		Errors       int                         `json:"errors"`
-		LinksChecked *int                        `json:"links_checked,omitempty"`
-		ElapsedMS    int64                       `json:"elapsed_ms"`
-		ErrorDetail  map[string][]rule.LintError `json:"details"`
-	}{
-		Files:       totalFiles,
-		Lines:       totalLines,
-		Errors:      totalErrors,
-		ElapsedMS:   duration.Milliseconds(),
-		ErrorDetail: results,
-	}
-
-	if linkCheckEnabled {
-		output.LinksChecked = &totalLinksChecked
-	}
-
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(output); err != nil {
-		log.Fatalf("failed to write JSON output: %v", err)
-	}
-}
-
-func printHumanOutput(
-	orderedPaths []string,
-	results map[string][]rule.LintError,
-	totalFiles, totalLines, totalErrors, totalLinksChecked int,
-	linkCheckEnabled bool,
-	duration time.Duration,
-) {
-	red := "\033[31m"
-	green := "\033[32m"
-	gray := "\033[90m"
-	reset := "\033[0m"
-
-	for _, path := range orderedPaths {
-		errors := results[path]
-		if len(errors) == 0 {
-			continue
-		}
-		fmt.Printf("Errors in %s:\n", path)
-		for _, e := range errors {
-			fmt.Printf("  %s:%d: %s\n", e.File, e.Line, e.Message)
-		}
-		fmt.Println()
-	}
-
-	if totalErrors > 0 {
-		fmt.Printf("\n%s✖ %d issues found%s\n", red, totalErrors, reset)
+func formatOutput(cfg config.Config, result *linter.Result, fileCount int, duration time.Duration) error {
+	var formatter output.Formatter
+	if cfg.OutputFormat == "json" {
+		formatter = output.NewJSONFormatter()
 	} else {
-		fmt.Printf("\n%s✔ No issues found%s\n", green, reset)
+		formatter = output.NewTextFormatter()
 	}
 
-	if linkCheckEnabled {
-		if duration < time.Second {
-			fmt.Printf("%s✓%s Checked %d file(s), %d line(s), %d link(s) in %s%dms%s\n",
-				green, reset, totalFiles, totalLines, totalLinksChecked, gray, duration.Milliseconds(), reset)
-		} else {
-			fmt.Printf("%s✓%s Checked %d file(s), %d line(s), %d link(s) in %s%.1fs%s\n",
-				green, reset, totalFiles, totalLines, totalLinksChecked, gray, duration.Seconds(), reset)
-		}
-	} else {
-		if duration < time.Second {
-			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%dms%s\n",
-				green, reset, totalFiles, totalLines, gray, duration.Milliseconds(), reset)
-		} else {
-			fmt.Printf("%s✓%s Checked %d file(s), %d line(s) in %s%.1fs%s\n",
-				green, reset, totalFiles, totalLines, gray, duration.Seconds(), reset)
-		}
+	linksChecked := &result.TotalLinksChecked
+	if !cfg.EnableLinkCheck {
+		linksChecked = nil
 	}
+
+	outputResult := &output.Result{
+		Files:        fileCount,
+		Lines:        result.TotalLines,
+		Errors:       result.TotalErrors,
+		LinksChecked: linksChecked,
+		Duration:     duration,
+		Details:      result.Errors,
+		OrderedPaths: result.OrderedPaths,
+	}
+
+	return formatter.Format(os.Stdout, outputResult)
 }
 
 func init() {
