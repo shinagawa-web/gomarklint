@@ -383,27 +383,64 @@ jobs:
 gomarklint/
 ├── cmd/                    # CLI commands
 │   ├── init.go            # Configuration initialization
-│   └── root.go            # Root command and main logic
+│   ├── root.go            # Root command and CLI orchestration
+│   └── root_bench_test.go # Benchmark tests for CLI
 ├── internal/
 │   ├── config/            # Configuration management
 │   │   ├── config.go      # Config struct and defaults
 │   │   ├── config_test.go
-│   │   └── load.go        # Configuration loading
-│   ├── parser/            # Markdown parsing utilities
-│   │   ├── expand.go      # File expansion logic
-│   │   ├── external_link.go # External link handling
-│   │   ├── markdown.go    # Core markdown parsing
-│   │   └── strip_frontmatter.go # Frontmatter removal
+│   │   ├── load.go        # Configuration file loading
+│   │   ├── merge.go       # Config merging and flag handling
+│   │   └── merge_test.go
+│   ├── file/              # File system operations
+│   │   ├── expand.go      # File expansion and glob pattern matching
+│   │   ├── expand_test.go
+│   │   ├── pathutil.go    # Path utilities
+│   │   ├── pathutil_test.go
+│   │   ├── reader.go      # File reading with frontmatter handling
+│   │   └── reader_test.go
+│   ├── linter/            # Core linting logic
+│   │   ├── linter.go      # Linter implementation with concurrent processing
+│   │   └── linter_test.go
+│   ├── output/            # Output formatting
+│   │   ├── formatter.go   # Formatter interface
+│   │   ├── json.go        # JSON output formatter
+│   │   ├── json_test.go
+│   │   ├── text.go        # Text output formatter
+│   │   ├── text_test.go
+│   │   └── testutil_test.go
 │   ├── rule/              # Lint rules implementation
 │   │   ├── code_block.go
+│   │   ├── code_block_test.go
+│   │   ├── code_block_bench_test.go
 │   │   ├── duplicate_headings.go
+│   │   ├── duplicate_headings_test.go
+│   │   ├── duplicate_headings_bench_test.go
 │   │   ├── empty_alt_text.go
+│   │   ├── empty_alt_text_test.go
+│   │   ├── empty_alt_text_bench_test.go
 │   │   ├── external_link.go
+│   │   ├── external_link_test.go
+│   │   ├── external_link_bench_test.go
 │   │   ├── final_blank_line.go
-│   │   └── heading_level.go
-│   ├── testutil/          # Testing utilities
-│   └── util/              # Common utilities
-├── testdata/              # Test fixtures
+│   │   ├── final_blank_line_test.go
+│   │   ├── final_blank_line_bench_test.go
+│   │   ├── heading_level.go
+│   │   ├── heading_level_test.go
+│   │   ├── heading_level_bench_test.go
+│   │   ├── no_multiple_blank_lines.go
+│   │   ├── no_multiple_blank_lines_test.go
+│   │   ├── no_multiple_blank_lines_bench_test.go
+│   │   ├── setext_headings.go
+│   │   └── setext_headings_test.go
+│   └── testutil/          # Testing utilities
+│       ├── path.go
+│       └── path_test.go
+├── e2e/                   # End-to-end tests
+│   ├── e2e_test.go
+│   ├── fixtures/          # Test fixture markdown files
+│   └── .gomarklint.json
+├── testdata/              # Unit test fixtures
 ├── main.go               # Application entry point
 └── doc.go                # Package documentation
 ```
@@ -464,9 +501,10 @@ make clean
 #### Unit Tests
 Unit tests for individual rules and utilities are located in `*_test.go` files alongside the code they test:
 - `internal/rule/*_test.go` — Test individual lint rules
-- `internal/parser/*_test.go` — Test parsing utilities
-- `internal/config/*_test.go` — Test configuration loading
-- `internal/util/*_test.go` — Test utility functions
+- `internal/linter/*_test.go` — Test core linting logic
+- `internal/file/*_test.go` — Test file operations and path utilities
+- `internal/config/*_test.go` — Test configuration loading and merging
+- `internal/output/*_test.go` — Test output formatters
 
 Run with: `make test`
 
