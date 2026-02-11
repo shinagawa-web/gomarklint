@@ -465,3 +465,55 @@ func TestRun_DuplicatePaths(t *testing.T) {
 		t.Errorf("expected %d lines (counted once), got %d", expectedLines, result.TotalLines)
 	}
 }
+
+func TestLintContent_NoErrors(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = false
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	content := "# Hello\n\nThis is a test.\n"
+	errors, lineCount, linksChecked := linter.LintContent("test.md", content)
+
+	if len(errors) != 0 {
+		t.Errorf("expected 0 errors, got %d", len(errors))
+	}
+	if lineCount != 4 {
+		t.Errorf("expected 4 lines, got %d", lineCount)
+	}
+	if linksChecked != 0 {
+		t.Errorf("expected 0 links checked, got %d", linksChecked)
+	}
+}
+
+func TestLintContent_WithErrors(t *testing.T) {
+	cfg := config.Default()
+	cfg.EnableHeadingLevelCheck = true
+	cfg.MinHeadingLevel = 2
+	cfg.EnableDuplicateHeadingCheck = false
+	cfg.EnableNoMultipleBlankLinesCheck = false
+	cfg.EnableFinalBlankLineCheck = false
+	cfg.EnableNoSetextHeadingsCheck = false
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	content := "# Title\n\nContent\n"
+	errors, lineCount, _ := linter.LintContent("test.md", content)
+
+	if len(errors) == 0 {
+		t.Error("expected at least 1 error (heading level)")
+	}
+	if lineCount != 4 {
+		t.Errorf("expected 4 lines, got %d", lineCount)
+	}
+}
