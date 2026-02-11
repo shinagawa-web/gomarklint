@@ -77,10 +77,36 @@ jobs:
           script: |
             const fs = require('fs');
             const comparison = fs.readFileSync('comparison.txt', 'utf8');
+            const commentMarker = '<!-- benchmark-comment -->';
+            const body = commentMarker + '\n' + comparison;
             
-            github.rest.issues.createComment({
+            // Find existing benchmark comment
+            const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comparison
             });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes(commentMarker)
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                comment_id: existingComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+              console.log('Updated existing benchmark comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+              console.log('Created new benchmark comment');
+            }

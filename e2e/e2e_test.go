@@ -59,13 +59,22 @@ func TestE2E(t *testing.T) {
 		})
 
 		t.Run("InvalidHeadingLevel", func(t *testing.T) {
-			output := runTest(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json")
+			output, err := runTestWithCmd(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json")
+
+			// Should exit with non-zero code for lint violations
+			if err == nil {
+				t.Error("expected non-zero exit code for lint violations")
+			}
+
 			assertOutputContains(t, output, "Errors in fixtures/invalid_heading_level.md:")
 			assertOutputContains(t, output, "fixtures/invalid_heading_level.md:1:")
 			assertOutputContains(t, output, "First heading should be level 2")
 			assertOutputContains(t, output, "found level 1")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "1 issues found")
+
+			// Lint violations should NOT show [gomarklint error]:
+			assertOutputNotContains(t, output, "[gomarklint error]:")
 		})
 
 		t.Run("DuplicateHeadings", func(t *testing.T) {
@@ -257,10 +266,10 @@ func TestE2E(t *testing.T) {
 			if err == nil {
 				t.Errorf("expected error for invalid config file, but command succeeded")
 			}
-			errorOutput := string(output)
-			if !bytes.Contains(output, []byte("error")) && !bytes.Contains(output, []byte("invalid")) {
-				t.Errorf("expected error message about invalid config, got: %s", errorOutput)
-			}
+
+			// Real errors (not lint violations) should show [gomarklint error]:
+			assertOutputContains(t, output, "[gomarklint error]:")
+			assertOutputContains(t, output, "failed to parse config file")
 		})
 
 		t.Run("EmptyFile", func(t *testing.T) {

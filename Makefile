@@ -48,9 +48,10 @@ test-all: test test-e2e ## Run all tests (unit + E2E)
 
 test-coverage: ## Run tests with coverage
 	@echo "Running tests with coverage..."
-	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage.txt
-	$(GOCMD) tool cover -html=coverage.txt -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@mkdir -p coverage
+	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage/coverage.out
+	$(GOCMD) tool cover -html=coverage/coverage.out -o coverage/coverage.html
+	@echo "Coverage report generated: coverage/coverage.html"
 
 bench: ## Run benchmark tests
 	@echo "Running benchmark tests..."
@@ -60,7 +61,7 @@ clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
-	rm -f coverage.out coverage.html
+	rm -rf coverage
 
 install: ## Install the binary locally
 	@echo "Installing $(BINARY_NAME)..."

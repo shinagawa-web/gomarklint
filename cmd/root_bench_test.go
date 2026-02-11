@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/shinagawa-web/gomarklint/internal/config"
+	"github.com/shinagawa-web/gomarklint/internal/linter"
 )
 
 // generateComplexMarkdown generates a realistic markdown file with mixed content.
@@ -64,11 +64,15 @@ func BenchmarkFullLinting(b *testing.B) {
 	content := generateComplexMarkdown(1000)
 	cfg := config.Default()
 	cfg.EnableLinkCheck = false
-	urlCache := &sync.Map{}
+
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = collectErrors("benchmark.md", content, cfg, nil, urlCache)
+		_, _, _ = lint.LintContent("benchmark.md", content)
 	}
 }
 
@@ -76,10 +80,14 @@ func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	content := generateComplexMarkdown(5000)
 	cfg := config.Default()
 	cfg.EnableLinkCheck = false
-	urlCache := &sync.Map{}
+
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = collectErrors("benchmark.md", content, cfg, nil, urlCache)
+		_, _, _ = lint.LintContent("benchmark.md", content)
 	}
 }
