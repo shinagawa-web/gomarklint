@@ -54,7 +54,12 @@ func TestLoadOrDefault(t *testing.T) {
 		if err := os.Chmod(tmpDir, 0000); err != nil {
 			t.Fatalf("failed to change permissions: %v", err)
 		}
-		defer os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+		defer func() {
+			// Restore permissions for cleanup
+			if err := os.Chmod(tmpDir, 0755); err != nil {
+				t.Logf("failed to restore permissions: %v", err)
+			}
+		}()
 
 		_, err := LoadOrDefault(configPath)
 		if err == nil {
