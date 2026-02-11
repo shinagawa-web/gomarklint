@@ -41,6 +41,26 @@ func TestLoadOrDefault(t *testing.T) {
 			t.Errorf("expected default MinHeadingLevel=%d, got %d", defaultCfg.MinHeadingLevel, cfg.MinHeadingLevel)
 		}
 	})
+
+	t.Run("ReturnsErrorForPermissionDenied", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, ".gomarklint.json")
+		content := `{"minHeadingLevel": 3}`
+		if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create test config: %v", err)
+		}
+
+		// Make directory unreadable to simulate permission error
+		if err := os.Chmod(tmpDir, 0000); err != nil {
+			t.Fatalf("failed to change permissions: %v", err)
+		}
+		defer os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+
+		_, err := LoadOrDefault(configPath)
+		if err == nil {
+			t.Error("expected error for permission denied, got nil")
+		}
+	})
 }
 
 func TestMergeFlags(t *testing.T) {

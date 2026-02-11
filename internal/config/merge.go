@@ -22,10 +22,13 @@ type FlagValues struct {
 
 // LoadOrDefault loads configuration from file if it exists, otherwise returns default config.
 func LoadOrDefault(configPath string) (Config, error) {
-	if _, err := os.Stat(configPath); err == nil {
-		return LoadConfig(configPath)
+	if _, err := os.Stat(configPath); err != nil {
+		if os.IsNotExist(err) {
+			return Default(), nil
+		}
+		return Config{}, fmt.Errorf("failed to access config file: %w", err)
 	}
-	return Default(), nil
+	return LoadConfig(configPath)
 }
 
 // MergeFlags merges command-line flag values into the config, respecting which flags were actually set.
