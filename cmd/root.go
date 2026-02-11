@@ -14,6 +14,9 @@ import (
 	"github.com/shinagawa-web/gomarklint/internal/output"
 )
 
+// ErrLintViolations is returned when lint violations are found.
+var ErrLintViolations = errors.New("lint violations found")
+
 var minHeadingLevel int
 var enableLinkCheck bool
 var skipLinkPatterns []string
@@ -91,7 +94,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 	}
 
 	if result.TotalErrors > 0 {
-		return errors.New("")
+		return ErrLintViolations
 	}
 	return nil
 }
