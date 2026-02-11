@@ -51,15 +51,18 @@ changelog:
     - title: "Bug Fixes 🐛"
       regexp: '(?i)^.*?(fix|bug).*?$'
       order: 2
+    - title: "Code Refactoring ♻️"
+      regexp: '(?i)^.*?refactor.*?$'
+      order: 3
     - title: "Documentation 📝"
       regexp: '(?i)^.*?(docs?|documentation).*?$'
-      order: 3
+      order: 4
     - title: "Maintenance 🔧"
       regexp: '(?i)^.*?chore.*?$'
-      order: 4
+      order: 5
     - title: "Dependency Updates 📦"
       regexp: '(?i)^.*?(dep|dependencies|dependabot).*?$'
-      order: 5
+      order: 6
     - title: "Other Changes"
       order: 999
   filters:
