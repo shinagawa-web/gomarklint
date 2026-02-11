@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -67,12 +65,6 @@ func BenchmarkFullLinting(b *testing.B) {
 	cfg := config.Default()
 	cfg.EnableLinkCheck = false
 
-	tmpDir := b.TempDir()
-	testFile := filepath.Join(tmpDir, "benchmark.md")
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
-		b.Fatal(err)
-	}
-
 	lint, err := linter.New(cfg)
 	if err != nil {
 		b.Fatal(err)
@@ -80,7 +72,7 @@ func BenchmarkFullLinting(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = lint.Run([]string{testFile})
+		_, _, _ = lint.LintContent("benchmark.md", content)
 	}
 }
 
@@ -89,12 +81,6 @@ func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	cfg := config.Default()
 	cfg.EnableLinkCheck = false
 
-	tmpDir := b.TempDir()
-	testFile := filepath.Join(tmpDir, "benchmark.md")
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
-		b.Fatal(err)
-	}
-
 	lint, err := linter.New(cfg)
 	if err != nil {
 		b.Fatal(err)
@@ -102,6 +88,6 @@ func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = lint.Run([]string{testFile})
+		_, _, _ = lint.LintContent("benchmark.md", content)
 	}
 }

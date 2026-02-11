@@ -114,6 +114,12 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 	}, nil
 }
 
+// LintContent performs linting checks on the provided content string.
+// This is useful for benchmarking and testing without file I/O overhead.
+func (l *Linter) LintContent(path string, content string) ([]rule.LintError, int, int) {
+	return l.collectErrors(path, content)
+}
+
 // collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
