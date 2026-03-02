@@ -18,7 +18,7 @@ func generateComplexMarkdown(sections int) string {
 
 	for i := 1; i <= sections; i++ {
 		// Heading
-		sb.WriteString(fmt.Sprintf("## Section %d\n\n", i))
+		fmt.Fprintf(&sb, "## Section %d\n\n", i)
 
 		// Paragraph
 		sb.WriteString("This section contains important information. ")
@@ -42,8 +42,8 @@ func generateComplexMarkdown(sections int) string {
 		// Links
 		if i%3 == 0 {
 			sb.WriteString("Useful resources:\n\n")
-			sb.WriteString(fmt.Sprintf("- [Documentation](https://example.com/docs/%d)\n", i))
-			sb.WriteString(fmt.Sprintf("- [GitHub](https://github.com/project/%d)\n", i))
+			fmt.Fprintf(&sb, "- [Documentation](https://example.com/docs/%d)\n", i)
+			fmt.Fprintf(&sb, "- [GitHub](https://github.com/project/%d)\n", i)
 			sb.WriteString("\n")
 		}
 
