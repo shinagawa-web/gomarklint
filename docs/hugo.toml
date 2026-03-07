@@ -9,4 +9,5 @@ theme = "hugo-book"
   BookEditPath = "edit/main/docs/content"
   BookSearch = true
   BookDescription = "A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI."
+  BookTheme = "dark"
 
