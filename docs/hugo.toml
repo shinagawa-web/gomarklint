@@ -1,0 +1,11 @@
+baseURL = "https://shinagawa-web.github.io/gomarklint/"
+languageCode = "en-us"
+title = "gomarklint"
+theme = "hugo-book"
+
+[params]
+  BookToC = true
+  BookRepo = "https://github.com/shinagawa-web/gomarklint"
+  BookEditPath = "edit/main/docs/content"
+  BookSearch = true
+  BookDescription = "A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI."
