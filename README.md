@@ -6,6 +6,8 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/shinagawa-web/gomarklint.svg)](https://pkg.go.dev/github.com/shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+English | [日本語](README.ja.md)
+
 > A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
 
 ```sh
