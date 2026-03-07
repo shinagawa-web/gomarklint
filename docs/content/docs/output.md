@@ -23,7 +23,7 @@ Errors in testdata/sample_links.md:
 ```
 
 - Summary: `✖ N issues found` if issues, `✔ No issues found` if clean.
-- Always prints: `Checked <files>, <lines> in <Xms|Ys>`.
+- Prints stats line: `Checked <files>, <lines>[, <links>] in <Xms|Ys>` (includes link count when link checking is enabled).
 
 ## JSON (`--output json`)
 

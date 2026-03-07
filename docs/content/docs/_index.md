@@ -14,7 +14,7 @@ go install github.com/shinagawa-web/gomarklint@latest
 # or clone and build manually
 git clone https://github.com/shinagawa-web/gomarklint
 cd gomarklint
-make build   # or: go build ./cmd/gomarklint
+make build   # or: go build -o gomarklint .
 ```
 
 ## 1) Initialize config (optional but recommended)
@@ -27,15 +27,18 @@ This creates `.gomarklint.json` with sensible defaults:
 
 ```json
 {
-  "include": ["."],
-  "ignore": ["node_modules", "vendor"],
   "minHeadingLevel": 2,
-  "enableHeadingLevelCheck": true,
-  "enableDuplicateHeadingCheck": true,
   "enableLinkCheck": false,
-  "enableNoSetextHeadingsCheck": true,
+  "linkCheckTimeoutSeconds": 5,
   "skipLinkPatterns": [],
-  "outputFormat": "text"
+  "include": ["README.md", "testdata"],
+  "ignore": [],
+  "output": "text",
+  "enableDuplicateHeadingCheck": true,
+  "enableHeadingLevelCheck": true,
+  "enableNoMultipleBlankLinesCheck": true,
+  "enableNoSetextHeadingsCheck": true,
+  "enableFinalBlankLineCheck": true
 }
 ```
 
@@ -45,10 +48,10 @@ You can edit it anytime — CLI flags override config values.
 
 ```sh
 # lint current directory recursively
-gomarklint ./...
+gomarklint .
 
 # lint specific targets
-gomarklint docs README.md internal/handbook
+gomarklint docs README.md internal/rule
 ```
 
 Exit code is non-zero if any violations are found, zero otherwise.
@@ -56,5 +59,5 @@ Exit code is non-zero if any violations are found, zero otherwise.
 ## 3) JSON output (for CI / tooling)
 
 ```sh
-gomarklint ./... --output json
+gomarklint . --output json
 ```

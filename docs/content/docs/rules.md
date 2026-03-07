@@ -9,8 +9,8 @@ weight: 2
 
 | Rule key                       | What it detects                                         | Notes / Options                                                                                        |
 | ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `final-blank-line`             | Missing final blank line at EOF                         | Always on                                                                                              |
-| `unclosed-code-block`          | Unclosed fenced code blocks (` ``` ` / `~~~`)           | Always on                                                                                              |
+| `final-blank-line`             | Missing final blank line at EOF                         | Toggle: `--enable-final-blank-line-check` (default **on**)                                             |
+| `unclosed-code-block`          | Unclosed fenced code blocks (`` ``` ``)                 | Always on                                                                                              |
 | `empty-alt-text`               | Image syntax with an empty alt text                     | Always on                                                                                              |
 | `heading-level`                | Invalid heading level progression (e.g., H2 → H4 skip) | Toggle: `--enable-heading-level-check` (default **on**) / `--min-heading` (default **2**)              |
 | `duplicate-heading`            | Duplicate headings within one file                      | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |

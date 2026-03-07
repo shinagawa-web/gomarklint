@@ -28,11 +28,11 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
-          hugo-version: latest
+          hugo-version: '0.157.0'
           extended: true
 
       - name: Clone hugo-book theme
-        run: git clone https://github.com/alex-shpak/hugo-book docs/themes/hugo-book --depth 1
+        run: git clone --branch v13 --depth 1 https://github.com/alex-shpak/hugo-book docs/themes/hugo-book
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

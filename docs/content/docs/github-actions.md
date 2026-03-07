@@ -7,8 +7,8 @@ weight: 7
 
 You can use gomarklint in your CI workflows using the official [GitHub Action](https://github.com/marketplace/actions/gomarklint-markdown-linter).
 
-> **Note:** When using `gomarklint` in GitHub Actions, you must first create a `.gomarklint.json` configuration file in your repository root.
-> Generate a default config with: `gomarklint init`
+> **Note:** It is recommended that you create a `.gomarklint.json` configuration file in your repository root before using `gomarklint` in GitHub Actions. If no configuration file is present, gomarklint will run with its default settings.
+> You can generate a starter config with: `gomarklint init`
 
 ## Example: `.github/workflows/lint.yml`
 
