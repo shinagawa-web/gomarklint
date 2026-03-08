@@ -10,6 +10,27 @@
 
 > エンジニアリングチームのための高速・実用的な Markdown リンター。Go 製、CI 向け設計。
 
+**バイナリをダウンロード**（Go 環境不要）:
+
+[GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) からお使いのプラットフォーム向けバイナリをダウンロードできます。
+
+```sh
+# macOS / Linux
+tar -xzf gomarklint_Darwin_x86_64.tar.gz
+sudo mv gomarklint /usr/local/bin/
+# sudo が使えない場合はユーザーローカルへ
+mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
+```
+
+```powershell
+# Windows (PowerShell)
+Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
+# PATH に追加（初回のみ）
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
+```
+
+**`go install` を使う場合:**
+
 ```sh
 go install github.com/shinagawa-web/gomarklint@latest
 ```

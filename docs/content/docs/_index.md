@@ -7,11 +7,34 @@ weight: 1
 
 ## Install
 
-```sh
-# install via go install
-go install github.com/shinagawa-web/gomarklint@latest
+**Download binary** (no Go required):
 
-# or clone and build manually
+Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
+
+```sh
+# macOS / Linux
+tar -xzf gomarklint_Darwin_x86_64.tar.gz
+sudo mv gomarklint /usr/local/bin/
+# or install to user-local directory (no sudo required)
+mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
+```
+
+```powershell
+# Windows (PowerShell)
+Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
+# Add to PATH (run once)
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
+```
+
+**Via `go install`:**
+
+```sh
+go install github.com/shinagawa-web/gomarklint@latest
+```
+
+**Build from source:**
+
+```sh
 git clone https://github.com/shinagawa-web/gomarklint
 cd gomarklint
 make build   # or: go build -o gomarklint .
