@@ -17,10 +17,13 @@ tar -xzf gomarklint_Darwin_x86_64.tar.gz
 sudo mv gomarklint /usr/local/bin/
 # or install to user-local directory (no sudo required)
 mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
+```
 
+```powershell
 # Windows (PowerShell)
-Expand-Archive gomarklint_Windows_x86_64.zip
-mv gomarklint.exe C:\Windows\System32\
+Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
+# Add to PATH (run once)
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
 ```
 
 **Via `go install`:**
