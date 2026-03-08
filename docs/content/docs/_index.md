@@ -14,7 +14,9 @@ Download the latest binary for your platform from [GitHub Releases](https://gith
 ```sh
 # macOS / Linux
 tar -xzf gomarklint_Darwin_x86_64.tar.gz
-mv gomarklint /usr/local/bin/
+sudo mv gomarklint /usr/local/bin/
+# or install to user-local directory (no sudo required)
+mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
 
 # Windows (PowerShell)
 Expand-Archive gomarklint_Windows_x86_64.zip

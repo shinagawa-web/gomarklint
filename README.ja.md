@@ -17,7 +17,9 @@
 ```sh
 # macOS / Linux
 tar -xzf gomarklint_Darwin_x86_64.tar.gz
-mv gomarklint /usr/local/bin/
+sudo mv gomarklint /usr/local/bin/
+# sudo が使えない場合はユーザーローカルへ
+mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
 
 # Windows (PowerShell)
 Expand-Archive gomarklint_Windows_x86_64.zip
