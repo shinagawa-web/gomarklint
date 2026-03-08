@@ -7,11 +7,25 @@ weight: 1
 
 ## Install
 
-```sh
-# install via go install
-go install github.com/shinagawa-web/gomarklint@latest
+**Via `go install`:**
 
-# or clone and build manually
+```sh
+go install github.com/shinagawa-web/gomarklint@latest
+```
+
+**Download prebuilt binary** (no Go required):
+
+Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
+
+```sh
+# macOS / Linux example
+tar -xzf gomarklint_Darwin_x86_64.tar.gz
+mv gomarklint /usr/local/bin/
+```
+
+**Build from source:**
+
+```sh
 git clone https://github.com/shinagawa-web/gomarklint
 cd gomarklint
 make build   # or: go build -o gomarklint .
