@@ -10,13 +10,7 @@ English | [日本語](README.ja.md)
 
 > A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
 
-**Via `go install`:**
-
-```sh
-go install github.com/shinagawa-web/gomarklint@latest
-```
-
-**Download prebuilt binary** (no Go required):
+**Download binary** (no Go required):
 
 Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
 
@@ -28,6 +22,12 @@ mv gomarklint /usr/local/bin/
 # Windows (PowerShell)
 Expand-Archive gomarklint_Windows_x86_64.zip
 mv gomarklint.exe C:\Windows\System32\
+```
+
+**Via `go install`:**
+
+```sh
+go install github.com/shinagawa-web/gomarklint@latest
 ```
 
 - Catch broken links and headings before your docs ship.

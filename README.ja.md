@@ -10,13 +10,7 @@
 
 > エンジニアリングチームのための高速・実用的な Markdown リンター。Go 製、CI 向け設計。
 
-**`go install` を使う場合:**
-
-```sh
-go install github.com/shinagawa-web/gomarklint@latest
-```
-
-**ビルド済みバイナリをダウンロード**（Go 環境不要）:
+**バイナリをダウンロード**（Go 環境不要）:
 
 [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) からお使いのプラットフォーム向けバイナリをダウンロードできます。
 
@@ -28,6 +22,12 @@ mv gomarklint /usr/local/bin/
 # Windows (PowerShell)
 Expand-Archive gomarklint_Windows_x86_64.zip
 mv gomarklint.exe C:\Windows\System32\
+```
+
+**`go install` を使う場合:**
+
+```sh
+go install github.com/shinagawa-web/gomarklint@latest
 ```
 
 - リンク切れや見出しの問題をドキュメント公開前にキャッチ。
