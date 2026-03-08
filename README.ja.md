@@ -21,9 +21,13 @@ go install github.com/shinagawa-web/gomarklint@latest
 [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) からお使いのプラットフォーム向けバイナリをダウンロードできます。
 
 ```sh
-# macOS / Linux の例
+# macOS / Linux
 tar -xzf gomarklint_Darwin_x86_64.tar.gz
 mv gomarklint /usr/local/bin/
+
+# Windows (PowerShell)
+Expand-Archive gomarklint_Windows_x86_64.zip
+mv gomarklint.exe C:\Windows\System32\
 ```
 
 - リンク切れや見出しの問題をドキュメント公開前にキャッチ。
