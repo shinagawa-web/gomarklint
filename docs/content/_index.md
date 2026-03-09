@@ -10,11 +10,16 @@ title: "gomarklint"
 [![Go Reference](https://pkg.go.dev/badge/github.com/shinagawa-web/gomarklint.svg)](https://pkg.go.dev/github.com/shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/shinagawa-web/gomarklint/blob/main/LICENSE)
 
-> A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
+> Lint your Markdown like you lint your code.
+> A fast Markdown linter built in Go — for local dev and CI alike.
 
 ```sh
-go install github.com/shinagawa-web/gomarklint@latest
+# macOS / Linux — download binary (no Go required)
+tar -xzf gomarklint_Darwin_x86_64.tar.gz
+sudo mv gomarklint /usr/local/bin/
 ```
+
+Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) · [Quick Start →]({{< relref "/docs" >}})
 
 - Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").
