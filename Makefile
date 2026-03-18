@@ -77,7 +77,7 @@ lint-fix: ## Run golangci-lint and fix issues automatically
 
 lint-self: ## Run gomarklint on the repo's README
 	@echo "Running gomarklint on README.md"
-	$(GORUN) . README.md --min-heading=1
+	$(GORUN) . README.md --config .gomarklint.ci.json
 
 static-lint: ## Run golangci-lint for static analysis
 	@echo "Running golangci-lint..."
