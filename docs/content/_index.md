@@ -19,7 +19,7 @@ tar -xzf gomarklint_Darwin_x86_64.tar.gz
 sudo mv gomarklint /usr/local/bin/
 ```
 
-Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) · [Quick Start →]({{< relref "/docs" >}})
+Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) · [Quick Start →]({{< relref "/docs/quick-start" >}})
 
 - Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").
