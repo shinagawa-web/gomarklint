@@ -135,6 +135,73 @@ func assertNotContains(t *testing.T, output, unexpected string) {
 	}
 }
 
+func TestTextFormatter_WarningsOnly(t *testing.T) {
+	formatter := NewTextFormatter()
+
+	t.Run("SingularWarning", func(t *testing.T) {
+		result := &Result{
+			Files:    1,
+			Lines:    10,
+			Errors:   1,
+			Warnings: 1,
+			Details: map[string][]rule.LintError{
+				"file.md": {
+					{File: "file.md", Line: 5, Message: "Setext heading found", Severity: "warning"},
+				},
+			},
+			OrderedPaths: []string{"file.md"},
+			Duration:     100 * time.Millisecond,
+		}
+
+		output := formatAndGetOutput(t, formatter, result)
+
+		assertContains(t, output, "[warning]")
+		assertContains(t, output, "1 warning found")
+		assertNotContains(t, output, "issues found")
+		assertNotContains(t, output, "[error]")
+	})
+
+	t.Run("PluralWarnings", func(t *testing.T) {
+		result := &Result{
+			Files:    1,
+			Lines:    10,
+			Errors:   2,
+			Warnings: 2,
+			Details: map[string][]rule.LintError{
+				"file.md": {
+					{File: "file.md", Line: 5, Message: "Setext heading", Severity: "warning"},
+					{File: "file.md", Line: 8, Message: "Another warning", Severity: "warning"},
+				},
+			},
+			OrderedPaths: []string{"file.md"},
+			Duration:     100 * time.Millisecond,
+		}
+
+		output := formatAndGetOutput(t, formatter, result)
+
+		assertContains(t, output, "2 warnings found")
+		assertNotContains(t, output, "issues found")
+	})
+
+	t.Run("WriteErrorOnWarningSummary", func(t *testing.T) {
+		result := &Result{
+			Files:        1,
+			Lines:        10,
+			Errors:       1,
+			Warnings:     1,
+			Details:      map[string][]rule.LintError{},
+			OrderedPaths: []string{},
+			Duration:     100 * time.Millisecond,
+		}
+
+		ew := &errorWriter{}
+		err := formatter.Format(ew, result)
+		if err == nil {
+			t.Error("expected error when writing warning summary to errorWriter")
+		}
+	})
+}
+
 func TestTextFormatter_WriteErrors(t *testing.T) {
 	t.Run("ErrorInErrorDetailsGeneral", func(t *testing.T) {
 		formatter := NewTextFormatter()
@@ -267,8 +334,9 @@ func TestTextFormatter_WriteErrors(t *testing.T) {
 			Duration:     100 * time.Millisecond,
 		}
 
-		// Allow header and error line (43 bytes) but fail on final newline
-		lw := &limitedErrorWriter{limit: 43}
+		// Allow header (19 bytes) + detail line (32 bytes) = 51, fail on final newline
+		// Detail line: "  test.md:5: [error] Test error\n" = 32 bytes
+		lw := &limitedErrorWriter{limit: 51}
 		err := formatter.Format(lw, result)
 		if err == nil {
 			t.Error("expected error when writing final newline after errors")

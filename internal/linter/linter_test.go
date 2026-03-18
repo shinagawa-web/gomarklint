@@ -472,3 +472,45 @@ func TestLintContent_WithErrors(t *testing.T) {
 		t.Errorf("expected 4 lines, got %d", lineCount)
 	}
 }
+
+func TestRun_WarningSeverity(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-setext-headings"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityWarning,
+		Options:  map[string]interface{}{},
+	}
+
+	linter, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "setext.md")
+	content := "## Intro\n\nSection One\n===========\n\nContent\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result, err := linter.Run([]string{testFile})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.TotalWarnings == 0 {
+		t.Error("expected TotalWarnings > 0 for warning-severity rule violation")
+	}
+	if result.TotalErrors != 0 {
+		t.Errorf("expected TotalErrors=0, got %d", result.TotalErrors)
+	}
+
+	// Each violation should be tagged with severity="warning"
+	for _, errs := range result.Errors {
+		for _, e := range errs {
+			if e.Severity != "warning" {
+				t.Errorf("expected severity=warning, got %q", e.Severity)
+			}
+		}
+	}
+}
