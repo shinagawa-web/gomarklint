@@ -21,6 +21,7 @@ func (f *JSONFormatter) Format(w io.Writer, result *Result) error {
 		Files        int                         `json:"files"`
 		Lines        int                         `json:"lines"`
 		Errors       int                         `json:"errors"`
+		Warnings     int                         `json:"warnings"`
 		LinksChecked *int                        `json:"links_checked,omitempty"`
 		ElapsedMS    int64                       `json:"elapsed_ms"`
 		Details      map[string][]rule.LintError `json:"details"`
@@ -28,6 +29,7 @@ func (f *JSONFormatter) Format(w io.Writer, result *Result) error {
 		Files:     result.Files,
 		Lines:     result.Lines,
 		Errors:    result.Errors,
+		Warnings:  result.Warnings,
 		ElapsedMS: result.Duration.Milliseconds(),
 		Details:   result.Details,
 	}

@@ -55,13 +55,15 @@ v2 replaces the flat boolean config fields with a unified `rules` map. This enab
 
 ### Rule value shorthand
 
-Each rule entry accepts three forms:
+Each rule entry accepts three forms (bool, string, or object):
 
 | Value | Meaning |
 |---|---|
 | `true` | enabled, severity = `"error"` |
 | `false` | disabled |
+| `"error"` | enabled, severity = `"error"` |
 | `"warning"` | enabled, severity = `"warning"` |
+| `"off"` | disabled |
 | `{ "enabled": true, "severity": "warning", ...options }` | full object form |
 
 ### `default` key
@@ -161,7 +163,17 @@ Downgrade a rule to a warning instead of an error:
 }
 ```
 
-Use `--severity error` to surface only errors in CI while warnings are visible locally.
+**Exit code behavior:**
+
+| Severity of violations | Exit code |
+|------------------------|-----------|
+| `error` violations present | `1` (failure) |
+| `warning` violations only | `0` (success) |
+| No violations | `0` (success) |
+
+Warnings are always displayed and counted in the output, but they will **not** fail CI.
+
+Use `--severity error` to suppress warnings from output entirely (only `error` violations are shown and counted).
 
 ### Opt-in mode
 

@@ -23,9 +23,10 @@ type Linter struct {
 
 // Result holds the results of a linting run.
 type Result struct {
-	Errors            map[string][]rule.LintError // Errors per file path
+	Errors            map[string][]rule.LintError // All violations (errors + warnings) per file path
 	OrderedPaths      []string                    // Sorted file paths
-	TotalErrors       int                         // Total number of errors
+	TotalErrors       int                         // Count of severity=error violations (used for exit code)
+	TotalWarnings     int                         // Count of severity=warning violations
 	TotalLines        int                         // Total number of lines checked
 	TotalLinksChecked int                         // Total number of links checked
 	FailedFiles       map[string]error            // Files that failed to read
@@ -75,6 +76,7 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 	orderedPaths := make([]string, 0, len(deduped))
 	failedFiles := map[string]error{}
 	totalErrors := 0
+	totalWarnings := 0
 	totalLines := 0
 	totalLinksChecked := 0
 
@@ -99,7 +101,13 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 			mu.Lock()
 			results[p] = errors
 			orderedPaths = append(orderedPaths, p)
-			totalErrors += len(errors)
+			for _, e := range errors {
+				if e.Severity == "warning" {
+					totalWarnings++
+				} else {
+					totalErrors++
+				}
+			}
 			totalLines += lineCount
 			totalLinksChecked += linksChecked
 			mu.Unlock()
@@ -115,6 +123,7 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 		Errors:            results,
 		OrderedPaths:      orderedPaths,
 		TotalErrors:       totalErrors,
+		TotalWarnings:     totalWarnings,
 		TotalLines:        totalLines,
 		TotalLinksChecked: totalLinksChecked,
 		FailedFiles:       failedFiles,
@@ -127,6 +136,15 @@ func (l *Linter) LintContent(path string, content string) ([]rule.LintError, int
 	return l.collectErrors(path, content)
 }
 
+// withSeverity tags each error in errs with the configured severity for ruleName.
+func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.LintError {
+	sev := l.config.RuleSeverity(ruleName)
+	for i := range errs {
+		errs[i].Severity = sev
+	}
+	return errs
+}
+
 // collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
@@ -135,13 +153,13 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	var allErrors []rule.LintError
 
 	if l.config.IsEnabled("final-blank-line") {
-		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckFinalBlankLine(path, lines, offset), "final-blank-line")...)
 	}
 	if l.config.IsEnabled("unclosed-code-block") {
-		allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckUnclosedCodeBlocks(path, lines, offset), "unclosed-code-block")...)
 	}
 	if l.config.IsEnabled("empty-alt-text") {
-		allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
 	}
 	if l.config.IsEnabled("heading-level") {
 		minLevel := 2
@@ -150,16 +168,16 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 				minLevel = int(f)
 			}
 		}
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, minLevel)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, minLevel), "heading-level")...)
 	}
 	if l.config.IsEnabled("duplicate-heading") {
-		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
 	}
 	if l.config.IsEnabled("no-multiple-blank-lines") {
-		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoMultipleBlankLines(path, lines, offset), "no-multiple-blank-lines")...)
 	}
 	if l.config.IsEnabled("no-setext-headings") {
-		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
 	}
 
 	linksChecked := 0
@@ -171,7 +189,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 			}
 		}
 		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, timeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
-		allErrors = append(allErrors, errors...)
+		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
 

@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "final-blank-line": true
+  }
+}

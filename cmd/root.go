@@ -12,6 +12,7 @@ import (
 	"github.com/shinagawa-web/gomarklint/v2/internal/file"
 	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
 	"github.com/shinagawa-web/gomarklint/v2/internal/output"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // ErrLintViolations is returned when lint violations are found.
@@ -79,6 +80,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Exit 1 only when there are severity=error violations (warnings never fail)
 	if result.TotalErrors > 0 {
 		return ErrLintViolations
 	}
@@ -98,17 +100,45 @@ func formatOutput(cfg config.Config, result *linter.Result, fileCount int, durat
 		linksChecked = nil
 	}
 
+	// Filter violations by MinSeverity: "error" hides warnings from output
+	details, errCount, warnCount := filterBySeverity(result.Errors, cfg.MinSeverity)
+
 	outputResult := &output.Result{
 		Files:        fileCount,
 		Lines:        result.TotalLines,
-		Errors:       result.TotalErrors,
+		Errors:       errCount + warnCount,
+		Warnings:     warnCount,
 		LinksChecked: linksChecked,
 		Duration:     duration,
-		Details:      result.Errors,
+		Details:      details,
 		OrderedPaths: result.OrderedPaths,
 	}
 
 	return formatter.Format(os.Stdout, outputResult)
+}
+
+// filterBySeverity filters violations by minimum severity and returns filtered details,
+// error count, and warning count.
+func filterBySeverity(details map[string][]rule.LintError, minSev config.RuleSeverity) (map[string][]rule.LintError, int, int) {
+	filtered := make(map[string][]rule.LintError, len(details))
+	errCount := 0
+	warnCount := 0
+	for path, errs := range details {
+		var kept []rule.LintError
+		for _, e := range errs {
+			if minSev == config.SeverityError && e.Severity == "warning" {
+				continue
+			}
+			kept = append(kept, e)
+			if e.Severity == "warning" {
+				warnCount++
+			} else {
+				errCount++
+			}
+		}
+		filtered[path] = kept
+	}
+	return filtered, errCount, warnCount
 }
 
 func init() {

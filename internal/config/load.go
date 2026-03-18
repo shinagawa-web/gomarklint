@@ -18,7 +18,7 @@ func LoadConfig(path string) (Config, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
-	var cfg Config
+	cfg := Config{Default: true}
 	if err := decoder.Decode(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to parse config file: %w", err)
 	}

@@ -173,9 +173,9 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, `"errors"`)
 			assertOutputContains(t, output, `"details"`)
 			assertOutputContains(t, output, `"elapsed_ms"`)
-			assertOutputContains(t, output, `"File": "fixtures/invalid_heading_level.md"`)
-			assertOutputContains(t, output, `"Line": 1`)
-			assertOutputContains(t, output, `"Message": "First heading should be level 2`)
+			assertOutputContains(t, output, `"file": "fixtures/invalid_heading_level.md"`)
+			assertOutputContains(t, output, `"line": 1`)
+			assertOutputContains(t, output, `"message": "First heading should be level 2`)
 			assertOutputContains(t, output, `{`)
 			assertOutputContains(t, output, `}`)
 		})
@@ -222,7 +222,14 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Missing final blank line")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:6:")
-			assertOutputContains(t, output, "Checked 17 file(s)")
+			assertOutputContains(t, output, "Errors in fixtures/setext_headings.md:")
+			assertOutputContains(t, output, "fixtures/setext_headings.md:6:")
+			assertOutputContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "Errors in fixtures/mixed_severity.md:")
+			assertOutputContains(t, output, "fixtures/mixed_severity.md:4:")
+			assertOutputContains(t, output, "fixtures/mixed_severity.md:8:")
+			assertOutputContains(t, output, "Unclosed code block")
+			assertOutputContains(t, output, "Checked 19 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
@@ -352,6 +359,93 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputContains(t, output, "link(s)")
+		})
+	})
+
+	t.Run("Severity", func(t *testing.T) {
+		t.Run("NoSetextHeadingsBasic", func(t *testing.T) {
+			output, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", ".gomarklint.json")
+			if err == nil {
+				t.Error("expected non-zero exit code for setext heading violation")
+			}
+			assertOutputContains(t, output, "Errors in fixtures/setext_headings.md:")
+			assertOutputContains(t, output, "fixtures/setext_headings.md:6:")
+			assertOutputContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "1 issues found")
+		})
+
+		t.Run("WarningSeverityExits0", func(t *testing.T) {
+			// no-setext-headings set to "warning" — violations shown but exit 0
+			output, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", "config-warning-setext.json")
+			if err != nil {
+				t.Errorf("expected exit 0 for warning-only violations, got error: %v\noutput: %s", err, output)
+			}
+			assertOutputContains(t, output, "[warning]")
+			assertOutputContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "1 warning found")
+		})
+
+		t.Run("ErrorSeverityExits1", func(t *testing.T) {
+			// default config has no-setext-headings as "error" — exit 1
+			_, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", ".gomarklint.json")
+			if err == nil {
+				t.Error("expected exit 1 for error-severity violation")
+			}
+		})
+
+		t.Run("MixedSeverityExits1", func(t *testing.T) {
+			// mixed_severity.md has setext (warning) + unclosed code block (error)
+			// config-mixed-severity.json: no-setext-headings=warning, rest=error
+			output, err := runTestWithCmd(t, "fixtures/mixed_severity.md", "--config", "config-mixed-severity.json")
+			if err == nil {
+				t.Error("expected exit 1 when at least one error-severity violation exists")
+			}
+			assertOutputContains(t, output, "[warning]")
+			assertOutputContains(t, output, "[error]")
+			assertOutputContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "Unclosed code block")
+		})
+
+		t.Run("WarningsOnlyExits0", func(t *testing.T) {
+			// setext_headings.md with no-setext-headings=warning and nothing else violated
+			output, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", "config-warning-setext.json")
+			if err != nil {
+				t.Errorf("expected exit 0 for warnings-only result, got: %v\noutput: %s", err, output)
+			}
+			assertOutputContains(t, output, "warning found")
+			assertOutputNotContains(t, output, "issues found")
+		})
+
+		t.Run("SeverityErrorFlagSuppressesWarnings", func(t *testing.T) {
+			// --severity error: warning violations should not appear in output
+			output, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", "config-warning-setext.json", "--severity", "error")
+			if err != nil {
+				t.Errorf("expected exit 0 when warnings filtered out, got: %v\noutput: %s", err, output)
+			}
+			assertOutputNotContains(t, output, "[warning]")
+			assertOutputNotContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "No issues found")
+		})
+
+		t.Run("SeverityWarningFlagShowsAll", func(t *testing.T) {
+			// --severity warning (default): both warnings and errors shown
+			output, err := runTestWithCmd(t, "fixtures/mixed_severity.md", "--config", "config-mixed-severity.json", "--severity", "warning")
+			if err == nil {
+				t.Error("expected exit 1 when error violations present")
+			}
+			assertOutputContains(t, output, "[warning]")
+			assertOutputContains(t, output, "[error]")
+		})
+
+		t.Run("DefaultFalseOptInMode", func(t *testing.T) {
+			// config-opt-in.json: default=false, only final-blank-line enabled
+			// setext_headings.md has no final-blank-line issue, so should pass
+			output, err := runTestWithCmd(t, "fixtures/setext_headings.md", "--config", "config-opt-in.json")
+			if err != nil {
+				t.Errorf("expected exit 0 in opt-in mode (only final-blank-line enabled), got: %v\noutput: %s", err, output)
+			}
+			assertOutputContains(t, output, "No issues found")
+			assertOutputNotContains(t, output, "Setext heading found")
 		})
 	})
 }

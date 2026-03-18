@@ -17,9 +17,10 @@ type Formatter interface {
 type Result struct {
 	Files        int                         // Total number of files checked
 	Lines        int                         // Total number of lines checked
-	Errors       int                         // Total number of errors found
+	Errors       int                         // Total number of issues shown (errors + warnings, after MinSeverity filter)
+	Warnings     int                         // Number of those that are warnings
 	LinksChecked *int                        // Number of links checked (nil if link check disabled)
 	Duration     time.Duration               // Time taken for linting
-	Details      map[string][]rule.LintError // Detailed errors per file
+	Details      map[string][]rule.LintError // Detailed violations per file (after MinSeverity filter)
 	OrderedPaths []string                    // Sorted file paths for consistent output
 }

@@ -61,9 +61,9 @@ func TestTextFormatter_WithErrors(t *testing.T) {
 
 	assertContains(t, output, "2 issues found")
 	assertContains(t, output, "Errors in file1.md:")
-	assertContains(t, output, "file1.md:5: Heading level error")
+	assertContains(t, output, "file1.md:5: [error] Heading level error")
 	assertContains(t, output, "Errors in file2.md:")
-	assertContains(t, output, "file2.md:10: Missing blank line")
+	assertContains(t, output, "file2.md:10: [error] Missing blank line")
 	assertContains(t, output, "1.5s")
 }
 

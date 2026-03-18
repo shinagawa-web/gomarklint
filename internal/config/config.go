@@ -96,9 +96,12 @@ func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// enabled=false always wins over any severity field
+	// enabled=false always forces SeverityOff; severity=off always forces Enabled=false
 	if !r.Enabled {
 		r.Severity = SeverityOff
+	}
+	if r.Severity == SeverityOff {
+		r.Enabled = false
 	}
 
 	return nil
@@ -130,7 +133,7 @@ type Config struct {
 // IsEnabled reports whether the named rule should run.
 func (c *Config) IsEnabled(name string) bool {
 	rc, ok := c.Rules[name]
-	if !ok {
+	if !ok || rc == nil {
 		return c.Default
 	}
 	return rc.Enabled
@@ -139,10 +142,20 @@ func (c *Config) IsEnabled(name string) bool {
 // RuleOptions returns the options map for the named rule, or an empty map.
 func (c *Config) RuleOptions(name string) map[string]interface{} {
 	rc, ok := c.Rules[name]
-	if !ok || rc.Options == nil {
+	if !ok || rc == nil || rc.Options == nil {
 		return map[string]interface{}{}
 	}
 	return rc.Options
+}
+
+// RuleSeverity returns the configured severity for the named rule.
+// Returns "error" if the rule is not listed or has no severity set.
+func (c *Config) RuleSeverity(name string) string {
+	rc, ok := c.Rules[name]
+	if !ok || rc == nil || rc.Severity == "" {
+		return string(SeverityError)
+	}
+	return string(rc.Severity)
 }
 
 // Default returns the default configuration with all standard rules enabled.

@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	colorRed   = "\033[31m"
-	colorGreen = "\033[32m"
-	colorGray  = "\033[90m"
-	colorReset = "\033[0m"
+	colorRed    = "\033[31m"
+	colorYellow = "\033[33m"
+	colorGreen  = "\033[32m"
+	colorGray   = "\033[90m"
+	colorReset  = "\033[0m"
 )
 
 // TextFormatter formats lint results as human-readable text with colors.
@@ -46,7 +47,11 @@ func (f *TextFormatter) formatErrorDetails(w io.Writer, result *Result) error {
 			return err
 		}
 		for _, e := range errors {
-			if _, err := fmt.Fprintf(w, "  %s:%d: %s\n", e.File, e.Line, e.Message); err != nil {
+			prefix := "[error] "
+			if e.Severity == "warning" {
+				prefix = "[warning] "
+			}
+			if _, err := fmt.Fprintf(w, "  %s:%d: %s%s\n", e.File, e.Line, prefix, e.Message); err != nil {
 				return err
 			}
 		}
@@ -59,8 +64,17 @@ func (f *TextFormatter) formatErrorDetails(w io.Writer, result *Result) error {
 
 // formatSummary prints the summary (errors found or no issues).
 func (f *TextFormatter) formatSummary(w io.Writer, result *Result) error {
-	if result.Errors > 0 {
+	errorCount := result.Errors - result.Warnings
+	if errorCount > 0 {
 		if _, err := fmt.Fprintf(w, "\n%s✖ %d issues found%s\n", colorRed, result.Errors, colorReset); err != nil {
+			return err
+		}
+	} else if result.Warnings > 0 {
+		word := "warnings"
+		if result.Warnings == 1 {
+			word = "warning"
+		}
+		if _, err := fmt.Fprintf(w, "\n%s⚠ %d %s found%s\n", colorYellow, result.Warnings, word, colorReset); err != nil {
 			return err
 		}
 	} else {

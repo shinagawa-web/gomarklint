@@ -328,3 +328,88 @@ func TestIsEnabled(t *testing.T) {
 		t.Error("expected unlisted rule to be disabled (Default=false)")
 	}
 }
+
+func TestIsEnabled_NilRuleEntry(t *testing.T) {
+	cfg := Config{
+		Default: true,
+		Rules:   map[string]*RuleConfig{"some-rule": nil},
+	}
+	// nil entry should fall back to Default, not panic
+	if !cfg.IsEnabled("some-rule") {
+		t.Error("expected nil rule entry to fall back to Default=true")
+	}
+}
+
+func TestRuleOptions_NilRuleEntry(t *testing.T) {
+	cfg := Config{
+		Default: true,
+		Rules:   map[string]*RuleConfig{"some-rule": nil},
+	}
+	// nil entry should return empty map, not panic
+	opts := cfg.RuleOptions("some-rule")
+	if opts == nil {
+		t.Error("expected non-nil map for nil rule entry")
+	}
+}
+
+func TestRuleSeverity(t *testing.T) {
+	cfg := Config{
+		Default: true,
+		Rules: map[string]*RuleConfig{
+			"error-rule":   {Enabled: true, Severity: SeverityError},
+			"warning-rule": {Enabled: true, Severity: SeverityWarning},
+			"nil-rule":     nil,
+		},
+	}
+
+	if s := cfg.RuleSeverity("error-rule"); s != "error" {
+		t.Errorf("expected error, got %s", s)
+	}
+	if s := cfg.RuleSeverity("warning-rule"); s != "warning" {
+		t.Errorf("expected warning, got %s", s)
+	}
+	// unlisted rule defaults to error
+	if s := cfg.RuleSeverity("unlisted"); s != "error" {
+		t.Errorf("expected error for unlisted rule, got %s", s)
+	}
+	// nil entry defaults to error
+	if s := cfg.RuleSeverity("nil-rule"); s != "error" {
+		t.Errorf("expected error for nil rule entry, got %s", s)
+	}
+}
+
+func TestLoadConfig_DefaultKeyOmitted(t *testing.T) {
+	// When "default" key is omitted, Default should be true (opt-out by default).
+	json := `{"output": "text"}`
+	tmp := filepath.Join(t.TempDir(), "nodefault.json")
+	if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(tmp)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !cfg.Default {
+		t.Error("expected Default=true when 'default' key is omitted")
+	}
+}
+
+func TestUnmarshalJSON_SeverityOffDisablesRule(t *testing.T) {
+	// severity="off" in object form should set Enabled=false
+	json := `{"default": true, "rules": {"heading-level": {"severity": "off"}}}`
+	tmp := filepath.Join(t.TempDir(), "cfg.json")
+	if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(tmp)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	r := cfg.Rules["heading-level"]
+	if r.Enabled {
+		t.Error("expected Enabled=false when severity=off")
+	}
+	if r.Severity != SeverityOff {
+		t.Errorf("expected Severity=off, got %s", r.Severity)
+	}
+}
