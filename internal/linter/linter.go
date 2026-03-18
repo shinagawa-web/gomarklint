@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
-	"github.com/shinagawa-web/gomarklint/internal/file"
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/file"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // Linter performs linting on markdown files.
@@ -34,14 +34,21 @@ type Result struct {
 // New creates a new Linter with the given configuration.
 func New(cfg config.Config) (*Linter, error) {
 	compiledPatterns := []*regexp.Regexp{}
-	if cfg.EnableLinkCheck {
-		for _, pat := range cfg.SkipLinkPatterns {
-			re, err := regexp.Compile(pat)
-			if err != nil {
-				log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
-				continue
+	if cfg.IsEnabled("external-link") {
+		opts := cfg.RuleOptions("external-link")
+		if patterns, ok := opts["skipPatterns"]; ok {
+			if arr, ok := patterns.([]interface{}); ok {
+				for _, p := range arr {
+					if s, ok := p.(string); ok {
+						re, err := regexp.Compile(s)
+						if err != nil {
+							log.Printf("Invalid skip-link-pattern: %s (error: %v)", s, err)
+							continue
+						}
+						compiledPatterns = append(compiledPatterns, re)
+					}
+				}
 			}
-			compiledPatterns = append(compiledPatterns, re)
 		}
 	}
 
@@ -126,28 +133,44 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	lines := strings.Split(body, "\n")
 
 	var allErrors []rule.LintError
-	if l.config.EnableFinalBlankLineCheck {
+
+	if l.config.IsEnabled("final-blank-line") {
 		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
 	}
-	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
-	allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
-	if l.config.EnableHeadingLevelCheck {
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, l.config.MinHeadingLevel)...)
+	if l.config.IsEnabled("unclosed-code-block") {
+		allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
 	}
-	if l.config.EnableDuplicateHeadingCheck {
+	if l.config.IsEnabled("empty-alt-text") {
+		allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
+	}
+	if l.config.IsEnabled("heading-level") {
+		minLevel := 2
+		if v, ok := l.config.RuleOptions("heading-level")["minLevel"]; ok {
+			if f, ok := v.(float64); ok {
+				minLevel = int(f)
+			}
+		}
+		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, minLevel)...)
+	}
+	if l.config.IsEnabled("duplicate-heading") {
 		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
 	}
-	if l.config.EnableNoMultipleBlankLinesCheck {
+	if l.config.IsEnabled("no-multiple-blank-lines") {
 		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
 	}
-
-	if l.config.EnableNoSetextHeadingsCheck {
+	if l.config.IsEnabled("no-setext-headings") {
 		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
 	}
 
 	linksChecked := 0
-	if l.config.EnableLinkCheck {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.config.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
+	if l.config.IsEnabled("external-link") {
+		timeoutSeconds := 5
+		if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
+			if f, ok := v.(float64); ok {
+				timeoutSeconds = int(f)
+			}
+		}
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, timeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
 		allErrors = append(allErrors, errors...)
 		linksChecked = count
 	}

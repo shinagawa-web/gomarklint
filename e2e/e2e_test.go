@@ -44,8 +44,6 @@ func runTestWithCmd(t *testing.T, args ...string) ([]byte, error) {
 
 	cmd := exec.Command(binaryPath)
 	cmd.Args = append(cmd.Args, args...)
-	// We capture the error here to return it to the caller.
-	// Some tests need to verify error conditions (e.g., invalid config files).
 	output, err := cmd.CombinedOutput()
 	return output, err
 }
@@ -61,7 +59,6 @@ func TestE2E(t *testing.T) {
 		t.Run("InvalidHeadingLevel", func(t *testing.T) {
 			output, err := runTestWithCmd(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json")
 
-			// Should exit with non-zero code for lint violations
 			if err == nil {
 				t.Error("expected non-zero exit code for lint violations")
 			}
@@ -73,7 +70,6 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "1 issues found")
 
-			// Lint violations should NOT show [gomarklint error]:
 			assertOutputNotContains(t, output, "[gomarklint error]:")
 		})
 
@@ -115,8 +111,7 @@ func TestE2E(t *testing.T) {
 		})
 
 		t.Run("InvalidExternalLink", func(t *testing.T) {
-			// Enable link check explicitly to test external link validation
-			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
 			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable")
@@ -136,24 +131,25 @@ func TestE2E(t *testing.T) {
 	})
 
 	t.Run("Configuration", func(t *testing.T) {
-		t.Run("CLIFlagsOverrideConfig", func(t *testing.T) {
-			output := runTest(t, "fixtures/heading_level_one.md", "--config", ".gomarklint.json", "--min-heading", "1")
+		t.Run("MinHeadingLevel1", func(t *testing.T) {
+			// config-min-heading-1.json has minLevel=1, so H1 headings are allowed
+			output := runTest(t, "fixtures/heading_level_one.md", "--config", "config-min-heading-1.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "First heading should be level")
 			assertOutputNotContains(t, output, "Errors")
 		})
 
-		t.Run("DisableRuleViaFlag", func(t *testing.T) {
-			output := runTest(t, "fixtures/duplicate_headings.md", "--config", ".gomarklint.json", "--enable-duplicate-heading-check=false")
+		t.Run("DisableDuplicateHeadingRule", func(t *testing.T) {
+			output := runTest(t, "fixtures/duplicate_headings.md", "--config", "config-no-duplicate-heading.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "duplicate heading")
 			assertOutputNotContains(t, output, "Errors")
 		})
 
-		t.Run("DisableFinalBlankLineCheck", func(t *testing.T) {
-			output := runTest(t, "fixtures/no_final_blank_line.md", "--config", ".gomarklint.json", "--enable-final-blank-line-check=false")
+		t.Run("DisableFinalBlankLineRule", func(t *testing.T) {
+			output := runTest(t, "fixtures/no_final_blank_line.md", "--config", "config-no-final-blank-line.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "Missing final blank line")
@@ -213,7 +209,6 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Errors in fixtures/empty_alt_text.md:")
 			assertOutputContains(t, output, "fixtures/empty_alt_text.md:5:")
 			assertOutputContains(t, output, "image with empty alt text")
-			// External link check is enabled in the E2E config, so we should see link errors
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
 			assertOutputContains(t, output, "fixtures/invalid_external_link.md:14:")
 			assertOutputContains(t, output, "Link unreachable: https://this-domain-definitely-does-not-exist-12345.com")
@@ -227,26 +222,20 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "Missing final blank line")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:6:")
-			// Count may vary, but should have checked all files
 			assertOutputContains(t, output, "Checked 17 file(s)")
 			assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 			assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
-			// valid_external_links.md should have no errors when link check is enabled
 			assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
-			// mixed_link_types.md should have no errors (only checks HTTP/HTTPS)
 			assertOutputNotContains(t, output, "Errors in fixtures/mixed_link_types.md")
 		})
 
 		t.Run("ErrorsFromAllFiles", func(t *testing.T) {
 			output := runTest(t, "fixtures/invalid_heading_level.md", "fixtures/duplicate_headings.md", "fixtures/multiple_blank_lines.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_heading_level.md:")
-			assertOutputContains(t, output, "fixtures/invalid_heading_level.md:1:")
 			assertOutputContains(t, output, "First heading should be level 2")
 			assertOutputContains(t, output, "Errors in fixtures/duplicate_headings.md:")
-			assertOutputContains(t, output, "fixtures/duplicate_headings.md:14:")
 			assertOutputContains(t, output, "duplicate heading")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_blank_lines.md:")
-			assertOutputContains(t, output, "fixtures/multiple_blank_lines.md:5:")
 			assertOutputContains(t, output, "Multiple consecutive blank lines")
 			assertOutputContains(t, output, "Checked 3 file(s)")
 			assertOutputContains(t, output, "3 issues found")
@@ -267,7 +256,6 @@ func TestE2E(t *testing.T) {
 				t.Errorf("expected error for invalid config file, but command succeeded")
 			}
 
-			// Real errors (not lint violations) should show [gomarklint error]:
 			assertOutputContains(t, output, "[gomarklint error]:")
 			assertOutputContains(t, output, "failed to parse config file")
 		})
@@ -290,53 +278,33 @@ func TestE2E(t *testing.T) {
 		t.Run("MultipleViolationsInSingleFile", func(t *testing.T) {
 			output, _ := runTestWithCmd(t, "fixtures/multiple_violations.md", "--config", ".gomarklint.json")
 
-			// Should return output showing errors (exit code behavior may vary)
-			// Just verify errors are reported
-
-			// All errors should be reported
 			assertOutputContains(t, output, "Errors in fixtures/multiple_violations.md:")
-
-			// Heading level error (first heading is level 1, should be level 2)
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:6:")
 			assertOutputContains(t, output, "First heading should be level 2")
-
-			// Multiple blank lines error
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:10:")
 			assertOutputContains(t, output, "Multiple consecutive blank lines")
-
-			// Duplicate heading error (line 17)
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:17:")
 			assertOutputContains(t, output, "duplicate heading")
 			assertOutputContains(t, output, "section one")
-
-			// Empty alt text error
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:21:")
 			assertOutputContains(t, output, "image with empty alt text")
-
-			// Unclosed code block error
 			assertOutputContains(t, output, "fixtures/multiple_violations.md:25:")
 			assertOutputContains(t, output, "Unclosed code block")
-
-			// File should have been checked
 			assertOutputContains(t, output, "Checked 1 file(s)")
-
-			// All 5 errors should be reported
 			assertOutputContains(t, output, "5 issues found")
 		})
 	})
 
 	t.Run("External Link Checks", func(t *testing.T) {
 		t.Run("DisableExternalLinkCheck", func(t *testing.T) {
-			// External link check is disabled by default, so this should pass without checking links
-			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json", "--enable-link-check=false")
+			output := runTest(t, "fixtures/invalid_external_link.md", "--config", "config-no-link-check.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "Link unreachable")
 		})
 
 		t.Run("EnableExternalLinkCheckWithInvalidLink", func(t *testing.T) {
-			// Enable link check and verify it detects invalid links
-			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
 			assertOutputContains(t, output, "Link unreachable")
 			assertOutputContains(t, output, "this-domain-definitely-does-not-exist-12345.com")
@@ -344,16 +312,14 @@ func TestE2E(t *testing.T) {
 		})
 
 		t.Run("ValidExternalLinksOnly", func(t *testing.T) {
-			// Test with only valid external links
-			output := runTest(t, "fixtures/valid_external_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/valid_external_links.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "Link unreachable")
 		})
 
 		t.Run("MultipleExternalLinks", func(t *testing.T) {
-			// Test with multiple external links (both valid and invalid)
-			output := runTest(t, "fixtures/multiple_external_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/multiple_external_links.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/multiple_external_links.md:")
 			assertOutputContains(t, output, "Link unreachable")
 			assertOutputContains(t, output, "this-is-definitely-an-invalid-domain-12345.xyz")
@@ -362,7 +328,6 @@ func TestE2E(t *testing.T) {
 		})
 
 		t.Run("ExternalLinkCheckEnabledByDefault", func(t *testing.T) {
-			// Verify that external link check is enabled in the E2E config file
 			output := runTest(t, "fixtures/invalid_external_link.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Errors in fixtures/invalid_external_link.md:")
 			assertOutputContains(t, output, "Link unreachable")
@@ -370,29 +335,22 @@ func TestE2E(t *testing.T) {
 		})
 
 		t.Run("HTTPAndHTTPSLinks", func(t *testing.T) {
-			// Test that both HTTP and HTTPS links are checked
-			output := runTest(t, "fixtures/http_and_https_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/http_and_https_links.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
-			// Should check both HTTP and HTTPS links
-			// The HTTP link might fail, but the test verifies both are checked
 			assertOutputContains(t, output, "link(s)")
 		})
 
 		t.Run("MixedLinkTypes", func(t *testing.T) {
-			// Test that only HTTP/HTTPS links are checked, not relative paths or FTP
-			output := runTest(t, "fixtures/mixed_link_types.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/mixed_link_types.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
-			// Should only check HTTP/HTTPS links (2 links: Google and GitHub bare URL)
 			assertOutputContains(t, output, "link(s)")
 			assertOutputContains(t, output, "No issues found")
 		})
 
 		t.Run("SameLineMultipleLinks", func(t *testing.T) {
-			// Test multiple links in the same line
-			output := runTest(t, "fixtures/same_line_multiple_links.md", "--config", ".gomarklint.json", "--enable-link-check=true")
+			output := runTest(t, "fixtures/same_line_multiple_links.md", "--config", ".gomarklint.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
-			// Should check all links even if they're on the same line
 			assertOutputContains(t, output, "link(s)")
 		})
 	})

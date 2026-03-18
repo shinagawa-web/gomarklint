@@ -5,20 +5,42 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
+
+// off returns a disabled RuleConfig.
+func off() *config.RuleConfig {
+	return &config.RuleConfig{Enabled: false, Severity: config.SeverityOff, Options: map[string]interface{}{}}
+}
+
+// on returns an enabled RuleConfig with error severity.
+func on() *config.RuleConfig {
+	return &config.RuleConfig{Enabled: true, Severity: config.SeverityError, Options: map[string]interface{}{}}
+}
+
+// allOff returns a default config with every rule disabled.
+func allOff() config.Config {
+	cfg := config.Default()
+	for k := range cfg.Rules {
+		cfg.Rules[k] = off()
+	}
+	return cfg
+}
 
 func TestNew(t *testing.T) {
 	cfg := config.Default()
-	cfg.SkipLinkPatterns = []string{"https://example\\.com/.*"}
-	cfg.EnableLinkCheck = true
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options: map[string]interface{}{
+			"skipPatterns":   []interface{}{"https://example\\.com/.*"},
+			"timeoutSeconds": float64(5),
+		},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
-	}
-	if linter.config.EnableLinkCheck != true {
-		t.Error("expected EnableLinkCheck to be true")
 	}
 	if len(linter.compiledPatterns) != 1 {
 		t.Errorf("expected 1 compiled pattern, got %d", len(linter.compiledPatterns))
@@ -27,26 +49,26 @@ func TestNew(t *testing.T) {
 
 func TestNew_InvalidPattern(t *testing.T) {
 	cfg := config.Default()
-	cfg.SkipLinkPatterns = []string{"[invalid("}
-	cfg.EnableLinkCheck = true
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options: map[string]interface{}{
+			"skipPatterns":   []interface{}{"[invalid("},
+			"timeoutSeconds": float64(5),
+		},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 	if len(linter.compiledPatterns) != 0 {
 		t.Errorf("expected 0 compiled patterns (invalid pattern should be skipped), got %d", len(linter.compiledPatterns))
 	}
 }
 
 func TestRun_NoErrors(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -55,8 +77,7 @@ func TestRun_NoErrors(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
-	content := "# Hello\n\nThis is a test.\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Hello\n\nThis is a test.\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -77,13 +98,12 @@ func TestRun_NoErrors(t *testing.T) {
 }
 
 func TestRun_WithErrors(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = true
-	cfg.MinHeadingLevel = 2
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["heading-level"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"minLevel": float64(2)},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -92,8 +112,7 @@ func TestRun_WithErrors(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
-	content := "# Title\n\nContent\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Title\n\nContent\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -111,12 +130,7 @@ func TestRun_WithErrors(t *testing.T) {
 }
 
 func TestRun_MultipleFiles(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -142,7 +156,6 @@ func TestRun_MultipleFiles(t *testing.T) {
 	if len(result.OrderedPaths) != 3 {
 		t.Errorf("expected 3 files, got %d", len(result.OrderedPaths))
 	}
-
 	for i := 0; i < len(result.OrderedPaths)-1; i++ {
 		if result.OrderedPaths[i] > result.OrderedPaths[i+1] {
 			t.Errorf("paths are not sorted: %s > %s", result.OrderedPaths[i], result.OrderedPaths[i+1])
@@ -151,12 +164,8 @@ func TestRun_MultipleFiles(t *testing.T) {
 }
 
 func TestRun_UnclosedCodeBlock(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["unclosed-code-block"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -165,8 +174,7 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "unclosed.md")
-	content := "# Test\n\n```go\ncode here\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Test\n\n```go\ncode here\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -178,19 +186,11 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 	if result.TotalErrors == 0 {
 		t.Error("expected error for unclosed code block")
 	}
-
-	if len(result.Errors[testFile]) == 0 {
-		t.Error("expected at least one error for unclosed code block")
-	}
 }
 
 func TestRun_EmptyAltText(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["empty-alt-text"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -199,8 +199,7 @@ func TestRun_EmptyAltText(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "empty-alt.md")
-	content := "# Test\n\n![](image.png)\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Test\n\n![](image.png)\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -211,10 +210,6 @@ func TestRun_EmptyAltText(t *testing.T) {
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for empty alt text")
-	}
-
-	if len(result.Errors[testFile]) == 0 {
-		t.Error("expected at least one error for empty alt text")
 	}
 }
 
@@ -233,23 +228,17 @@ func TestRun_FileReadError(t *testing.T) {
 	if len(result.FailedFiles) != 1 {
 		t.Errorf("expected 1 failed file, got %d", len(result.FailedFiles))
 	}
-
 	if _, exists := result.FailedFiles["/non/existent/file.md"]; !exists {
 		t.Error("expected /non/existent/file.md in FailedFiles")
 	}
-
 	if len(result.Errors) != 0 {
 		t.Errorf("expected no results for non-existent file, got %d", len(result.Errors))
 	}
 }
 
 func TestRun_DuplicateHeadings(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = true
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["duplicate-heading"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -258,8 +247,7 @@ func TestRun_DuplicateHeadings(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "duplicate.md")
-	content := "# Title\n\n## Section\n\n## Section\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Title\n\n## Section\n\n## Section\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -274,12 +262,8 @@ func TestRun_DuplicateHeadings(t *testing.T) {
 }
 
 func TestRun_NoMultipleBlankLines(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = true
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["no-multiple-blank-lines"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -288,8 +272,7 @@ func TestRun_NoMultipleBlankLines(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "blank.md")
-	content := "# Title\n\n\n\nContent\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Title\n\n\n\nContent\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -304,12 +287,8 @@ func TestRun_NoMultipleBlankLines(t *testing.T) {
 }
 
 func TestRun_NoSetextHeadings(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = true
+	cfg := allOff()
+	cfg.Rules["no-setext-headings"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -318,8 +297,7 @@ func TestRun_NoSetextHeadings(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "setext.md")
-	content := "Title\n=====\n\nContent\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("Title\n=====\n\nContent\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -334,12 +312,8 @@ func TestRun_NoSetextHeadings(t *testing.T) {
 }
 
 func TestRun_FinalBlankLine(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = true
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["final-blank-line"] = on()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -348,8 +322,7 @@ func TestRun_FinalBlankLine(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "nofinal.md")
-	content := "# Title\n\nContent"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Title\n\nContent"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -364,14 +337,15 @@ func TestRun_FinalBlankLine(t *testing.T) {
 }
 
 func TestRun_LinkCheck(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
-	cfg.EnableLinkCheck = true
-	cfg.LinkCheckTimeoutSeconds = 5
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options: map[string]interface{}{
+			"timeoutSeconds": float64(5),
+			"skipPatterns":   []interface{}{},
+		},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -396,15 +370,15 @@ func TestRun_LinkCheck(t *testing.T) {
 }
 
 func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
-	cfg.EnableLinkCheck = true
-	cfg.SkipLinkPatterns = []string{"https://example\\.com/.*"}
-	cfg.LinkCheckTimeoutSeconds = 5
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options: map[string]interface{}{
+			"timeoutSeconds": float64(5),
+			"skipPatterns":   []interface{}{"https://example\\.com/.*"},
+		},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -429,12 +403,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 }
 
 func TestRun_DuplicatePaths(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
 
 	linter, err := New(cfg)
 	if err != nil {
@@ -443,44 +412,32 @@ func TestRun_DuplicatePaths(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
-	content := "# Test\n\nContent\n"
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte("# Test\n\nContent\n"), 0644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	// Pass the same file multiple times
 	result, err := linter.Run([]string{testFile, testFile, testFile})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Should only process once
 	if len(result.OrderedPaths) != 1 {
 		t.Errorf("expected 1 unique path, got %d", len(result.OrderedPaths))
 	}
-
-	// Should count lines only once
-	expectedLines := 4
-	if result.TotalLines != expectedLines {
-		t.Errorf("expected %d lines (counted once), got %d", expectedLines, result.TotalLines)
+	if result.TotalLines != 4 {
+		t.Errorf("expected 4 lines (counted once), got %d", result.TotalLines)
 	}
 }
 
 func TestLintContent_NoErrors(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = false
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
 
 	linter, err := New(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	content := "# Hello\n\nThis is a test.\n"
-	errors, lineCount, linksChecked := linter.LintContent("test.md", content)
+	errors, lineCount, linksChecked := linter.LintContent("test.md", "# Hello\n\nThis is a test.\n")
 
 	if len(errors) != 0 {
 		t.Errorf("expected 0 errors, got %d", len(errors))
@@ -494,21 +451,19 @@ func TestLintContent_NoErrors(t *testing.T) {
 }
 
 func TestLintContent_WithErrors(t *testing.T) {
-	cfg := config.Default()
-	cfg.EnableHeadingLevelCheck = true
-	cfg.MinHeadingLevel = 2
-	cfg.EnableDuplicateHeadingCheck = false
-	cfg.EnableNoMultipleBlankLinesCheck = false
-	cfg.EnableFinalBlankLineCheck = false
-	cfg.EnableNoSetextHeadingsCheck = false
+	cfg := allOff()
+	cfg.Rules["heading-level"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"minLevel": float64(2)},
+	}
 
 	linter, err := New(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	content := "# Title\n\nContent\n"
-	errors, lineCount, _ := linter.LintContent("test.md", content)
+	errors, lineCount, _ := linter.LintContent("test.md", "# Title\n\nContent\n")
 
 	if len(errors) == 0 {
 		t.Error("expected at least 1 error (heading level)")

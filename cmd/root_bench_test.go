@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
-	"github.com/shinagawa-web/gomarklint/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
 )
 
 // generateComplexMarkdown generates a realistic markdown file with mixed content.
@@ -63,7 +63,7 @@ func generateComplexMarkdown(sections int) string {
 func BenchmarkFullLinting(b *testing.B) {
 	content := generateComplexMarkdown(1000)
 	cfg := config.Default()
-	cfg.EnableLinkCheck = false
+	cfg.Rules["external-link"].Enabled = false
 
 	lint, err := linter.New(cfg)
 	if err != nil {
@@ -79,7 +79,7 @@ func BenchmarkFullLinting(b *testing.B) {
 func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	content := generateComplexMarkdown(5000)
 	cfg := config.Default()
-	cfg.EnableLinkCheck = false
+	cfg.Rules["external-link"].Enabled = false
 
 	lint, err := linter.New(cfg)
 	if err != nil {

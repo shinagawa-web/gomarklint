@@ -1,14 +1,29 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/shinagawa-web/gomarklint/internal/config"
 )
+
+const defaultConfigJSON = `{
+  "default": true,
+  "rules": {
+    "final-blank-line": true,
+    "unclosed-code-block": true,
+    "empty-alt-text": true,
+    "heading-level": { "enabled": true, "severity": "error", "minLevel": 2 },
+    "duplicate-heading": true,
+    "no-multiple-blank-lines": true,
+    "no-setext-headings": true,
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+  },
+  "include": ["README.md", "docs"],
+  "ignore": [],
+  "output": "text"
+}
+`
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -21,13 +36,7 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("%s already exists", path)
 		}
 
-		cfg := config.Default()
-		data, err := json.MarshalIndent(cfg, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal config: %w", err)
-		}
-
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, []byte(defaultConfigJSON), 0644); err != nil {
 			return fmt.Errorf("failed to write config file: %w", err)
 		}
 

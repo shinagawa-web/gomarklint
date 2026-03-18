@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // Formatter is the interface for formatting lint results.

@@ -23,12 +23,13 @@ func LoadConfig(path string) (Config, error) {
 		return Config{}, fmt.Errorf("failed to parse config file: %w", err)
 	}
 	if cfg.OutputFormat == "" {
-		// Fallback to default if not set in config file
 		cfg.OutputFormat = "text"
 	}
-	if cfg.LinkCheckTimeoutSeconds <= 0 {
-		// Fallback to default if not set or invalid in config file
-		cfg.LinkCheckTimeoutSeconds = 5
+	if cfg.MinSeverity == "" {
+		cfg.MinSeverity = SeverityWarning
+	}
+	if cfg.Rules == nil {
+		cfg.Rules = map[string]*RuleConfig{}
 	}
 
 	return cfg, nil

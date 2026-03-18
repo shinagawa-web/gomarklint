@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shinagawa-web/gomarklint/cmd"
+	"github.com/shinagawa-web/gomarklint/v2/cmd"
 )
 
 func main() {

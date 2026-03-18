@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
 
 // generateMarkdownWithHeadings generates markdown content with various heading levels.
@@ -24,9 +24,15 @@ func BenchmarkCheckHeadingLevel(b *testing.B) {
 	content := generateMarkdownWithHeadings(1000)
 	cfg := config.Default()
 	lines := strings.Split(content, "\n")
+	minLevel := 2
+	if v, ok := cfg.RuleOptions("heading-level")["minLevel"]; ok {
+		if f, ok := v.(float64); ok {
+			minLevel = int(f)
+		}
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckHeadingLevels("test.md", lines, 0, cfg.MinHeadingLevel)
+		_ = CheckHeadingLevels("test.md", lines, 0, minLevel)
 	}
 }

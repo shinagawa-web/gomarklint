@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // JSONFormatter formats lint results as JSON.

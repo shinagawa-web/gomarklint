@@ -8,25 +8,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
-	"github.com/shinagawa-web/gomarklint/internal/file"
-	"github.com/shinagawa-web/gomarklint/internal/linter"
-	"github.com/shinagawa-web/gomarklint/internal/output"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/file"
+	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v2/internal/output"
 )
 
 // ErrLintViolations is returned when lint violations are found.
 var ErrLintViolations = errors.New("lint violations found")
 
-var minHeadingLevel int
-var enableLinkCheck bool
-var skipLinkPatterns []string
 var configFilePath string
 var outputFormat string
-var enableHeadingLevelCheck bool
-var enableDuplicateHeadingCheck bool
-var enableNoMultipleBlankLinesCheck bool
-var enableNoSetextHeadingsCheck bool
-var enableFinalBlankLineCheck bool
+var minSeverity string
 
 var rootCmd = &cobra.Command{
 	Use:   "gomarklint [files or directories]",
@@ -47,15 +40,8 @@ func runLint(cmd *cobra.Command, args []string) error {
 	}
 
 	flags := config.FlagValues{
-		MinHeadingLevel:                 minHeadingLevel,
-		EnableLinkCheck:                 enableLinkCheck,
-		EnableHeadingLevelCheck:         enableHeadingLevelCheck,
-		EnableDuplicateHeadingCheck:     enableDuplicateHeadingCheck,
-		EnableNoMultipleBlankLinesCheck: enableNoMultipleBlankLinesCheck,
-		EnableNoSetextHeadingsCheck:     enableNoSetextHeadingsCheck,
-		EnableFinalBlankLineCheck:       enableFinalBlankLineCheck,
-		SkipLinkPatterns:                skipLinkPatterns,
-		OutputFormat:                    outputFormat,
+		OutputFormat: outputFormat,
+		MinSeverity:  minSeverity,
 	}
 	cfg = config.MergeFlags(cfg, cmd, flags)
 
@@ -108,7 +94,7 @@ func formatOutput(cfg config.Config, result *linter.Result, fileCount int, durat
 	}
 
 	linksChecked := &result.TotalLinksChecked
-	if !cfg.EnableLinkCheck {
+	if !cfg.IsEnabled("external-link") {
 		linksChecked = nil
 	}
 
@@ -129,16 +115,8 @@ func init() {
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	rootCmd.Flags().StringVar(&configFilePath, "config", ".gomarklint.json", "path to config file (default: .gomarklint.json)")
-
-	rootCmd.Flags().IntVar(&minHeadingLevel, "min-heading", 2, "minimum heading level to start from (default: 2)")
-	rootCmd.Flags().BoolVar(&enableLinkCheck, "enable-link-check", false, "enable external link checking")
-	rootCmd.Flags().BoolVar(&enableHeadingLevelCheck, "enable-heading-level-check", true, "enable heading level check")
-	rootCmd.Flags().BoolVar(&enableDuplicateHeadingCheck, "enable-duplicate-heading-check", true, "enable duplicate heading check")
-	rootCmd.Flags().BoolVar(&enableNoMultipleBlankLinesCheck, "enable-no-multiple-blank-lines-check", true, "enable no multiple blank lines check")
-	rootCmd.Flags().BoolVar(&enableNoSetextHeadingsCheck, "enable-no-setext-headings-check", true, "enable no setext headings check")
-	rootCmd.Flags().BoolVar(&enableFinalBlankLineCheck, "enable-final-blank-line-check", true, "enable final blank line check")
-	rootCmd.Flags().StringArrayVar(&skipLinkPatterns, "skip-link-patterns", nil, "patterns of URLs to skip link checking")
 	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text or json")
+	rootCmd.Flags().StringVar(&minSeverity, "severity", "warning", "minimum severity to report: warning or error")
 
 	rootCmd.AddCommand(initCmd)
 }
