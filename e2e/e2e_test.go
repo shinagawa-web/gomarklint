@@ -140,12 +140,40 @@ func TestE2E(t *testing.T) {
 			assertOutputNotContains(t, output, "Errors")
 		})
 
+		t.Run("MinHeadingLevel1EnabledOmitted", func(t *testing.T) {
+			// enabled can be omitted in object form; behavior must match explicit enabled:true
+			output := runTest(t, "fixtures/heading_level_one.md", "--config", "config-min-heading-1-no-enabled.json")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "No issues found")
+			assertOutputNotContains(t, output, "First heading should be level")
+			assertOutputNotContains(t, output, "Errors")
+		})
+
 		t.Run("DisableDuplicateHeadingRule", func(t *testing.T) {
 			output := runTest(t, "fixtures/duplicate_headings.md", "--config", "config-no-duplicate-heading.json")
 			assertOutputContains(t, output, "Checked 1 file(s)")
 			assertOutputContains(t, output, "No issues found")
 			assertOutputNotContains(t, output, "duplicate heading")
 			assertOutputNotContains(t, output, "Errors")
+		})
+
+		t.Run("OffValueDisablesRule", func(t *testing.T) {
+			// "off" is equivalent to false — rule is disabled
+			output := runTest(t, "fixtures/duplicate_headings.md", "--config", "config-off-duplicate-heading.json")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "No issues found")
+			assertOutputNotContains(t, output, "duplicate heading")
+			assertOutputNotContains(t, output, "Errors")
+		})
+
+		t.Run("DefaultFalseOptInModeWithViolation", func(t *testing.T) {
+			// opt-in mode: only final-blank-line enabled, and the file violates it
+			output, err := runTestWithCmd(t, "fixtures/no_final_blank_line.md", "--config", "config-opt-in.json")
+			if err == nil {
+				t.Error("expected exit 1: opt-in rule final-blank-line should detect violation")
+			}
+			assertOutputContains(t, output, "Missing final blank line")
+			assertOutputNotContains(t, output, "Setext heading found")
 		})
 
 		t.Run("DisableFinalBlankLineRule", func(t *testing.T) {
@@ -360,6 +388,14 @@ func TestE2E(t *testing.T) {
 			assertOutputContains(t, output, "No issues found")
 			assertOutputContains(t, output, "link(s)")
 		})
+
+		t.Run("SkipPatternsExcludeLinks", func(t *testing.T) {
+			// skipPatterns matches the invalid URL — link check is skipped, no errors
+			output := runTest(t, "fixtures/invalid_external_link.md", "--config", "config-skip-patterns.json")
+			assertOutputContains(t, output, "Checked 1 file(s)")
+			assertOutputContains(t, output, "No issues found")
+			assertOutputNotContains(t, output, "Link unreachable")
+		})
 	})
 
 	t.Run("Severity", func(t *testing.T) {
@@ -435,6 +471,19 @@ func TestE2E(t *testing.T) {
 			}
 			assertOutputContains(t, output, "[warning]")
 			assertOutputContains(t, output, "[error]")
+		})
+
+		t.Run("SeverityErrorFlagMixedFiltersWarnings", func(t *testing.T) {
+			// mixed_severity.md has setext (warning) + unclosed code block (error)
+			// --severity error: warning is suppressed, only error remains → exit 1
+			output, err := runTestWithCmd(t, "fixtures/mixed_severity.md", "--config", "config-mixed-severity.json", "--severity", "error")
+			if err == nil {
+				t.Error("expected exit 1: error-severity violation remains after filtering warnings")
+			}
+			assertOutputNotContains(t, output, "[warning]")
+			assertOutputNotContains(t, output, "Setext heading found")
+			assertOutputContains(t, output, "[error]")
+			assertOutputContains(t, output, "Unclosed code block")
 		})
 
 		t.Run("DefaultFalseOptInMode", func(t *testing.T) {

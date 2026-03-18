@@ -1,0 +1,14 @@
+{
+  "default": true,
+  "rules": {
+    "final-blank-line": true,
+    "unclosed-code-block": true,
+    "empty-alt-text": true,
+    "heading-level": { "severity": "error", "minLevel": 2 },
+    "duplicate-heading": "off",
+    "no-multiple-blank-lines": true,
+    "no-setext-headings": true,
+    "external-link": false
+  },
+  "output": "text"
+}

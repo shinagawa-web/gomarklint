@@ -66,6 +66,13 @@ Each rule entry accepts three forms (bool, string, or object):
 | `"off"` | disabled |
 | `{ "enabled": true, "severity": "warning", ...options }` | full object form |
 
+In the object form, `enabled` can be omitted — it defaults to `true`. These are equivalent:
+
+```json
+"heading-level": { "enabled": true, "severity": "warning", "minLevel": 2 }
+"heading-level": { "severity": "warning", "minLevel": 2 }
+```
+
 ### `default` key
 
 Controls what happens to rules **not listed** in the `rules` map:
