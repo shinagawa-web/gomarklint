@@ -78,9 +78,6 @@ func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 				return fmt.Errorf("invalid \"enabled\" value: %w", err)
 			}
 			r.Enabled = b
-			if !b {
-				r.Severity = SeverityOff
-			}
 		case "severity":
 			var sev string
 			if err := json.Unmarshal(v, &sev); err != nil {
@@ -99,6 +96,11 @@ func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 			}
 			r.Options[k] = val
 		}
+	}
+
+	// enabled=false always wins over any severity field
+	if !r.Enabled {
+		r.Severity = SeverityOff
 	}
 
 	return nil

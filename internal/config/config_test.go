@@ -191,6 +191,123 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
+func TestLoadConfig_NoRulesKey(t *testing.T) {
+	// When "rules" is omitted, cfg.Rules should default to an empty map (not nil).
+	json := `{"default": true, "output": "json"}`
+	tmp := filepath.Join(t.TempDir(), "norules.json")
+	if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(tmp)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Rules == nil {
+		t.Error("expected Rules to be non-nil empty map, got nil")
+	}
+}
+
+func TestUnmarshalJSON_ObjectForm(t *testing.T) {
+	t.Run("EnabledFalse sets SeverityOff", func(t *testing.T) {
+		json := `{"default": true, "rules": {"heading-level": {"enabled": false, "severity": "error"}}}`
+		tmp := filepath.Join(t.TempDir(), "cfg.json")
+		if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := LoadConfig(tmp)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		r := cfg.Rules["heading-level"]
+		if r.Enabled {
+			t.Error("expected Enabled=false")
+		}
+		if r.Severity != SeverityOff {
+			t.Errorf("expected Severity=off when enabled=false, got %s", r.Severity)
+		}
+	})
+
+	t.Run("InvalidEnabledValue", func(t *testing.T) {
+		json := `{"default": true, "rules": {"heading-level": {"enabled": "yes"}}}`
+		tmp := filepath.Join(t.TempDir(), "cfg.json")
+		if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+			t.Fatal(err)
+		}
+		_, err := LoadConfig(tmp)
+		if err == nil {
+			t.Error("expected error for invalid enabled value")
+		}
+	})
+
+	t.Run("InvalidSeverityValue", func(t *testing.T) {
+		json := `{"default": true, "rules": {"heading-level": {"severity": "critical"}}}`
+		tmp := filepath.Join(t.TempDir(), "cfg.json")
+		if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+			t.Fatal(err)
+		}
+		_, err := LoadConfig(tmp)
+		if err == nil {
+			t.Error("expected error for invalid severity value")
+		}
+	})
+
+	t.Run("InvalidSeverityType", func(t *testing.T) {
+		json := `{"default": true, "rules": {"heading-level": {"severity": 42}}}`
+		tmp := filepath.Join(t.TempDir(), "cfg.json")
+		if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+			t.Fatal(err)
+		}
+		_, err := LoadConfig(tmp)
+		if err == nil {
+			t.Error("expected error for non-string severity type")
+		}
+	})
+
+	t.Run("InvalidOptionValue", func(t *testing.T) {
+		// A JSON object value that can't be unmarshaled (e.g., a function) can't
+		// be triggered from JSON alone — but we can hit the options path with a
+		// valid but unusual type like a nested object.
+		json := `{"default": true, "rules": {"heading-level": {"minLevel": {"nested": true}}}}`
+		tmp := filepath.Join(t.TempDir(), "cfg.json")
+		if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := LoadConfig(tmp)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// Nested objects are valid interface{} values — just stored as-is.
+		if cfg.Rules["heading-level"].Options["minLevel"] == nil {
+			t.Error("expected minLevel option to be stored")
+		}
+	})
+
+	t.Run("InvalidObjectJSON", func(t *testing.T) {
+		var r RuleConfig
+		err := r.UnmarshalJSON([]byte(`{invalid`))
+		if err == nil {
+			t.Error("expected error for malformed object JSON")
+		}
+	})
+}
+
+func TestRuleOptions_NilOptions(t *testing.T) {
+	cfg := Config{
+		Default: true,
+		Rules: map[string]*RuleConfig{
+			"heading-level": {Enabled: true, Severity: SeverityError, Options: nil},
+		},
+	}
+	// Should return empty map, not panic
+	opts := cfg.RuleOptions("heading-level")
+	if opts == nil {
+		t.Error("expected non-nil map for nil Options")
+	}
+	if len(opts) != 0 {
+		t.Errorf("expected empty map, got %v", opts)
+	}
+}
+
 func TestIsEnabled(t *testing.T) {
 	cfg := Config{
 		Default: true,
