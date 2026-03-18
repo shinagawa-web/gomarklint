@@ -12,8 +12,10 @@ weight: 1
 Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
 
 ```sh
-# macOS / Linux
+# macOS (Intel)
 tar -xzf gomarklint_Darwin_x86_64.tar.gz
+# Linux (x86_64)
+tar -xzf gomarklint_Linux_x86_64.tar.gz
 sudo mv gomarklint /usr/local/bin/
 # or install to user-local directory (no sudo required)
 mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
