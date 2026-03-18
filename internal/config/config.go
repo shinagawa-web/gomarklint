@@ -91,9 +91,7 @@ func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 			}
 		default:
 			var val interface{}
-			if err := json.Unmarshal(v, &val); err != nil {
-				return fmt.Errorf("invalid option %q: %w", k, err)
-			}
+			_ = json.Unmarshal(v, &val)
 			r.Options[k] = val
 		}
 	}
