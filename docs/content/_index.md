@@ -14,7 +14,7 @@ title: "gomarklint"
 > A fast Markdown linter built in Go — for local dev and CI alike.
 
 ```sh
-# macOS / Linux — download binary (no Go required)
+# macOS — download binary (no Go required)
 tar -xzf gomarklint_Darwin_x86_64.tar.gz
 sudo mv gomarklint /usr/local/bin/
 ```
