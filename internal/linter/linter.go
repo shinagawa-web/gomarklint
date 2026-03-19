@@ -33,7 +33,7 @@ type Result struct {
 }
 
 // New creates a new Linter with the given configuration.
-func New(cfg config.Config) (*Linter, error) {
+func New(cfg config.Config) *Linter {
 	compiledPatterns := []*regexp.Regexp{}
 	if cfg.IsEnabled("external-link") {
 		opts := cfg.RuleOptions("external-link")
@@ -57,11 +57,11 @@ func New(cfg config.Config) (*Linter, error) {
 		config:           cfg,
 		compiledPatterns: compiledPatterns,
 		urlCache:         &sync.Map{},
-	}, nil
+	}
 }
 
 // Run performs linting on the given file paths concurrently.
-func (l *Linter) Run(filePaths []string) (*Result, error) {
+func (l *Linter) Run(filePaths []string) *Result {
 	// Deduplicate file paths to prevent double-counting
 	uniquePaths := make(map[string]struct{})
 	for _, p := range filePaths {
@@ -127,7 +127,7 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 		TotalLines:        totalLines,
 		TotalLinksChecked: totalLinksChecked,
 		FailedFiles:       failedFiles,
-	}, nil
+	}
 }
 
 // LintContent performs linting checks on the provided content string.

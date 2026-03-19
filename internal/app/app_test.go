@@ -17,7 +17,9 @@ import (
 func TestRun_ValidMarkdown(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "valid.md")
-	os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644)
+	if err := os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -32,7 +34,10 @@ func TestRun_ValidMarkdown(t *testing.T) {
 func TestRun_InvalidMarkdown_ReturnsViolations(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "invalid.md")
-	os.WriteFile(f, []byte("# H1 heading\n"), 0644) // H1 when default minLevel=2
+	// H1 when default minLevel=2
+	if err := os.WriteFile(f, []byte("# H1 heading\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -47,7 +52,9 @@ func TestRun_InvalidMarkdown_ReturnsViolations(t *testing.T) {
 func TestRun_NoArgs_NoInclude_ReturnsError(t *testing.T) {
 	dir := t.TempDir()
 	cfgFile := filepath.Join(dir, "empty-include.json")
-	os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"include":[]}`), 0644)
+	if err := os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"include":[]}`), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -62,7 +69,9 @@ func TestRun_NoArgs_NoInclude_ReturnsError(t *testing.T) {
 func TestRun_InvalidConfigFile_ReturnsError(t *testing.T) {
 	dir := t.TempDir()
 	badConfig := filepath.Join(dir, "bad.json")
-	os.WriteFile(badConfig, []byte("{invalid json}"), 0644)
+	if err := os.WriteFile(badConfig, []byte("{invalid json}"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -77,7 +86,9 @@ func TestRun_InvalidConfigFile_ReturnsError(t *testing.T) {
 func TestRun_InvalidOutputFormat_ReturnsError(t *testing.T) {
 	dir := t.TempDir()
 	cfgFile := filepath.Join(dir, "bad-output.json")
-	os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"output":"xlsx"}`), 0644)
+	if err := os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"output":"xlsx"}`), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -92,7 +103,9 @@ func TestRun_InvalidOutputFormat_ReturnsError(t *testing.T) {
 func TestRun_OutputFormatOverride(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "valid.md")
-	os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644)
+	if err := os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	err := Run(&buf, Options{
@@ -111,14 +124,18 @@ func TestRun_OutputFormatOverride(t *testing.T) {
 func TestRun_MinSeverityOverride(t *testing.T) {
 	dir := t.TempDir()
 	cfgFile := filepath.Join(dir, "warning-rule.json")
-	os.WriteFile(cfgFile, []byte(`{
+	if err := os.WriteFile(cfgFile, []byte(`{
 		"default": false,
 		"rules": {
 			"no-setext-headings": "warning"
 		}
-	}`), 0644)
+	}`), 0644); err != nil {
+		t.Fatal(err)
+	}
 	f := filepath.Join(dir, "setext.md")
-	os.WriteFile(f, []byte("Heading\n=======\n\nParagraph.\n"), 0644)
+	if err := os.WriteFile(f, []byte("Heading\n=======\n\nParagraph.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	// With MinSeverity=warning, warning violations are shown
 	var buf bytes.Buffer
@@ -152,10 +169,14 @@ func TestRun_MinSeverityOverride(t *testing.T) {
 func TestRun_UsesConfigInclude(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "valid.md")
-	os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644)
+	if err := os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	cfgFile := filepath.Join(dir, "include.json")
-	os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"include":["`+f+`"]}`), 0644)
+	if err := os.WriteFile(cfgFile, []byte(`{"default":true,"rules":{},"include":["`+f+`"]}`), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	var buf bytes.Buffer
 	// No args — should fall back to cfg.Include
@@ -190,7 +211,9 @@ func TestFormatOutput_WriterError(t *testing.T) {
 func TestRun_WriterError(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "valid.md")
-	os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644)
+	if err := os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	err := Run(&errorWriter{}, Options{
 		ConfigPath: "/nonexistent/.gomarklint.json",

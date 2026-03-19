@@ -9,7 +9,9 @@ import (
 func TestMain_HappyPath(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "valid.md")
-	os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644)
+	if err := os.WriteFile(f, []byte("## Hello\n\nWorld.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	old := os.Args
 	os.Args = []string{"gomarklint", f, "--config", "/nonexistent/.gomarklint.json"}
@@ -20,9 +22,9 @@ func TestMain_HappyPath(t *testing.T) {
 	oldStdout := os.Stdout
 	os.Stdout = w
 	defer func() {
-		w.Close()
+		_ = w.Close()
 		os.Stdout = oldStdout
-		r.Close()
+		_ = r.Close()
 	}()
 
 	main() // should return normally without calling osExit
@@ -31,7 +33,9 @@ func TestMain_HappyPath(t *testing.T) {
 func TestMain_LintViolation(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "invalid.md")
-	os.WriteFile(f, []byte("# H1 heading\n"), 0644)
+	if err := os.WriteFile(f, []byte("# H1 heading\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	old := os.Args
 	os.Args = []string{"gomarklint", f, "--config", "/nonexistent/.gomarklint.json"}
@@ -46,9 +50,9 @@ func TestMain_LintViolation(t *testing.T) {
 	oldStdout := os.Stdout
 	os.Stdout = w
 	defer func() {
-		w.Close()
+		_ = w.Close()
 		os.Stdout = oldStdout
-		r.Close()
+		_ = r.Close()
 	}()
 
 	main()
@@ -60,7 +64,9 @@ func TestMain_LintViolation(t *testing.T) {
 func TestMain_GenericError(t *testing.T) {
 	dir := t.TempDir()
 	badConfig := filepath.Join(dir, "bad.json")
-	os.WriteFile(badConfig, []byte("{invalid json}"), 0644)
+	if err := os.WriteFile(badConfig, []byte("{invalid json}"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	old := os.Args
 	os.Args = []string{"gomarklint", "--config", badConfig, "somefile.md"}
@@ -77,10 +83,10 @@ func TestMain_GenericError(t *testing.T) {
 	oldStderr := os.Stderr
 	os.Stderr = w
 	defer func() {
-		w.Close()
+		_ = w.Close()
 		os.Stdout = oldStdout
 		os.Stderr = oldStderr
-		r.Close()
+		_ = r.Close()
 	}()
 
 	main()

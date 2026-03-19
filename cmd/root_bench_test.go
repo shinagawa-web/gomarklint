@@ -65,10 +65,7 @@ func BenchmarkFullLinting(b *testing.B) {
 	cfg := config.Default()
 	cfg.Rules["external-link"].Enabled = false
 
-	lint, err := linter.New(cfg)
-	if err != nil {
-		b.Fatal(err)
-	}
+	lint := linter.New(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -81,10 +78,7 @@ func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	cfg := config.Default()
 	cfg.Rules["external-link"].Enabled = false
 
-	lint, err := linter.New(cfg)
-	if err != nil {
-		b.Fatal(err)
-	}
+	lint := linter.New(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

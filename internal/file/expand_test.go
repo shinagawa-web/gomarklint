@@ -68,10 +68,7 @@ func TestExpandPaths(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExpandPaths(tt.input, []string{})
-			if err != nil {
-				t.Fatalf("ExpandPaths failed: %v", err)
-			}
+			got := ExpandPaths(tt.input, []string{})
 
 			var gotEnds []string
 			for _, path := range got {
@@ -97,9 +94,10 @@ func TestExpandPaths(t *testing.T) {
 			_ = os.Chmod(badDir, 0755) // cleanup
 		}()
 
-		_, err := ExpandPaths([]string{base}, []string{})
-		if err != nil {
-			t.Fatalf("ExpandPaths failed: %v", err)
+		// Unreadable subdirectory should be silently skipped, not error.
+		got := ExpandPaths([]string{base}, []string{})
+		if len(got) != 0 {
+			t.Errorf("expected no files from unreadable directory, got %v", got)
 		}
 	})
 }

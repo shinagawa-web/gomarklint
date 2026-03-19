@@ -31,6 +31,7 @@ func TestLoadConfig_ValidFile(t *testing.T) {
 	hl := cfg.Rules["heading-level"]
 	if hl == nil {
 		t.Fatal("expected heading-level rule")
+		return
 	}
 	if !hl.Enabled {
 		t.Error("expected heading-level enabled=true")

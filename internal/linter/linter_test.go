@@ -38,10 +38,7 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 	if len(linter.compiledPatterns) != 1 {
 		t.Errorf("expected 1 compiled pattern, got %d", len(linter.compiledPatterns))
 	}
@@ -58,10 +55,7 @@ func TestNew_InvalidPattern(t *testing.T) {
 		},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 	if len(linter.compiledPatterns) != 0 {
 		t.Errorf("expected 0 compiled patterns (invalid pattern should be skipped), got %d", len(linter.compiledPatterns))
 	}
@@ -70,10 +64,7 @@ func TestNew_InvalidPattern(t *testing.T) {
 func TestRun_NoErrors(t *testing.T) {
 	cfg := allOff()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -81,10 +72,7 @@ func TestRun_NoErrors(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors != 0 {
 		t.Errorf("expected 0 errors, got %d", result.TotalErrors)
@@ -105,10 +93,7 @@ func TestRun_WithErrors(t *testing.T) {
 		Options:  map[string]interface{}{"minLevel": float64(2)},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -116,10 +101,7 @@ func TestRun_WithErrors(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected errors, got 0")
@@ -132,10 +114,7 @@ func TestRun_WithErrors(t *testing.T) {
 func TestRun_MultipleFiles(t *testing.T) {
 	cfg := allOff()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	file1 := filepath.Join(tmpDir, "file1.md")
@@ -148,10 +127,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 		}
 	}
 
-	result, err := linter.Run([]string{file1, file2, file3})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{file1, file2, file3})
 
 	if len(result.OrderedPaths) != 3 {
 		t.Errorf("expected 3 files, got %d", len(result.OrderedPaths))
@@ -167,10 +143,7 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["unclosed-code-block"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "unclosed.md")
@@ -178,10 +151,7 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for unclosed code block")
@@ -192,10 +162,7 @@ func TestRun_EmptyAltText(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["empty-alt-text"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "empty-alt.md")
@@ -203,10 +170,7 @@ func TestRun_EmptyAltText(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for empty alt text")
@@ -215,15 +179,9 @@ func TestRun_EmptyAltText(t *testing.T) {
 
 func TestRun_FileReadError(t *testing.T) {
 	cfg := config.Default()
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
-	result, err := linter.Run([]string{"/non/existent/file.md"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{"/non/existent/file.md"})
 
 	if len(result.FailedFiles) != 1 {
 		t.Errorf("expected 1 failed file, got %d", len(result.FailedFiles))
@@ -240,10 +198,7 @@ func TestRun_DuplicateHeadings(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["duplicate-heading"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "duplicate.md")
@@ -251,10 +206,7 @@ func TestRun_DuplicateHeadings(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for duplicate headings")
@@ -265,10 +217,7 @@ func TestRun_NoMultipleBlankLines(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-multiple-blank-lines"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "blank.md")
@@ -276,10 +225,7 @@ func TestRun_NoMultipleBlankLines(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for multiple blank lines")
@@ -290,10 +236,7 @@ func TestRun_NoSetextHeadings(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "setext.md")
@@ -301,10 +244,7 @@ func TestRun_NoSetextHeadings(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for setext headings")
@@ -315,10 +255,7 @@ func TestRun_FinalBlankLine(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["final-blank-line"] = on()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "nofinal.md")
@@ -326,10 +263,7 @@ func TestRun_FinalBlankLine(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalErrors == 0 {
 		t.Error("expected error for missing final blank line")
@@ -347,10 +281,7 @@ func TestRun_LinkCheck(t *testing.T) {
 		},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "links.md")
@@ -359,10 +290,7 @@ func TestRun_LinkCheck(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalLinksChecked != 2 {
 		t.Errorf("expected 2 links checked, got %d", result.TotalLinksChecked)
@@ -380,10 +308,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 		},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "links.md")
@@ -392,10 +317,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalLinksChecked != 1 {
 		t.Errorf("expected 1 link checked (skipped link not counted), got %d", result.TotalLinksChecked)
@@ -405,10 +327,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 func TestRun_DuplicatePaths(t *testing.T) {
 	cfg := allOff()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -416,10 +335,7 @@ func TestRun_DuplicatePaths(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile, testFile, testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile, testFile, testFile})
 
 	if len(result.OrderedPaths) != 1 {
 		t.Errorf("expected 1 unique path, got %d", len(result.OrderedPaths))
@@ -432,10 +348,7 @@ func TestRun_DuplicatePaths(t *testing.T) {
 func TestLintContent_NoErrors(t *testing.T) {
 	cfg := allOff()
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	errors, lineCount, linksChecked := linter.LintContent("test.md", "# Hello\n\nThis is a test.\n")
 
@@ -458,10 +371,7 @@ func TestLintContent_WithErrors(t *testing.T) {
 		Options:  map[string]interface{}{"minLevel": float64(2)},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	errors, lineCount, _ := linter.LintContent("test.md", "# Title\n\nContent\n")
 
@@ -481,10 +391,7 @@ func TestRun_WarningSeverity(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter, err := New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	linter := New(cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "setext.md")
@@ -493,10 +400,7 @@ func TestRun_WarningSeverity(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	result, err := linter.Run([]string{testFile})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result := linter.Run([]string{testFile})
 
 	if result.TotalWarnings == 0 {
 		t.Error("expected TotalWarnings > 0 for warning-severity rule violation")

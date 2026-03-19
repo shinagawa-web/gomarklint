@@ -54,20 +54,10 @@ func Run(w io.Writer, opts Options) error {
 		}
 	}
 
-	files, err := file.ExpandPaths(args, cfg.Ignore)
-	if err != nil {
-		return fmt.Errorf("failed to expand paths: %w", err)
-	}
+	files := file.ExpandPaths(args, cfg.Ignore)
 
-	lint, err := linter.New(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to create linter: %w", err)
-	}
-
-	result, err := lint.Run(files)
-	if err != nil {
-		return err
-	}
+	lint := linter.New(cfg)
+	result := lint.Run(files)
 
 	if err := formatOutput(w, cfg, result, len(files), time.Since(start)); err != nil {
 		return err
