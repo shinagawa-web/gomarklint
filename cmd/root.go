@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/shinagawa-web/gomarklint/v2/internal/app"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
-
-// ErrLintViolations is re-exported so main.go can check it.
-var ErrLintViolations = app.ErrLintViolations
 
 var configFilePath string
 var outputFormat string
@@ -25,7 +22,6 @@ var rootCmd = &cobra.Command{
 }
 
 func runLint(cmd *cobra.Command, args []string) error {
-	fmt.Println()
 	opts := app.Options{
 		ConfigPath: configFilePath,
 		Args:       args,
@@ -34,7 +30,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 		opts.OutputFormat = outputFormat
 	}
 	if cmd.Flags().Changed("severity") {
-		opts.MinSeverity = minSeverity
+		opts.MinSeverity = config.RuleSeverity(minSeverity)
 	}
 	return app.Run(os.Stdout, opts)
 }

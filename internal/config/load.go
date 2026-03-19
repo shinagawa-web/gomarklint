@@ -28,10 +28,19 @@ func LoadConfig(path string) (Config, error) {
 	if cfg.MinSeverity == "" {
 		cfg.MinSeverity = SeverityWarning
 	}
+	defaults := Default().Rules
 	if cfg.Rules == nil {
 		// rules key was omitted entirely — seed from built-in defaults so that
 		// rules like external-link remain disabled by default.
-		cfg.Rules = Default().Rules
+		cfg.Rules = defaults
+	} else {
+		// rules key was provided — seed any unlisted opt-in rules (Enabled=false by default)
+		// so they are not inadvertently enabled by the Default=true fallback in IsEnabled.
+		for name, defaultRule := range defaults {
+			if _, exists := cfg.Rules[name]; !exists && !defaultRule.Enabled {
+				cfg.Rules[name] = defaultRule
+			}
+		}
 	}
 
 	return cfg, nil

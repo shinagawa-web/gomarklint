@@ -18,10 +18,10 @@ var ErrLintViolations = errors.New("lint violations found")
 
 // Options holds the parameters for a lint run.
 type Options struct {
-	ConfigPath   string   // path to config file
-	Args         []string // files/dirs to lint
-	OutputFormat string   // overrides config if non-empty
-	MinSeverity  string   // overrides config if non-empty
+	ConfigPath   string              // path to config file
+	Args         []string            // files/dirs to lint
+	OutputFormat string              // overrides config if non-empty
+	MinSeverity  config.RuleSeverity // overrides config if non-empty
 }
 
 // Run loads config, lints files, and writes results to w.
@@ -38,7 +38,7 @@ func Run(w io.Writer, opts Options) error {
 		cfg.OutputFormat = opts.OutputFormat
 	}
 	if opts.MinSeverity != "" {
-		cfg.MinSeverity = config.RuleSeverity(opts.MinSeverity)
+		cfg.MinSeverity = opts.MinSeverity
 	}
 
 	if err := config.Validate(cfg); err != nil {
@@ -59,7 +59,7 @@ func Run(w io.Writer, opts Options) error {
 	lint := linter.New(cfg)
 	result := lint.Run(files)
 
-	if err := formatOutput(w, cfg, result, len(files), time.Since(start)); err != nil {
+	if err := formatOutput(w, cfg, result, len(files)-len(result.FailedFiles), time.Since(start)); err != nil {
 		return err
 	}
 
@@ -87,7 +87,7 @@ func formatOutput(w io.Writer, cfg config.Config, result *linter.Result, fileCou
 	outputResult := &output.Result{
 		Files:        fileCount,
 		Lines:        result.TotalLines,
-		Errors:       errCount + warnCount,
+		Total:        errCount + warnCount,
 		Warnings:     warnCount,
 		LinksChecked: linksChecked,
 		Duration:     duration,
@@ -105,11 +105,11 @@ func filterBySeverity(details map[string][]rule.LintError, minSev config.RuleSev
 	for path, errs := range details {
 		var kept []rule.LintError
 		for _, e := range errs {
-			if minSev == config.SeverityError && e.Severity == "warning" {
+			if minSev == config.SeverityError && e.Severity == string(config.SeverityWarning) {
 				continue
 			}
 			kept = append(kept, e)
-			if e.Severity == "warning" {
+			if e.Severity == string(config.SeverityWarning) {
 				warnCount++
 			} else {
 				errCount++

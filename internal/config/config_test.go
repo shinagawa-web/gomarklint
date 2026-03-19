@@ -193,7 +193,9 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestLoadConfig_NoRulesKey(t *testing.T) {
-	// When "rules" is omitted, cfg.Rules should default to an empty map (not nil).
+	// When "rules" is omitted, cfg.Rules is seeded from Default().Rules (not nil).
+	// This ensures opt-out rules like external-link remain disabled even when
+	// default=true would otherwise enable all unlisted rules via IsEnabled fallback.
 	json := `{"default": true, "output": "json"}`
 	tmp := filepath.Join(t.TempDir(), "norules.json")
 	if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
@@ -204,7 +206,32 @@ func TestLoadConfig_NoRulesKey(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if cfg.Rules == nil {
-		t.Error("expected Rules to be non-nil empty map, got nil")
+		t.Error("expected Rules to be seeded from Default().Rules, got nil")
+	}
+	// external-link must remain disabled (opt-in rule)
+	if cfg.IsEnabled("external-link") {
+		t.Error("expected external-link to be disabled even when default=true and rules key is omitted")
+	}
+}
+
+func TestLoadConfig_PartialRulesKey_ExternalLinkDisabledByDefault(t *testing.T) {
+	// When "rules" is provided but external-link is not listed, it should remain
+	// disabled by default (opt-in rule), not enabled by the default=true fallback.
+	json := `{"default": true, "rules": {"heading-level": true}}`
+	tmp := filepath.Join(t.TempDir(), "partial.json")
+	if err := os.WriteFile(tmp, []byte(json), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(tmp)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.IsEnabled("external-link") {
+		t.Error("expected external-link to be disabled when not listed in rules, even with default=true")
+	}
+	// explicitly listed rule should still work
+	if !cfg.IsEnabled("heading-level") {
+		t.Error("expected heading-level to be enabled")
 	}
 }
 

@@ -2,7 +2,6 @@ package linter
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -43,7 +42,7 @@ func New(cfg config.Config) *Linter {
 					if s, ok := p.(string); ok {
 						re, err := regexp.Compile(s)
 						if err != nil {
-							log.Printf("Invalid skip-link-pattern: %s (error: %v)", s, err)
+							fmt.Fprintf(os.Stderr, "Invalid skip-link-pattern: %s (error: %v)\n", s, err)
 							continue
 						}
 						compiledPatterns = append(compiledPatterns, re)

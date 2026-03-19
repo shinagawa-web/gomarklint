@@ -10,16 +10,21 @@ import (
 )
 
 // captureStdout redirects os.Stdout for the duration of f and returns what was written.
-func captureStdout(f func() error) (string, error) {
-	r, w, _ := os.Pipe()
+func captureStdout(t *testing.T, f func() error) (string, error) {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
 	old := os.Stdout
 	os.Stdout = w
-	err := f()
+	runErr := f()
 	_ = w.Close()
 	os.Stdout = old
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, r)
-	return buf.String(), err
+	_ = r.Close()
+	return buf.String(), runErr
 }
 
 func TestExecute(t *testing.T) {
@@ -32,7 +37,7 @@ func TestExecute(t *testing.T) {
 	rootCmd.SetArgs([]string{f, "--config", "/nonexistent/.gomarklint.json"})
 	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
-	_, err := captureStdout(func() error {
+	_, err := captureStdout(t, func() error {
 		return Execute()
 	})
 	if err != nil {
@@ -51,7 +56,7 @@ func TestInitCmd_CreatesFile(t *testing.T) {
 	rootCmd.SetArgs([]string{"init"})
 	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
-	_, err := captureStdout(func() error {
+	_, err := captureStdout(t, func() error {
 		return Execute()
 	})
 	if err != nil {
@@ -72,7 +77,7 @@ func TestExecute_WithOutputAndSeverityFlags(t *testing.T) {
 	rootCmd.SetArgs([]string{f, "--config", "/nonexistent/.gomarklint.json", "--output", "json", "--severity", "warning"})
 	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
-	out, err := captureStdout(func() error {
+	out, err := captureStdout(t, func() error {
 		return Execute()
 	})
 	if err != nil {
@@ -100,7 +105,7 @@ func TestInitCmd_WriteError(t *testing.T) {
 	rootCmd.SetArgs([]string{"init"})
 	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
-	_, err := captureStdout(func() error {
+	_, err := captureStdout(t, func() error {
 		return Execute()
 	})
 	if err == nil || !strings.Contains(err.Error(), "failed to write config file") {
@@ -123,7 +128,7 @@ func TestInitCmd_AlreadyExists(t *testing.T) {
 	rootCmd.SetArgs([]string{"init"})
 	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
-	_, err := captureStdout(func() error {
+	_, err := captureStdout(t, func() error {
 		return Execute()
 	})
 	if err == nil || !strings.Contains(err.Error(), "already exists") {

@@ -17,8 +17,15 @@ func TestMain_HappyPath(t *testing.T) {
 	os.Args = []string{"gomarklint", f, "--config", "/nonexistent/.gomarklint.json"}
 	defer func() { os.Args = old }()
 
+	oldExit := osExit
+	osExit = func(code int) { t.Errorf("unexpected osExit(%d)", code) }
+	defer func() { osExit = oldExit }()
+
 	// Capture stdout to avoid test noise
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
 	oldStdout := os.Stdout
 	os.Stdout = w
 	defer func() {
@@ -46,7 +53,10 @@ func TestMain_LintViolation(t *testing.T) {
 	osExit = func(code int) { exitCode = code }
 	defer func() { osExit = oldExit }()
 
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
 	oldStdout := os.Stdout
 	os.Stdout = w
 	defer func() {
@@ -77,7 +87,10 @@ func TestMain_GenericError(t *testing.T) {
 	osExit = func(code int) { exitCode = code }
 	defer func() { osExit = oldExit }()
 
-	r, w, _ := os.Pipe()
+	r, w, pipeErr := os.Pipe()
+	if pipeErr != nil {
+		t.Fatalf("os.Pipe: %v", pipeErr)
+	}
 	oldStdout := os.Stdout
 	os.Stdout = w
 	oldStderr := os.Stderr
