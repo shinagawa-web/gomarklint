@@ -191,7 +191,7 @@ func TestE2E_OutputFormats(t *testing.T) {
 	t.Run("JSONFormat", func(t *testing.T) {
 		output := runTest(t, "fixtures/invalid_heading_level.md", "--config", ".gomarklint.json", "--output", "json")
 		assertOutputContains(t, output, `"files"`)
-		assertOutputContains(t, output, `"errors"`)
+		assertOutputContains(t, output, `"total"`)
 		assertOutputContains(t, output, `"details"`)
 		assertOutputContains(t, output, `"elapsed_ms"`)
 		assertOutputContains(t, output, `"file": "fixtures/invalid_heading_level.md"`)
