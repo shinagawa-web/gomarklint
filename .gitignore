@@ -10,6 +10,8 @@ e2e/gomarklint-e2e-test
 
 # Coverage
 /coverage/
+*.out
+*.html
 
 # Claude Code worktrees
 .claude/worktrees/

@@ -43,7 +43,18 @@ func (f *TextFormatter) formatErrorDetails(w io.Writer, result *Result) error {
 		if len(errors) == 0 {
 			continue
 		}
-		if _, err := fmt.Fprintf(w, "Errors in %s:\n", path); err != nil {
+		header := "Errors"
+		allWarnings := true
+		for _, e := range errors {
+			if e.Severity != "warning" {
+				allWarnings = false
+				break
+			}
+		}
+		if allWarnings {
+			header = "Warnings"
+		}
+		if _, err := fmt.Fprintf(w, "%s in %s:\n", header, path); err != nil {
 			return err
 		}
 		for _, e := range errors {

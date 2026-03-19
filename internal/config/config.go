@@ -5,6 +5,26 @@ import (
 	"fmt"
 )
 
+// DefaultConfigJSON is the canonical JSON written by `gomarklint init`.
+// It must stay in sync with Default() — update both together when adding rules.
+const DefaultConfigJSON = `{
+  "default": true,
+  "rules": {
+    "final-blank-line": true,
+    "unclosed-code-block": true,
+    "empty-alt-text": true,
+    "heading-level": { "severity": "error", "minLevel": 2 },
+    "duplicate-heading": true,
+    "no-multiple-blank-lines": true,
+    "no-setext-headings": true,
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+  },
+  "include": ["README.md", "testdata"],
+  "ignore": [],
+  "output": "text"
+}
+`
+
 // RuleSeverity represents the severity level of a rule violation.
 type RuleSeverity string
 

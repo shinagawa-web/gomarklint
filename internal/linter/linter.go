@@ -184,7 +184,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("external-link") {
 		timeoutSeconds := 5
 		if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
-			if f, ok := v.(float64); ok {
+			if f, ok := v.(float64); ok && int(f) > 0 {
 				timeoutSeconds = int(f)
 			}
 		}

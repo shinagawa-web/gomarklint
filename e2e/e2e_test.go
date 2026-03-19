@@ -416,6 +416,7 @@ func TestE2E(t *testing.T) {
 			if err != nil {
 				t.Errorf("expected exit 0 for warning-only violations, got error: %v\noutput: %s", err, output)
 			}
+			assertOutputContains(t, output, "Warnings in fixtures/setext_headings.md:")
 			assertOutputContains(t, output, "[warning]")
 			assertOutputContains(t, output, "Setext heading found")
 			assertOutputContains(t, output, "1 warning found")

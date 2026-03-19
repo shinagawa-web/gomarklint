@@ -5,25 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-)
 
-const defaultConfigJSON = `{
-  "default": true,
-  "rules": {
-    "final-blank-line": true,
-    "unclosed-code-block": true,
-    "empty-alt-text": true,
-    "heading-level": { "enabled": true, "severity": "error", "minLevel": 2 },
-    "duplicate-heading": true,
-    "no-multiple-blank-lines": true,
-    "no-setext-headings": true,
-    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
-  },
-  "include": ["README.md", "docs"],
-  "ignore": [],
-  "output": "text"
-}
-`
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+)
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -36,7 +20,7 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("%s already exists", path)
 		}
 
-		if err := os.WriteFile(path, []byte(defaultConfigJSON), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(config.DefaultConfigJSON), 0644); err != nil {
 			return fmt.Errorf("failed to write config file: %w", err)
 		}
 

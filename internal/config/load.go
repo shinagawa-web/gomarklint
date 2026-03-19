@@ -29,7 +29,9 @@ func LoadConfig(path string) (Config, error) {
 		cfg.MinSeverity = SeverityWarning
 	}
 	if cfg.Rules == nil {
-		cfg.Rules = map[string]*RuleConfig{}
+		// rules key was omitted entirely — seed from built-in defaults so that
+		// rules like external-link remain disabled by default.
+		cfg.Rules = Default().Rules
 	}
 
 	return cfg, nil
