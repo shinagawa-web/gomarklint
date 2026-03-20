@@ -5,12 +5,10 @@
     "unclosed-code-block": true,
     "empty-alt-text": true,
     "heading-level": { "enabled": true, "severity": "error", "minLevel": 2 },
-    "duplicate-heading": true,
+    "duplicate-heading": false,
     "no-multiple-blank-lines": true,
     "no-setext-headings": true,
-    "external-link": { "enabled": true, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+    "external-link": false
   },
-  "include": ["fixtures"],
-  "ignore": [],
   "output": "text"
 }

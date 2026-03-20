@@ -19,7 +19,7 @@ import (
 //
 //	input:  []string{"docs", "README.md"}
 //	output: ["docs/a.md", "docs/sub/b.md", "README.md"]
-func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
+func ExpandPaths(paths []string, ignorePatterns []string) []string {
 	var results []string
 
 	for _, p := range paths {
@@ -29,11 +29,7 @@ func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
 		}
 
 		if info.IsDir() {
-			dirResults, err := expandDirectory(p, ignorePatterns)
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, dirResults...)
+			results = append(results, expandDirectory(p, ignorePatterns)...)
 		} else if strings.HasSuffix(info.Name(), ".md") {
 			if !ShouldIgnore(p, ignorePatterns) {
 				results = append(results, p)
@@ -41,13 +37,13 @@ func ExpandPaths(paths []string, ignorePatterns []string) ([]string, error) {
 		}
 	}
 
-	return results, nil
+	return results
 }
 
-func expandDirectory(root string, ignorePatterns []string) ([]string, error) {
+func expandDirectory(root string, ignorePatterns []string) []string {
 	var results []string
 
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -65,7 +61,7 @@ func expandDirectory(root string, ignorePatterns []string) ([]string, error) {
 		return nil
 	})
 
-	return results, err
+	return results
 }
 
 func shouldSkipDirectory(path, root, name string) bool {

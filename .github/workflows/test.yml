@@ -38,4 +38,4 @@ jobs:
           fail_ci_if_error: true
 
       - name: Lint README
-        run: ./gomarklint README.md --min-heading=1
+        run: ./gomarklint README.md --config .gomarklint.ci.json

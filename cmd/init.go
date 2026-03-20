@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
 
 var initCmd = &cobra.Command{
@@ -21,13 +20,7 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("%s already exists", path)
 		}
 
-		cfg := config.Default()
-		data, err := json.MarshalIndent(cfg, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal config: %w", err)
-		}
-
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, []byte(config.DefaultConfigJSON), 0644); err != nil {
 			return fmt.Errorf("failed to write config file: %w", err)
 		}
 

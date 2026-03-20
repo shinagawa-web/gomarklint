@@ -1,0 +1,7 @@
+{
+  "default": true,
+  "rules": {
+    "no-setext-headings": "warning",
+    "external-link": false
+  }
+}

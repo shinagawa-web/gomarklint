@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
 
 const (
-	colorRed   = "\033[31m"
-	colorGreen = "\033[32m"
-	colorGray  = "\033[90m"
-	colorReset = "\033[0m"
+	colorRed    = "\033[31m"
+	colorYellow = "\033[33m"
+	colorGreen  = "\033[32m"
+	colorGray   = "\033[90m"
+	colorReset  = "\033[0m"
 )
 
 // TextFormatter formats lint results as human-readable text with colors.
@@ -23,6 +26,9 @@ func NewTextFormatter() *TextFormatter {
 
 // Format implements the Formatter interface for text output.
 func (f *TextFormatter) Format(w io.Writer, result *Result) error {
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
 	if err := f.formatErrorDetails(w, result); err != nil {
 		return err
 	}
@@ -42,11 +48,26 @@ func (f *TextFormatter) formatErrorDetails(w io.Writer, result *Result) error {
 		if len(errors) == 0 {
 			continue
 		}
-		if _, err := fmt.Fprintf(w, "Errors in %s:\n", path); err != nil {
+		header := "Errors"
+		allWarnings := true
+		for _, e := range errors {
+			if e.Severity != string(config.SeverityWarning) {
+				allWarnings = false
+				break
+			}
+		}
+		if allWarnings {
+			header = "Warnings"
+		}
+		if _, err := fmt.Fprintf(w, "%s in %s:\n", header, path); err != nil {
 			return err
 		}
 		for _, e := range errors {
-			if _, err := fmt.Fprintf(w, "  %s:%d: %s\n", e.File, e.Line, e.Message); err != nil {
+			prefix := "[error] "
+			if e.Severity == string(config.SeverityWarning) {
+				prefix = "[warning] "
+			}
+			if _, err := fmt.Fprintf(w, "  %s:%d: %s%s\n", e.File, e.Line, prefix, e.Message); err != nil {
 				return err
 			}
 		}
@@ -59,8 +80,17 @@ func (f *TextFormatter) formatErrorDetails(w io.Writer, result *Result) error {
 
 // formatSummary prints the summary (errors found or no issues).
 func (f *TextFormatter) formatSummary(w io.Writer, result *Result) error {
-	if result.Errors > 0 {
-		if _, err := fmt.Fprintf(w, "\n%s✖ %d issues found%s\n", colorRed, result.Errors, colorReset); err != nil {
+	errorCount := result.Total - result.Warnings
+	if errorCount > 0 {
+		if _, err := fmt.Fprintf(w, "\n%s✖ %d issues found%s\n", colorRed, result.Total, colorReset); err != nil {
+			return err
+		}
+	} else if result.Warnings > 0 {
+		word := "warnings"
+		if result.Warnings == 1 {
+			word = "warning"
+		}
+		if _, err := fmt.Fprintf(w, "\n%s⚠ %d %s found%s\n", colorYellow, result.Warnings, word, colorReset); err != nil {
 			return err
 		}
 	} else {

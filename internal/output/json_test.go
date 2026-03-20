@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 func TestJSONFormatter_NoErrors(t *testing.T) {
@@ -15,7 +15,7 @@ func TestJSONFormatter_NoErrors(t *testing.T) {
 	result := &Result{
 		Files:        2,
 		Lines:        100,
-		Errors:       0,
+		Total:        0,
 		LinksChecked: nil,
 		Duration:     250 * time.Millisecond,
 		Details:      map[string][]rule.LintError{},
@@ -35,7 +35,7 @@ func TestJSONFormatter_NoErrors(t *testing.T) {
 	if !strings.Contains(output, `"lines": 100`) {
 		t.Errorf("expected lines count in JSON, got: %s", output)
 	}
-	if !strings.Contains(output, `"errors": 0`) {
+	if !strings.Contains(output, `"total": 0`) {
 		t.Errorf("expected errors count in JSON, got: %s", output)
 	}
 	if !strings.Contains(output, `"elapsed_ms": 250`) {
@@ -49,9 +49,9 @@ func TestJSONFormatter_NoErrors(t *testing.T) {
 func TestJSONFormatter_WithErrors(t *testing.T) {
 	formatter := NewJSONFormatter()
 	result := &Result{
-		Files:  1,
-		Lines:  50,
-		Errors: 2,
+		Files: 1,
+		Lines: 50,
+		Total: 2,
 		Details: map[string][]rule.LintError{
 			"test.md": {
 				{File: "test.md", Line: 10, Message: "Error 1"},
@@ -68,7 +68,7 @@ func TestJSONFormatter_WithErrors(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, `"errors": 2`) {
+	if !strings.Contains(output, `"total": 2`) {
 		t.Errorf("expected errors count, got: %s", output)
 	}
 	if !strings.Contains(output, `"test.md"`) {
@@ -88,7 +88,7 @@ func TestJSONFormatter_WithLinkCheck(t *testing.T) {
 	result := &Result{
 		Files:        3,
 		Lines:        200,
-		Errors:       0,
+		Total:        0,
 		LinksChecked: &linksChecked,
 		Duration:     1500 * time.Millisecond,
 		Details:      map[string][]rule.LintError{},
@@ -112,7 +112,7 @@ func TestJSONFormatter_ValidJSON(t *testing.T) {
 	result := &Result{
 		Files:        2,
 		Lines:        100,
-		Errors:       1,
+		Total:        1,
 		LinksChecked: &linksChecked,
 		Duration:     300 * time.Millisecond,
 		Details: map[string][]rule.LintError{
@@ -137,7 +137,7 @@ func TestJSONFormatter_WriteError(t *testing.T) {
 	result := &Result{
 		Files:    1,
 		Lines:    10,
-		Errors:   0,
+		Total:    0,
 		Duration: 100 * time.Millisecond,
 		Details:  map[string][]rule.LintError{},
 	}
@@ -156,7 +156,7 @@ func assertValidJSON(t *testing.T, data []byte) {
 		t.Fatalf("output is not valid JSON: %v", err)
 	}
 
-	requiredFields := []string{"files", "lines", "errors", "elapsed_ms", "details", "links_checked"}
+	requiredFields := []string{"files", "lines", "total", "elapsed_ms", "details", "links_checked"}
 	for _, field := range requiredFields {
 		if _, ok := decoded[field]; !ok {
 			t.Errorf("missing '%s' field in JSON output", field)

@@ -4,13 +4,11 @@
     "final-blank-line": true,
     "unclosed-code-block": true,
     "empty-alt-text": true,
-    "heading-level": { "enabled": true, "severity": "error", "minLevel": 2 },
+    "heading-level": { "severity": "error", "minLevel": 1 },
     "duplicate-heading": true,
     "no-multiple-blank-lines": true,
     "no-setext-headings": true,
-    "external-link": { "enabled": true, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+    "external-link": false
   },
-  "include": ["fixtures"],
-  "ignore": [],
   "output": "text"
 }

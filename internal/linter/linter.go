@@ -2,16 +2,15 @@ package linter
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
 	"sync"
 
-	"github.com/shinagawa-web/gomarklint/internal/config"
-	"github.com/shinagawa-web/gomarklint/internal/file"
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v2/internal/file"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // Linter performs linting on markdown files.
@@ -23,25 +22,33 @@ type Linter struct {
 
 // Result holds the results of a linting run.
 type Result struct {
-	Errors            map[string][]rule.LintError // Errors per file path
+	Errors            map[string][]rule.LintError // All violations (errors + warnings) per file path
 	OrderedPaths      []string                    // Sorted file paths
-	TotalErrors       int                         // Total number of errors
+	TotalErrors       int                         // Count of severity=error violations (used for exit code)
+	TotalWarnings     int                         // Count of severity=warning violations
 	TotalLines        int                         // Total number of lines checked
 	TotalLinksChecked int                         // Total number of links checked
 	FailedFiles       map[string]error            // Files that failed to read
 }
 
 // New creates a new Linter with the given configuration.
-func New(cfg config.Config) (*Linter, error) {
+func New(cfg config.Config) *Linter {
 	compiledPatterns := []*regexp.Regexp{}
-	if cfg.EnableLinkCheck {
-		for _, pat := range cfg.SkipLinkPatterns {
-			re, err := regexp.Compile(pat)
-			if err != nil {
-				log.Printf("Invalid skip-link-pattern: %s (error: %v)", pat, err)
-				continue
+	if cfg.IsEnabled("external-link") {
+		opts := cfg.RuleOptions("external-link")
+		if patterns, ok := opts["skipPatterns"]; ok {
+			if arr, ok := patterns.([]interface{}); ok {
+				for _, p := range arr {
+					if s, ok := p.(string); ok {
+						re, err := regexp.Compile(s)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "Invalid skip-link-pattern: %s (error: %v)\n", s, err)
+							continue
+						}
+						compiledPatterns = append(compiledPatterns, re)
+					}
+				}
 			}
-			compiledPatterns = append(compiledPatterns, re)
 		}
 	}
 
@@ -49,11 +56,11 @@ func New(cfg config.Config) (*Linter, error) {
 		config:           cfg,
 		compiledPatterns: compiledPatterns,
 		urlCache:         &sync.Map{},
-	}, nil
+	}
 }
 
 // Run performs linting on the given file paths concurrently.
-func (l *Linter) Run(filePaths []string) (*Result, error) {
+func (l *Linter) Run(filePaths []string) *Result {
 	// Deduplicate file paths to prevent double-counting
 	uniquePaths := make(map[string]struct{})
 	for _, p := range filePaths {
@@ -68,6 +75,7 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 	orderedPaths := make([]string, 0, len(deduped))
 	failedFiles := map[string]error{}
 	totalErrors := 0
+	totalWarnings := 0
 	totalLines := 0
 	totalLinksChecked := 0
 
@@ -92,7 +100,13 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 			mu.Lock()
 			results[p] = errors
 			orderedPaths = append(orderedPaths, p)
-			totalErrors += len(errors)
+			for _, e := range errors {
+				if e.Severity == "warning" {
+					totalWarnings++
+				} else {
+					totalErrors++
+				}
+			}
 			totalLines += lineCount
 			totalLinksChecked += linksChecked
 			mu.Unlock()
@@ -108,10 +122,11 @@ func (l *Linter) Run(filePaths []string) (*Result, error) {
 		Errors:            results,
 		OrderedPaths:      orderedPaths,
 		TotalErrors:       totalErrors,
+		TotalWarnings:     totalWarnings,
 		TotalLines:        totalLines,
 		TotalLinksChecked: totalLinksChecked,
 		FailedFiles:       failedFiles,
-	}, nil
+	}
 }
 
 // LintContent performs linting checks on the provided content string.
@@ -120,35 +135,60 @@ func (l *Linter) LintContent(path string, content string) ([]rule.LintError, int
 	return l.collectErrors(path, content)
 }
 
+// withSeverity tags each error in errs with the configured severity for ruleName.
+func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.LintError {
+	sev := l.config.RuleSeverity(ruleName)
+	for i := range errs {
+		errs[i].Severity = sev
+	}
+	return errs
+}
+
 // collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")
 
 	var allErrors []rule.LintError
-	if l.config.EnableFinalBlankLineCheck {
-		allErrors = append(allErrors, rule.CheckFinalBlankLine(path, lines, offset)...)
-	}
-	allErrors = append(allErrors, rule.CheckUnclosedCodeBlocks(path, lines, offset)...)
-	allErrors = append(allErrors, rule.CheckEmptyAltText(path, lines, offset)...)
-	if l.config.EnableHeadingLevelCheck {
-		allErrors = append(allErrors, rule.CheckHeadingLevels(path, lines, offset, l.config.MinHeadingLevel)...)
-	}
-	if l.config.EnableDuplicateHeadingCheck {
-		allErrors = append(allErrors, rule.CheckDuplicateHeadings(path, lines, offset)...)
-	}
-	if l.config.EnableNoMultipleBlankLinesCheck {
-		allErrors = append(allErrors, rule.CheckNoMultipleBlankLines(path, lines, offset)...)
-	}
 
-	if l.config.EnableNoSetextHeadingsCheck {
-		allErrors = append(allErrors, rule.CheckNoSetextHeadings(path, lines, offset)...)
+	if l.config.IsEnabled("final-blank-line") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckFinalBlankLine(path, lines, offset), "final-blank-line")...)
+	}
+	if l.config.IsEnabled("unclosed-code-block") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckUnclosedCodeBlocks(path, lines, offset), "unclosed-code-block")...)
+	}
+	if l.config.IsEnabled("empty-alt-text") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
+	}
+	if l.config.IsEnabled("heading-level") {
+		minLevel := 2
+		if v, ok := l.config.RuleOptions("heading-level")["minLevel"]; ok {
+			if f, ok := v.(float64); ok {
+				minLevel = int(f)
+			}
+		}
+		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, minLevel), "heading-level")...)
+	}
+	if l.config.IsEnabled("duplicate-heading") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
+	}
+	if l.config.IsEnabled("no-multiple-blank-lines") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoMultipleBlankLines(path, lines, offset), "no-multiple-blank-lines")...)
+	}
+	if l.config.IsEnabled("no-setext-headings") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
 	}
 
 	linksChecked := 0
-	if l.config.EnableLinkCheck {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.config.LinkCheckTimeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
-		allErrors = append(allErrors, errors...)
+	if l.config.IsEnabled("external-link") {
+		timeoutSeconds := 5
+		if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
+			if f, ok := v.(float64); ok && int(f) > 0 {
+				timeoutSeconds = int(f)
+			}
+		}
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, timeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
+		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
 

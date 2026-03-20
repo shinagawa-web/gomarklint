@@ -44,6 +44,10 @@ jobs:
       - name: Run benchmarks on main branch
         run: make bench | tee old-bench.txt
 
+      - name: Normalize main branch package names for comparison
+        run: |
+          sed -i 's|pkg: github.com/shinagawa-web/gomarklint/|pkg: github.com/shinagawa-web/gomarklint/v2/|g' old-bench.txt
+
       - name: Compare benchmarks
         id: benchmark_comparison
         run: |

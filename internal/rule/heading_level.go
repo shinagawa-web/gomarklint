@@ -6,9 +6,10 @@ import (
 )
 
 type LintError struct {
-	File    string
-	Line    int
-	Message string
+	File     string `json:"file"`
+	Line     int    `json:"line"`
+	Message  string `json:"message"`
+	Severity string `json:"severity"`
 }
 
 // CheckHeadingLevels analyzes the heading structure of the given Markdown content

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 func setupTestServer() *httptest.Server {
@@ -611,5 +611,35 @@ See [link1](https://first.com) and [link2](https://second.com)
 				t.Errorf("got = %#v, want = %#v", got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestCheckExternalLinks_GETFallback(t *testing.T) {
+	// Server that closes HEAD connections to force a transport error,
+	// then responds 200 to GET — exercises the HEAD→GET fallback in performCheck.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			hj, ok := w.(http.Hijacker)
+			if !ok {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			conn, _, _ := hj.Hijack()
+			_ = conn.Close()
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
+	lines, offset := toLines(markdown)
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, &sync.Map{})
+
+	if len(results) != 0 {
+		t.Errorf("expected no errors (GET fallback should succeed), got: %v", results)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 link checked, got %d", count)
 	}
 }

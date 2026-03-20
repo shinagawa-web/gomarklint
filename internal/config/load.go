@@ -18,17 +18,29 @@ func LoadConfig(path string) (Config, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
-	var cfg Config
+	cfg := Config{Default: true}
 	if err := decoder.Decode(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to parse config file: %w", err)
 	}
 	if cfg.OutputFormat == "" {
-		// Fallback to default if not set in config file
 		cfg.OutputFormat = "text"
 	}
-	if cfg.LinkCheckTimeoutSeconds <= 0 {
-		// Fallback to default if not set or invalid in config file
-		cfg.LinkCheckTimeoutSeconds = 5
+	if cfg.MinSeverity == "" {
+		cfg.MinSeverity = SeverityWarning
+	}
+	defaults := Default().Rules
+	if cfg.Rules == nil {
+		// rules key was omitted entirely — seed from built-in defaults so that
+		// rules like external-link remain disabled by default.
+		cfg.Rules = defaults
+	} else {
+		// rules key was provided — seed any unlisted opt-in rules (Enabled=false by default)
+		// so they are not inadvertently enabled by the Default=true fallback in IsEnabled.
+		for name, defaultRule := range defaults {
+			if _, exists := cfg.Rules[name]; !exists && !defaultRule.Enabled {
+				cfg.Rules[name] = defaultRule
+			}
+		}
 	}
 
 	return cfg, nil

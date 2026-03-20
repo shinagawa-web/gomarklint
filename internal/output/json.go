@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/shinagawa-web/gomarklint/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
 )
 
 // JSONFormatter formats lint results as JSON.
@@ -20,14 +20,16 @@ func (f *JSONFormatter) Format(w io.Writer, result *Result) error {
 	output := struct {
 		Files        int                         `json:"files"`
 		Lines        int                         `json:"lines"`
-		Errors       int                         `json:"errors"`
+		Total        int                         `json:"total"`
+		Warnings     int                         `json:"warnings"`
 		LinksChecked *int                        `json:"links_checked,omitempty"`
 		ElapsedMS    int64                       `json:"elapsed_ms"`
 		Details      map[string][]rule.LintError `json:"details"`
 	}{
 		Files:     result.Files,
 		Lines:     result.Lines,
-		Errors:    result.Errors,
+		Total:     result.Total,
+		Warnings:  result.Warnings,
 		ElapsedMS: result.Duration.Milliseconds(),
 		Details:   result.Details,
 	}

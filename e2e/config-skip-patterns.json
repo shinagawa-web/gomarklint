@@ -1,0 +1,6 @@
+{
+  "default": true,
+  "rules": {
+    "external-link": { "severity": "error", "timeoutSeconds": 5, "skipPatterns": ["this-domain-definitely-does-not-exist-12345\\.com"] }
+  }
+}
