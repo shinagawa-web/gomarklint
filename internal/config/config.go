@@ -49,73 +49,57 @@ type RuleConfig struct {
 
 // UnmarshalJSON handles bool, string, and object forms.
 func (r *RuleConfig) UnmarshalJSON(data []byte) error {
-	// bool shorthand
 	var b bool
 	if err := json.Unmarshal(data, &b); err == nil {
-		r.Enabled = b
-		if b {
-			r.Severity = SeverityError
-		} else {
-			r.Severity = SeverityOff
-		}
-		return nil
+		return r.fromBool(b)
 	}
-
-	// string shorthand
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		switch RuleSeverity(s) {
-		case SeverityError:
-			r.Enabled = true
-			r.Severity = SeverityError
-		case SeverityWarning:
-			r.Enabled = true
-			r.Severity = SeverityWarning
-		case SeverityOff:
-			r.Enabled = false
-			r.Severity = SeverityOff
-		default:
-			return fmt.Errorf("invalid rule value: %q (use true, false, \"error\", \"warning\", or \"off\")", s)
-		}
-		return nil
+		return r.fromString(s)
 	}
+	return r.fromObject(data)
+}
 
-	// full object form
+func (r *RuleConfig) fromBool(b bool) error {
+	r.Enabled = b
+	if b {
+		r.Severity = SeverityError
+	} else {
+		r.Severity = SeverityOff
+	}
+	return nil
+}
+
+func (r *RuleConfig) fromString(s string) error {
+	switch RuleSeverity(s) {
+	case SeverityError:
+		r.Enabled = true
+		r.Severity = SeverityError
+	case SeverityWarning:
+		r.Enabled = true
+		r.Severity = SeverityWarning
+	case SeverityOff:
+		r.Enabled = false
+		r.Severity = SeverityOff
+	default:
+		return fmt.Errorf("invalid rule value: %q (use true, false, \"error\", \"warning\", or \"off\")", s)
+	}
+	return nil
+}
+
+func (r *RuleConfig) fromObject(data []byte) error {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return fmt.Errorf("invalid rule config: %w", err)
 	}
-
-	// defaults
 	r.Enabled = true
 	r.Severity = SeverityError
 	r.Options = map[string]interface{}{}
-
 	for k, v := range raw {
-		switch k {
-		case "enabled":
-			if err := json.Unmarshal(v, &b); err != nil {
-				return fmt.Errorf("invalid \"enabled\" value: %w", err)
-			}
-			r.Enabled = b
-		case "severity":
-			var sev string
-			if err := json.Unmarshal(v, &sev); err != nil {
-				return fmt.Errorf("invalid \"severity\" value: %w", err)
-			}
-			switch RuleSeverity(sev) {
-			case SeverityError, SeverityWarning, SeverityOff:
-				r.Severity = RuleSeverity(sev)
-			default:
-				return fmt.Errorf("invalid severity: %q (use \"error\", \"warning\", or \"off\")", sev)
-			}
-		default:
-			var val interface{}
-			_ = json.Unmarshal(v, &val)
-			r.Options[k] = val
+		if err := r.applyObjectField(k, v); err != nil {
+			return err
 		}
 	}
-
 	// enabled=false always forces SeverityOff; severity=off always forces Enabled=false
 	if !r.Enabled {
 		r.Severity = SeverityOff
@@ -123,7 +107,33 @@ func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 	if r.Severity == SeverityOff {
 		r.Enabled = false
 	}
+	return nil
+}
 
+func (r *RuleConfig) applyObjectField(k string, v json.RawMessage) error {
+	switch k {
+	case "enabled":
+		var b bool
+		if err := json.Unmarshal(v, &b); err != nil {
+			return fmt.Errorf("invalid \"enabled\" value: %w", err)
+		}
+		r.Enabled = b
+	case "severity":
+		var sev string
+		if err := json.Unmarshal(v, &sev); err != nil {
+			return fmt.Errorf("invalid \"severity\" value: %w", err)
+		}
+		switch RuleSeverity(sev) {
+		case SeverityError, SeverityWarning, SeverityOff:
+			r.Severity = RuleSeverity(sev)
+		default:
+			return fmt.Errorf("invalid severity: %q (use \"error\", \"warning\", or \"off\")", sev)
+		}
+	default:
+		var val interface{}
+		_ = json.Unmarshal(v, &val)
+		r.Options[k] = val
+	}
 	return nil
 }
 
