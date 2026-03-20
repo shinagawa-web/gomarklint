@@ -43,33 +43,23 @@ changelog:
   use: github
   groups:
     - title: "Breaking Changes 🛠"
-      labels:
-        - breaking-change
+      regexp: '^.*!:|^BREAKING CHANGE'
       order: 0
     - title: "Exciting New Features 🎉"
-      labels:
-        - enhancement
+      regexp: '^feat'
       order: 1
     - title: "Bug Fixes 🐛"
-      labels:
-        - bug
+      regexp: '^fix'
       order: 2
     - title: "Code Refactoring ♻️"
-      labels:
-        - refactor
+      regexp: '^refactor'
       order: 3
     - title: "Documentation 📝"
-      labels:
-        - documentation
+      regexp: '^docs'
       order: 4
     - title: "Maintenance 🔧"
-      labels:
-        - chore
+      regexp: '^chore'
       order: 5
-    - title: "Dependency Updates 📦"
-      labels:
-        - dependencies
-      order: 6
     - title: "Other Changes"
       order: 999
   filters:
