@@ -126,6 +126,12 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "1 issues found")
 	})
 
+	t.Run("FencedCodeWithLanguage", func(t *testing.T) {
+		output := runTest(t, "fixtures/fenced_code_with_lang.md", "--config", ".gomarklint.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Fenced code block must have a language identifier")
+	})
+
 	t.Run("FencedCodeNoLanguage", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/fenced_code_no_lang.md", "--config", ".gomarklint.json")
 		if err == nil {
@@ -249,7 +255,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "Setext heading found")
 		assertOutputContains(t, output, "Errors in fixtures/mixed_severity.md:")
 		assertOutputContains(t, output, "Unclosed code block")
-		assertOutputContains(t, output, "Checked 20 file(s)")
+		assertOutputContains(t, output, "Checked 21 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
