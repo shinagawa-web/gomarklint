@@ -13,6 +13,7 @@ const DefaultConfigJSON = `{
     "final-blank-line": true,
     "unclosed-code-block": true,
     "empty-alt-text": true,
+    "fenced-code-language": true,
     "heading-level": { "severity": "error", "minLevel": 2 },
     "duplicate-heading": true,
     "no-multiple-blank-lines": true,
@@ -204,6 +205,11 @@ func Default() Config {
 				Options:  map[string]interface{}{},
 			},
 			"empty-alt-text": {
+				Enabled:  true,
+				Severity: SeverityError,
+				Options:  map[string]interface{}{},
+			},
+			"fenced-code-language": {
 				Enabled:  true,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{},
