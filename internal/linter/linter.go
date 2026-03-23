@@ -169,6 +169,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 		}
 		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, minLevel), "heading-level")...)
 	}
+	if l.config.IsEnabled("fenced-code-language") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckFencedCodeLanguage(path, lines, offset), "fenced-code-language")...)
+	}
 	if l.config.IsEnabled("duplicate-heading") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
 	}
