@@ -20,31 +20,42 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		if !inBlock {
-			var marker string
-			if strings.HasPrefix(trimmed, "```") {
-				marker = "```"
-			} else if strings.HasPrefix(trimmed, "~~~") {
-				marker = "~~~"
+		if inBlock {
+			if strings.HasPrefix(trimmed, fenceMarker) && strings.TrimSpace(trimmed[len(fenceMarker):]) == "" {
+				inBlock = false
+				fenceMarker = ""
 			}
+			continue
+		}
 
-			if marker != "" {
-				lang := strings.TrimSpace(trimmed[len(marker):])
-				if lang == "" {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "Fenced code block must have a language identifier",
-					})
-				}
-				inBlock = true
-				fenceMarker = marker
-			}
-		} else if strings.HasPrefix(trimmed, fenceMarker) && strings.TrimSpace(trimmed[len(fenceMarker):]) == "" {
-			inBlock = false
-			fenceMarker = ""
+		marker := openingFenceMarker(trimmed)
+		if marker == "" {
+			continue
+		}
+
+		inBlock = true
+		fenceMarker = marker
+
+		if strings.TrimSpace(trimmed[len(marker):]) == "" {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + i + 1,
+				Message: "Fenced code block must have a language identifier",
+			})
 		}
 	}
 
 	return errs
+}
+
+// openingFenceMarker returns the fence marker ("```" or "~~~") if the line is an opening fence,
+// or an empty string otherwise.
+func openingFenceMarker(trimmed string) string {
+	if strings.HasPrefix(trimmed, "```") {
+		return "```"
+	}
+	if strings.HasPrefix(trimmed, "~~~") {
+		return "~~~"
+	}
+	return ""
 }
