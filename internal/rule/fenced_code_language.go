@@ -48,14 +48,22 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 	return errs
 }
 
-// openingFenceMarker returns the fence marker ("```" or "~~~") if the line is an opening fence,
-// or an empty string otherwise.
+// openingFenceMarker returns the full fence marker (e.g. "```", "````", "~~~") if the line
+// is an opening fence, or an empty string otherwise. The full run of fence characters is
+// captured so that closing fences of the same length are correctly matched.
 func openingFenceMarker(trimmed string) string {
-	if strings.HasPrefix(trimmed, "```") {
-		return "```"
-	}
-	if strings.HasPrefix(trimmed, "~~~") {
-		return "~~~"
+	for _, ch := range []string{"`", "~"} {
+		if !strings.HasPrefix(trimmed, ch+ch+ch) {
+			continue
+		}
+		n := 0
+		for _, r := range trimmed {
+			if string(r) != ch {
+				break
+			}
+			n++
+		}
+		return strings.Repeat(ch, n)
 	}
 	return ""
 }

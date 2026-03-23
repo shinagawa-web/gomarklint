@@ -9,6 +9,7 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string
+		offset   int
 		wantErrs []LintError
 	}{
 		{
@@ -73,6 +74,7 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 		{
 			name:    "offset shifts line numbers",
 			content: "```\ncode\n```\n",
+			offset:  5,
 			wantErrs: []LintError{
 				{File: "test.md", Line: 6, Message: "Fenced code block must have a language identifier"},
 			},
@@ -82,16 +84,36 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 			content:  "~~~markdown\n```\ninner\n```\n~~~\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "4-backtick fence with language",
+			content:  "````go\ncode\n````\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "4-backtick fence without language",
+			content: "````\ncode\n````\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "Fenced code block must have a language identifier"},
+			},
+		},
+		{
+			name:     "4-tilde fence with language",
+			content:  "~~~~python\ncode\n~~~~\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "4-tilde fence without language",
+			content: "~~~~\ncode\n~~~~\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "Fenced code block must have a language identifier"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
-			offset := 0
-			if tt.name == "offset shifts line numbers" {
-				offset = 5
-			}
-			got := CheckFencedCodeLanguage("test.md", lines, offset)
+			got := CheckFencedCodeLanguage("test.md", lines, tt.offset)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\ngot:  %v\nwant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
