@@ -158,6 +158,25 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 	}
 }
 
+func TestRun_FencedCodeLanguage(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["fenced-code-language"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "no-lang.md")
+	if err := os.WriteFile(testFile, []byte("## Test\n\n```\ncode here\n```\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for fenced code block without language identifier")
+	}
+}
+
 func TestRun_EmptyAltText(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["empty-alt-text"] = on()

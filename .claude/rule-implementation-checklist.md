@@ -12,6 +12,7 @@ Follow this checklist whenever adding a new rule (e.g. `fenced-code-language`, `
 
 - [ ] `internal/config/config.go` — add to `Default()` AND `DefaultConfigJSON` (keep in sync)
 - [ ] `internal/linter/linter.go` — register in `collectErrors()`
+- [ ] `internal/linter/linter_test.go` — add `TestRun_<RuleName>` to cover the new branch
 - [ ] `e2e/e2e_test.go` — add E2E test case, update file/violation counts if needed
 
 ## Code review checklist
@@ -20,6 +21,7 @@ Follow this checklist whenever adding a new rule (e.g. `fenced-code-language`, `
 
 - E2E tests must cover both the success case (No issues found) and the failure case
 - New rule files must have 100% coverage (verify with `go tool cover -func`)
+- Avoid deep if nesting — use early `continue` or extract helpers to keep the main loop flat
 
 ## Conventions
 
