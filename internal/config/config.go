@@ -17,6 +17,7 @@ const DefaultConfigJSON = `{
     "duplicate-heading": true,
     "no-multiple-blank-lines": true,
     "no-setext-headings": true,
+    "single-h1": true,
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
   "include": ["README.md", "testdata"],
@@ -224,6 +225,11 @@ func Default() Config {
 				Options:  map[string]interface{}{},
 			},
 			"no-setext-headings": {
+				Enabled:  true,
+				Severity: SeverityError,
+				Options:  map[string]interface{}{},
+			},
+			"single-h1": {
 				Enabled:  true,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{},

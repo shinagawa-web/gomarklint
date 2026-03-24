@@ -1,0 +1,9 @@
+{
+  "default": false,
+  "rules": {
+    "single-h1": true
+  },
+  "include": [],
+  "ignore": [],
+  "output": "text"
+}

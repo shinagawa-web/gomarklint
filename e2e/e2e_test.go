@@ -238,7 +238,10 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "Setext heading found")
 		assertOutputContains(t, output, "Errors in fixtures/mixed_severity.md:")
 		assertOutputContains(t, output, "Unclosed code block")
-		assertOutputContains(t, output, "Checked 19 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/multiple_h1.md:")
+		assertOutputContains(t, output, "Multiple H1 headings found; only one H1 is allowed per file")
+		assertOutputContains(t, output, "Errors in fixtures/single_h1.md:")
+		assertOutputContains(t, output, "Checked 21 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
@@ -463,5 +466,23 @@ func TestE2E_Severity(t *testing.T) {
 		}
 		assertOutputContains(t, output, "No issues found")
 		assertOutputNotContains(t, output, "Setext heading found")
+	})
+}
+
+func TestE2E_SingleH1(t *testing.T) {
+	t.Run("MultipleH1Violation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/multiple_h1.md", "--config", "config-single-h1-only.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for multiple H1 violation")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/multiple_h1.md:")
+		assertOutputContains(t, output, "Multiple H1 headings found; only one H1 is allowed per file")
+		assertOutputContains(t, output, "1 issues found")
+	})
+
+	t.Run("SingleH1Valid", func(t *testing.T) {
+		output := runTest(t, "fixtures/single_h1.md", "--config", "config-single-h1-only.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Multiple H1 headings found")
 	})
 }
