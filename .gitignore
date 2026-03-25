@@ -13,5 +13,7 @@ e2e/gomarklint-e2e-test
 *.out
 *.html
 
-# Claude Code worktrees
+# Claude Code
 .claude/worktrees/
+.claude/settings.json
+.claude/settings.local.json
