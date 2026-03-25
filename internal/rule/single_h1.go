@@ -23,7 +23,7 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 		trimmed := strings.TrimSpace(line)
 
 		if inBlock {
-			if strings.HasPrefix(trimmed, fenceMarker) && strings.TrimSpace(trimmed[len(fenceMarker):]) == "" {
+			if isClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}

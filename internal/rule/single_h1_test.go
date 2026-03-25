@@ -94,6 +94,18 @@ func TestCheckSingleH1(t *testing.T) {
 			content:  "## Section\n\nContent.\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "longer closing fence properly closes block (CommonMark)",
+			content:  "# Real Title\n\n```go\ncode\n````\n\n# Second Title\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 7, Message: "Multiple H1 headings found; only one H1 is allowed per file"},
+			},
+		},
+		{
+			name:     "H1 inside block not flagged when block closed by longer fence",
+			content:  "# Real Title\n\n```markdown\n# Fake Title\n````\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
