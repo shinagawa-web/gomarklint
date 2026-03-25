@@ -181,6 +181,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("no-setext-headings") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
 	}
+	if l.config.IsEnabled("single-h1") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckSingleH1(path, lines, offset), "single-h1")...)
+	}
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {

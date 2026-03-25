@@ -1,0 +1,11 @@
+{
+  "default": true,
+  "rules": {
+    "heading-level": { "severity": "error", "minLevel": 1 },
+    "single-h1": true,
+    "external-link": false
+  },
+  "include": ["fixtures"],
+  "ignore": [],
+  "output": "text"
+}
