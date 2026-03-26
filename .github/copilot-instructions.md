@@ -226,6 +226,16 @@ Notes:
 - Tests should remain fast and self-contained — contributions that break this will be rejected.
 - When adding new rules or CLI flags, add corresponding E2E tests in `e2e/e2e_test.go` and test fixtures in `e2e/fixtures/`
 
+### E2E Test Conventions
+
+- **Rule-specific E2E configs** (`e2e/config-*.json`) must use `"default": false` and opt-in only the rules under test. This prevents future rule additions from breaking unrelated E2E tests.
+- **Fixture naming**: `<rule_name>_valid.md` / `<rule_name>_violation.md` means valid/invalid **for that specific rule only**. A `_valid` fixture may still trigger violations from other rules under the default E2E config (`.gomarklint.json`), and that is expected and intentional. Examples: `heading_level_one.md`, `single_h1_valid.md`.
+- **Directory recursion test** (`TestE2E_MultipleFiles/DirectoryRecursion`) runs all fixtures under the default config. When adding fixtures, update the file count and add assertions for any new violations. It is normal for rule-specific `_valid` fixtures to produce errors here from other rules.
+
+### Fenced Code Block Detection
+
+Multiple rules share a common pattern for detecting fenced code blocks (`HasPrefix` + `TrimSpace`). This is a known simplification — full CommonMark compliance (e.g. closing fences longer than the opening fence) is tracked in #95. Do not flag this as a per-rule issue in reviews.
+
 ## Notes for AI Assistance
 
 - When modifying config, always update both the struct and Default() function

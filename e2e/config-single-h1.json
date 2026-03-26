@@ -1,9 +1,9 @@
 {
-  "default": true,
+  "default": false,
   "rules": {
     "heading-level": { "severity": "error", "minLevel": 1 },
     "single-h1": true,
-    "external-link": false
+    "final-blank-line": true
   },
   "include": ["fixtures"],
   "ignore": [],
