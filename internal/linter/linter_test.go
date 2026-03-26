@@ -402,6 +402,25 @@ func TestLintContent_WithErrors(t *testing.T) {
 	}
 }
 
+func TestRun_SingleH1(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["single-h1"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "multi-h1.md")
+	if err := os.WriteFile(testFile, []byte("# First\n\n# Second\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for multiple H1 headings")
+	}
+}
+
 func TestRun_WarningSeverity(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = &config.RuleConfig{
