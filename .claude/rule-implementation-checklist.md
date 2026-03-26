@@ -30,3 +30,10 @@ Follow this checklist whenever adding a new rule (e.g. `fenced-code-language`, `
 - Use `strings.TrimSpace()` when matching fence/heading markers
 - Test offset: pass `offset > 0` in at least one test case to verify line numbers shift correctly
 - Table-driven tests; keep `Severity` field out of expected `LintError` (it's empty at rule level)
+- Fenced code block detection uses the existing shared pattern (`HasPrefix` + `TrimSpace`). CommonMark full compliance (e.g. longer closing fences) is tracked in #95 — do not fix per-rule
+
+## E2E test conventions
+
+- **Rule-specific E2E config**: always set `"default": false` and opt-in only the rules under test. This prevents future rule additions from breaking unrelated E2E tests.
+- **Fixture naming**: `<rule_name>_valid.md` / `<rule_name>_violation.md` means valid/invalid **for that specific rule**. A `_valid` fixture may still trigger violations from other rules under the default E2E config (`.gomarklint.json`), and that is expected. Example: `heading_level_one.md`, `single_h1_valid.md`.
+- **Directory recursion test** (`TestE2E_MultipleFiles/DirectoryRecursion`): runs all fixtures under the default config. When adding fixtures, update the file count and add assertions for any new violations that appear. It is normal for rule-specific `_valid` fixtures to produce errors here from other rules.
