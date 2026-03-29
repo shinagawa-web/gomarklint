@@ -8,6 +8,7 @@
     "duplicate-heading": true,
     "no-multiple-blank-lines": true,
     "no-setext-headings": true,
+    "single-h1": true,
     "external-link": { "enabled": true, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
   "include": ["fixtures"],
