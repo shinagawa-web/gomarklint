@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-push hook: runs lint and unit tests before pushing.
+# Bypass with: git push --no-verify
+
+set -e
+
+echo "==> Running static lint..."
+golangci-lint run --config=./.golangci.yml
+
+echo "==> Running unit tests..."
+go test $(go list ./... | grep -v '/e2e') -v
+
+echo "==> All checks passed."

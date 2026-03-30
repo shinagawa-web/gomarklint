@@ -62,6 +62,20 @@ make test-e2e  # end-to-end tests
 make build     # build binary
 ```
 
+### Git hooks
+
+Install the pre-push hook to run lint and unit tests automatically before pushing:
+
+```sh
+make install-hooks
+```
+
+To bypass the hook in an emergency:
+
+```sh
+git push --no-verify
+```
+
 ## License
 
 MIT License
