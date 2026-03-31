@@ -5,9 +5,9 @@
 set -e
 
 echo "==> Running static lint..."
-golangci-lint run --config=./.golangci.yml
+make static-lint
 
 echo "==> Running unit tests..."
-go test $(go list ./... | grep -v '/e2e') -v
+make test
 
 echo "==> All checks passed."

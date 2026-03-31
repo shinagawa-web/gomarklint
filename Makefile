@@ -92,9 +92,11 @@ init: ## Generate default .gomarklint.json config
 
 install-hooks: ## Install git hooks (pre-push)
 	@echo "Installing git hooks..."
-	cp scripts/pre-push .git/hooks/pre-push
-	chmod +x .git/hooks/pre-push
-	@echo "pre-push hook installed."
+	@HOOKS_DIR=$$(git rev-parse --git-path hooks); \
+	mkdir -p "$$HOOKS_DIR"; \
+	cp scripts/pre-push "$$HOOKS_DIR/pre-push"; \
+	chmod +x "$$HOOKS_DIR/pre-push"; \
+	echo "pre-push hook installed to $$HOOKS_DIR/pre-push."
 
 mod-tidy: ## Tidy go.mod and go.sum
 	@echo "Tidying go.mod..."
