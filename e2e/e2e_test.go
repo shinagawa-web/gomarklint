@@ -98,6 +98,20 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "1 issues found")
 	})
 
+	t.Run("LongerClosingFenceIsValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/longer_closing_fence.md", "--config", ".gomarklint.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Unclosed code block")
+	})
+
+	t.Run("ShorterClosingFenceIsUnclosed", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/shorter_closing_fence.md", "--config", ".gomarklint.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for unclosed code block")
+		}
+		assertOutputContains(t, output, "Unclosed code block")
+	})
+
 	t.Run("EmptyAltText", func(t *testing.T) {
 		output := runTest(t, "fixtures/empty_alt_text.md", "--config", ".gomarklint.json")
 		assertOutputContains(t, output, "Errors in fixtures/empty_alt_text.md:")
@@ -275,11 +289,13 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "Errors in fixtures/single_h1_violation.md:")
 		assertOutputContains(t, output, "Multiple H1 headings found")
 		assertOutputContains(t, output, "Errors in fixtures/single_h1_valid.md:")
-		assertOutputContains(t, output, "Checked 23 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/shorter_closing_fence.md:")
+		assertOutputContains(t, output, "Checked 25 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/mixed_link_types.md")
+		assertOutputNotContains(t, output, "Errors in fixtures/longer_closing_fence.md")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {
