@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-push hook: runs lint and unit tests before pushing.
+# Bypass with: git push --no-verify
+
+set -e
+
+echo "==> Running static lint..."
+make static-lint
+
+echo "==> Running unit tests..."
+make test
+
+echo "==> All checks passed."

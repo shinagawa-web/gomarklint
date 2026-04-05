@@ -62,6 +62,20 @@ make test-e2e  # エンドツーエンドテスト
 make build     # バイナリビルド
 ```
 
+### Git フック
+
+プッシュ前に自動でlintとユニットテストを実行するpre-pushフックをインストールできます：
+
+```sh
+make install-hooks
+```
+
+緊急時にフックをスキップする場合：
+
+```sh
+git push --no-verify
+```
+
 ## ライセンス
 
 MIT License

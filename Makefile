@@ -1,4 +1,4 @@
-.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench
+.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench install-hooks
 
 # Default target
 .DEFAULT_GOAL := help
@@ -89,6 +89,14 @@ run-dev: ## Run gomarklint with arguments (usage: make run-dev ARGS="path/to/fil
 init: ## Generate default .gomarklint.json config
 	@echo "Generating default .gomarklint.json..."
 	$(GORUN) . init
+
+install-hooks: ## Install git hooks (pre-push)
+	@echo "Installing git hooks..."
+	@HOOKS_DIR=$$(git rev-parse --git-path hooks); \
+	mkdir -p "$$HOOKS_DIR"; \
+	cp scripts/pre-push "$$HOOKS_DIR/pre-push"; \
+	chmod +x "$$HOOKS_DIR/pre-push"; \
+	echo "pre-push hook installed to $$HOOKS_DIR/pre-push."
 
 mod-tidy: ## Tidy go.mod and go.sum
 	@echo "Tidying go.mod..."

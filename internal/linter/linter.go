@@ -144,6 +144,28 @@ func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.Lin
 	return errs
 }
 
+// headingMinLevel returns the configured minLevel for the heading-level rule.
+func (l *Linter) headingMinLevel() int {
+	minLevel := 2
+	if v, ok := l.config.RuleOptions("heading-level")["minLevel"]; ok {
+		if f, ok := v.(float64); ok {
+			minLevel = int(f)
+		}
+	}
+	return minLevel
+}
+
+// externalLinkTimeout returns the configured timeoutSeconds for the external-link rule.
+func (l *Linter) externalLinkTimeout() int {
+	timeoutSeconds := 5
+	if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			timeoutSeconds = int(f)
+		}
+	}
+	return timeoutSeconds
+}
+
 // collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
@@ -161,13 +183,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 		allErrors = append(allErrors, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
 	}
 	if l.config.IsEnabled("heading-level") {
-		minLevel := 2
-		if v, ok := l.config.RuleOptions("heading-level")["minLevel"]; ok {
-			if f, ok := v.(float64); ok {
-				minLevel = int(f)
-			}
-		}
-		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, minLevel), "heading-level")...)
+		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
 	}
 	if l.config.IsEnabled("fenced-code-language") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckFencedCodeLanguage(path, lines, offset), "fenced-code-language")...)
@@ -187,13 +203,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		timeoutSeconds := 5
-		if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
-			if f, ok := v.(float64); ok && int(f) > 0 {
-				timeoutSeconds = int(f)
-			}
-		}
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, timeoutSeconds, rule.DefaultRetryDelayMs, l.urlCache)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.urlCache)
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
