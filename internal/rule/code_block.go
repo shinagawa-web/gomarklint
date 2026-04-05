@@ -32,19 +32,25 @@ func CheckUnclosedCodeBlocks(filename string, lines []string, offset int) []Lint
 func GetCodeBlockLineRanges(lines []string) (closed [][2]int, unclosed []int) {
 	inBlock := false
 	var start int
+	var fenceMarker string
 	var closedRanges [][2]int
 	var unclosedStarts []int
 
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "```") {
-			if inBlock {
+		if inBlock {
+			if IsClosingFence(trimmed, fenceMarker) {
 				closedRanges = append(closedRanges, [2]int{start + 1, i + 1})
 				inBlock = false
-			} else {
-				start = i
-				inBlock = true
+				fenceMarker = ""
 			}
+			continue
+		}
+		marker := openingFenceMarker(trimmed)
+		if marker != "" {
+			start = i
+			fenceMarker = marker
+			inBlock = true
 		}
 	}
 
