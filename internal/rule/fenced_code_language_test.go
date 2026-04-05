@@ -108,6 +108,23 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 				{File: "test.md", Line: 1, Message: "Fenced code block must have a language identifier"},
 			},
 		},
+		{
+			name:     "longer closing fence closes block",
+			content:  "```go\ncode\n`````\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "longer closing fence allows next block to be detected",
+			content: "```go\ncode\n`````\n\n```\nno lang\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 5, Message: "Fenced code block must have a language identifier"},
+			},
+		},
+		{
+			name:     "longer closing tilde fence",
+			content:  "~~~py\ncode\n~~~~~\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {

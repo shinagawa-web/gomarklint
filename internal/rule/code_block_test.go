@@ -40,6 +40,35 @@ func TestCheckUnclosedCodeBlocks(t *testing.T) {
 			content:  "# Just a heading\nSome text",
 			wantErrs: nil,
 		},
+		{
+			name:     "longer closing fence closes block",
+			content:  "```\ncode\n`````\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "tilde fence properly tracked",
+			content:  "~~~\ncode\n~~~\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "tilde fence unclosed by backtick",
+			content: "~~~\ncode\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "Unclosed code block"},
+			},
+		},
+		{
+			name:     "longer tilde closing fence",
+			content:  "~~~\ncode\n~~~~~\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "shorter closing fence does not close",
+			content: "````\ncode\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "Unclosed code block"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
