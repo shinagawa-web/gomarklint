@@ -30,7 +30,7 @@ Follow this checklist whenever adding a new rule (e.g. `fenced-code-language`, `
 - Use `strings.TrimSpace()` when matching fence/heading markers
 - Test offset: pass `offset > 0` in at least one test case to verify line numbers shift correctly
 - Table-driven tests; keep `Severity` field out of expected `LintError` (it's empty at rule level)
-- Fenced code block detection uses the existing shared pattern (`HasPrefix` + `TrimSpace`). CommonMark full compliance (e.g. longer closing fences) is tracked in #95 — do not fix per-rule
+- Fenced code block detection: use `openingFenceMarker()` to detect opening fences and `IsClosingFence()` to detect closing fences (both in `fence.go`). These handle backtick/tilde, variable-length runs, and CommonMark-compliant longer closing fences (#95)
 
 ## E2E test conventions
 

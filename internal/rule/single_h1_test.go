@@ -77,6 +77,18 @@ func TestCheckSingleH1(t *testing.T) {
 				{File: "test.md", Line: 3, Message: "Multiple H1 headings found; only one H1 is allowed per file"},
 			},
 		},
+		{
+			name:     "H1 inside block closed by longer fence is ignored",
+			content:  "# Title\n\n```markdown\n# Not a heading\n`````\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "H1 after block closed by longer fence is detected",
+			content: "# Title\n\n```markdown\n# Ignored\n`````\n\n# Second\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 7, Message: "Multiple H1 headings found; only one H1 is allowed per file"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
