@@ -2,11 +2,8 @@ package rule
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 )
-
-var bareURLRegex = regexp.MustCompile(`https?://[^\s<>()\[\]]+`)
 
 // countBacktickRun returns the number of consecutive backticks starting at
 // position start in s.
@@ -105,21 +102,60 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 		if strings.ContainsRune(line, '`') {
 			scanned = stripInlineCode(line)
 		}
-		matches := bareURLRegex.FindAllStringIndex(scanned, -1)
-		for _, m := range matches {
-			start := m[0]
+
+		// Scan for bare URLs without regex to avoid allocations.
+		pos := 0
+		for pos < len(scanned) {
+			idx := strings.Index(scanned[pos:], "http")
+			if idx == -1 {
+				break
+			}
+			start := pos + idx
+
+			// Determine scheme length ("https://" or "http://").
+			rest := scanned[start:]
+			var schemeLen int
+			if strings.HasPrefix(rest, "https://") {
+				schemeLen = 8
+			} else if strings.HasPrefix(rest, "http://") {
+				schemeLen = 7
+			} else {
+				pos = start + 4
+				continue
+			}
+
+			// Scan URL body: collect chars matching [^\s<>()\[\]].
+			end := start + schemeLen
+			for end < len(scanned) {
+				c := scanned[end]
+				if c <= ' ' || c == '<' || c == '>' || c == '(' || c == ')' || c == '[' || c == ']' {
+					break
+				}
+				end++
+			}
+			if end == start+schemeLen {
+				// No chars after scheme — not a real URL.
+				pos = end
+				continue
+			}
+
+			// Check context: angle-bracket or markdown link destination.
 			if start > 0 && scanned[start-1] == '<' {
-				continue // angle-bracket URL: <https://...>
+				pos = end
+				continue
 			}
 			if start > 1 && scanned[start-1] == '(' && scanned[start-2] == ']' {
-				continue // Markdown link/image destination: ](url)
+				pos = end
+				continue
 			}
-			url := strings.TrimRight(scanned[m[0]:m[1]], ".,;:!?)")
+
+			url := strings.TrimRight(scanned[start:end], ".,;:!?)")
 			errs = append(errs, LintError{
 				File:    filename,
 				Line:    offset + i + 1,
 				Message: fmt.Sprintf("no-bare-urls: bare URL found, use angle brackets or a Markdown link: %s", url),
 			})
+			pos = end
 		}
 	}
 
