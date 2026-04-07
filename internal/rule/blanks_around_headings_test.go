@@ -33,6 +33,18 @@ func TestCheckBlanksAroundHeadings(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "valid: ATX heading with tab after hash run",
+			content:  "##\tTitle\n\nSome text\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: ATX heading with tab, no blank line after",
+			content: "Some text\n\n##\tTitle\nMore text\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 3, Message: "blanks-around-headings: heading must be followed by a blank line"},
+			},
+		},
+		{
 			name:     "valid: all heading levels with blank lines",
 			content:  "# H1\n\n## H2\n\n### H3\n\n#### H4\n\n##### H5\n\n###### H6\n",
 			wantErrs: nil,

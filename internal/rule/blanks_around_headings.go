@@ -11,7 +11,7 @@ func isATXHeading(s string) bool {
 	if level == 0 || level > 6 {
 		return false
 	}
-	return level == len(s) || s[level] == ' '
+	return level == len(s) || s[level] == ' ' || s[level] == '\t'
 }
 
 // CheckBlanksAroundHeadings flags ATX-style headings that are not preceded or
