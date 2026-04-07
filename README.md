@@ -42,7 +42,7 @@ go install github.com/shinagawa-web/gomarklint@latest
 
 ## Documentation
 
-Full documentation is available at **[https://shinagawa-web.github.io/gomarklint/](https://shinagawa-web.github.io/gomarklint/)**
+Full documentation is available at **[shinagawa-web.github.io/gomarklint](https://shinagawa-web.github.io/gomarklint/)**
 
 - [Quick Start](https://shinagawa-web.github.io/gomarklint/docs/)
 - [Rules](https://shinagawa-web.github.io/gomarklint/docs/rules/)
