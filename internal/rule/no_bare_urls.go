@@ -96,7 +96,15 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
-		scanned := stripInlineCode(line)
+		// Fast path: skip lines without any URL scheme.
+		if !strings.Contains(line, "http") {
+			continue
+		}
+
+		scanned := line
+		if strings.ContainsRune(line, '`') {
+			scanned = stripInlineCode(line)
+		}
 		matches := bareURLRegex.FindAllStringIndex(scanned, -1)
 		for _, m := range matches {
 			start := m[0]
