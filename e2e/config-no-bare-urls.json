@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "no-bare-urls": true
+  }
+}

@@ -440,6 +440,25 @@ func TestRun_BlanksAroundHeadings(t *testing.T) {
 	}
 }
 
+func TestRun_NoBareURLs(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "bare-url.md")
+	if err := os.WriteFile(testFile, []byte("Visit https://example.com for details.\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for bare URL")
+	}
+}
+
 func TestRun_WarningSeverity(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = &config.RuleConfig{
