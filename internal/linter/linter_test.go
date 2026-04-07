@@ -421,6 +421,25 @@ func TestRun_SingleH1(t *testing.T) {
 	}
 }
 
+func TestRun_BlanksAroundHeadings(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["blanks-around-headings"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "no-blanks.md")
+	if err := os.WriteFile(testFile, []byte("Some text\n## Heading\nMore text\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected errors for heading without surrounding blank lines")
+	}
+}
+
 func TestRun_WarningSeverity(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = &config.RuleConfig{

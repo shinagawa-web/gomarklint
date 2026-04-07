@@ -173,6 +173,26 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "Multiple H1 headings found; only one H1 is allowed per file")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("BlanksAroundHeadingsValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/blanks_around_headings_valid.md", "--config", "config-blanks-around-headings.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "heading must be preceded by a blank line")
+		assertOutputNotContains(t, output, "heading must be followed by a blank line")
+	})
+
+	t.Run("BlanksAroundHeadingsViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/blanks_around_headings_violation.md", "--config", "config-blanks-around-headings.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/blanks_around_headings_violation.md:")
+		assertOutputContains(t, output, "fixtures/blanks_around_headings_violation.md:4:")
+		assertOutputContains(t, output, "heading must be preceded by a blank line")
+		assertOutputContains(t, output, "fixtures/blanks_around_headings_violation.md:7:")
+		assertOutputContains(t, output, "heading must be followed by a blank line")
+		assertOutputContains(t, output, "3 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -290,12 +310,15 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "Multiple H1 headings found")
 		assertOutputContains(t, output, "Errors in fixtures/single_h1_valid.md:")
 		assertOutputContains(t, output, "Errors in fixtures/shorter_closing_fence.md:")
-		assertOutputContains(t, output, "Checked 25 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/blanks_around_headings_violation.md:")
+		assertOutputContains(t, output, "heading must be preceded by a blank line")
+		assertOutputContains(t, output, "Checked 27 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/mixed_link_types.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/longer_closing_fence.md")
+		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_headings_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

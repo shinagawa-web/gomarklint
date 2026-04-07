@@ -200,6 +200,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("single-h1") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckSingleH1(path, lines, offset), "single-h1")...)
 	}
+	if l.config.IsEnabled("blanks-around-headings") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckBlanksAroundHeadings(path, lines, offset), "blanks-around-headings")...)
+	}
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
