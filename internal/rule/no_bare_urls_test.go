@@ -38,6 +38,18 @@ func TestCheckNoBareURLs(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "valid: double-backtick span containing a single backtick",
+			content:  "Use ``https://example.com`path`` here.\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: unclosed backtick does not suppress URL detection",
+			content: "See `https://example.com for details.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
 			name:    "invalid: bare URL in parentheses is still flagged",
 			content: "See (https://example.com) for details.\n",
 			wantErrs: []LintError{
