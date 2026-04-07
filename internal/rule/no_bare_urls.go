@@ -67,6 +67,67 @@ func stripInlineCode(s string) string {
 	return b.String()
 }
 
+// isURLBodyChar returns true for characters allowed in a URL body
+// (everything except whitespace and <>()[].)
+func isURLBodyChar(c byte) bool {
+	return c > ' ' && c != '<' && c != '>' && c != '(' && c != ')' && c != '[' && c != ']'
+}
+
+// isWrappedURL returns true if the URL starting at start in line is wrapped
+// in angle brackets or is a Markdown link/image destination.
+func isWrappedURL(line string, start int) bool {
+	if start > 0 && line[start-1] == '<' {
+		return true
+	}
+	return start > 1 && line[start-1] == '(' && line[start-2] == ']'
+}
+
+// scanURLEnd returns the end index of the URL body starting at bodyStart.
+func scanURLEnd(line string, bodyStart int) int {
+	end := bodyStart
+	for end < len(line) && isURLBodyChar(line[end]) {
+		end++
+	}
+	return end
+}
+
+// findBareURLs scans line for bare HTTP/HTTPS URLs and returns their text.
+// URLs wrapped in angle brackets or used as Markdown link destinations are
+// skipped.
+func findBareURLs(line string) []string {
+	var urls []string
+	pos := 0
+	for pos < len(line) {
+		idx := strings.Index(line[pos:], "http")
+		if idx == -1 {
+			break
+		}
+		start := pos + idx
+
+		// Determine scheme length ("https://" or "http://").
+		rest := line[start:]
+		var schemeLen int
+		if strings.HasPrefix(rest, "https://") {
+			schemeLen = 8
+		} else if strings.HasPrefix(rest, "http://") {
+			schemeLen = 7
+		} else {
+			pos = start + 4
+			continue
+		}
+
+		end := scanURLEnd(line, start+schemeLen)
+		if end == start+schemeLen || isWrappedURL(line, start) {
+			pos = end
+			continue
+		}
+
+		urls = append(urls, strings.TrimRight(line[start:end], ".,;:!?)"))
+		pos = end
+	}
+	return urls
+}
+
 // CheckNoBareURLs flags HTTP/HTTPS URLs that appear as bare text rather than
 // being wrapped in angle brackets or used inside a Markdown link or image.
 // URLs inside fenced code blocks and inline code spans are ignored.
@@ -93,7 +154,6 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
-		// Fast path: skip lines without any URL scheme.
 		if !strings.Contains(line, "http") {
 			continue
 		}
@@ -103,59 +163,12 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			scanned = stripInlineCode(line)
 		}
 
-		// Scan for bare URLs without regex to avoid allocations.
-		pos := 0
-		for pos < len(scanned) {
-			idx := strings.Index(scanned[pos:], "http")
-			if idx == -1 {
-				break
-			}
-			start := pos + idx
-
-			// Determine scheme length ("https://" or "http://").
-			rest := scanned[start:]
-			var schemeLen int
-			if strings.HasPrefix(rest, "https://") {
-				schemeLen = 8
-			} else if strings.HasPrefix(rest, "http://") {
-				schemeLen = 7
-			} else {
-				pos = start + 4
-				continue
-			}
-
-			// Scan URL body: collect chars matching [^\s<>()\[\]].
-			end := start + schemeLen
-			for end < len(scanned) {
-				c := scanned[end]
-				if c <= ' ' || c == '<' || c == '>' || c == '(' || c == ')' || c == '[' || c == ']' {
-					break
-				}
-				end++
-			}
-			if end == start+schemeLen {
-				// No chars after scheme — not a real URL.
-				pos = end
-				continue
-			}
-
-			// Check context: angle-bracket or markdown link destination.
-			if start > 0 && scanned[start-1] == '<' {
-				pos = end
-				continue
-			}
-			if start > 1 && scanned[start-1] == '(' && scanned[start-2] == ']' {
-				pos = end
-				continue
-			}
-
-			url := strings.TrimRight(scanned[start:end], ".,;:!?)")
+		for _, url := range findBareURLs(scanned) {
 			errs = append(errs, LintError{
 				File:    filename,
 				Line:    offset + i + 1,
 				Message: fmt.Sprintf("no-bare-urls: bare URL found, use angle brackets or a Markdown link: %s", url),
 			})
-			pos = end
 		}
 	}
 

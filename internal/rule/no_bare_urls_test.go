@@ -144,6 +144,21 @@ func TestCheckNoBareURLs(t *testing.T) {
 			content:  "## Just a heading\n\nSome plain text.\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "valid: httpbin is not a URL scheme",
+			content:  "Use httpbin for testing.\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: bare scheme with no host is ignored",
+			content:  "The prefix http:// is a scheme.\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: angle bracket URL at column 1",
+			content:  "<https://example.com>\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
