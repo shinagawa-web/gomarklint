@@ -20,7 +20,7 @@ func countBacktickRun(s string, start int) int {
 
 // stripInlineCode replaces content inside backtick spans (including the
 // delimiters) with spaces so that URLs within inline code are not scanned.
-// Handles both single-backtick (` `` `) and multi-backtick (` `` `) spans per
+// Handles both single-backtick (` “ `) and multi-backtick (` “ `) spans per
 // CommonMark: a code span opens with a run of N backticks and closes with the
 // next run of exactly N backticks.
 func stripInlineCode(s string) string {
