@@ -206,6 +206,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("no-bare-urls") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckNoBareURLs(path, lines, offset), "no-bare-urls")...)
 	}
+	if l.config.IsEnabled("no-empty-links") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoEmptyLinks(path, lines, offset), "no-empty-links")...)
+	}
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
