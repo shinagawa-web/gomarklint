@@ -37,7 +37,7 @@ func findEmptyLinks(line string) []string {
 		if emptyLinkDest(dest) {
 			// Walk back to find the opening '[' (or '![').
 			bracketStart := pos + idx
-			for bracketStart > 0 && line[bracketStart-1] != '[' && line[bracketStart-1] != '\n' {
+			for bracketStart > 0 && line[bracketStart-1] != '[' {
 				bracketStart--
 			}
 			if bracketStart > 0 && line[bracketStart-1] == '[' {
