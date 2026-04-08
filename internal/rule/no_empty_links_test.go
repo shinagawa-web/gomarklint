@@ -133,8 +133,8 @@ func TestCheckNoEmptyLinks(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
-			name:     "valid: destination with only spaces is empty",
-			content:  "[text](   )\n",
+			name:    "valid: destination with only spaces is empty",
+			content: "[text](   )\n",
 			wantErrs: []LintError{
 				{File: "test.md", Line: 1, Message: "no-empty-links: link has empty destination: [text](   )"},
 			},
