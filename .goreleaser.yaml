@@ -38,6 +38,15 @@ archives:
       - goos: windows
         format: zip
 
+brews:
+  - repository:
+      owner: shinagawa-web
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/shinagawa-web/gomarklint"
+    description: "A fast, extensible Markdown linter written in Go"
+    license: "MIT"
+
 changelog:
   sort: asc
   use: github
