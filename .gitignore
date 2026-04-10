@@ -13,6 +13,11 @@ e2e/gomarklint-e2e-test
 *.out
 *.html
 
+# npm wrapper
+npm/gomarklint
+npm/gomarklint.exe
+npm/node_modules/
+
 # Claude Code
 .claude/worktrees/
 .claude/settings.json
