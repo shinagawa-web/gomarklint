@@ -29,6 +29,12 @@ Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALA
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
 ```
 
+**Via npm:**
+
+```sh
+npm install -g @shinagawa-web/gomarklint
+```
+
 **Via `go install`:**
 
 ```sh

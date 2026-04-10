@@ -1,0 +1,31 @@
+{
+  "name": "@shinagawa-web/gomarklint",
+  "version": "0.0.0",
+  "description": "A fast, extensible Markdown linter written in Go",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shinagawa-web/gomarklint.git",
+    "directory": "npm"
+  },
+  "homepage": "https://github.com/shinagawa-web/gomarklint",
+  "keywords": [
+    "markdown",
+    "linter",
+    "lint",
+    "gomarklint"
+  ],
+  "bin": {
+    "gomarklint": "cli.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "cli.js",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}
