@@ -10,6 +10,12 @@
 
 > エンジニアリングチームのための高速・実用的な Markdown リンター。Go 製、CI 向け設計。
 
+**かんたんインストール**（macOS / Linux）:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+```
+
 **バイナリをダウンロード**（Go 環境不要）:
 
 [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) からお使いのプラットフォーム向けバイナリをダウンロードできます。

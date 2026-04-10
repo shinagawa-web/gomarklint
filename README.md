@@ -10,6 +10,12 @@ English | [日本語](README.ja.md)
 
 > A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
 
+**Quick install** (macOS / Linux):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+```
+
 **Download binary** (no Go required):
 
 Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
