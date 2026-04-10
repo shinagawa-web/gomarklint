@@ -8,7 +8,13 @@
 
 English | [日本語](README.ja.md)
 
-> A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
+> A fast, opinionated Markdown linter. Built in Go, designed for CI.
+
+**Quick install** (macOS / Linux):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
+```
 
 **Download binary** (no Go required):
 
@@ -27,6 +33,12 @@ mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
 Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
 # Add to PATH (run once)
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
+```
+
+**Via Homebrew:**
+
+```sh
+brew install shinagawa-web/tap/gomarklint
 ```
 
 **Via npm:**

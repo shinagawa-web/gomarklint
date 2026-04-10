@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@shinagawa-web/gomarklint)](https://www.npmjs.com/package/@shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/shinagawa-web/gomarklint/blob/main/LICENSE)
 
-> A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
+> A fast, opinionated Markdown linter. Built in Go, designed for CI.
 
 - Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").
@@ -51,6 +51,7 @@ Full documentation is available at **[shinagawa-web.github.io/gomarklint](https:
 
 ## Other installation methods
 
+- **Shell:** `curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh`
 - **Homebrew:** `brew install shinagawa-web/tap/gomarklint`
 - **Go:** `go install github.com/shinagawa-web/gomarklint@latest`
 - **Binary:** Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest)

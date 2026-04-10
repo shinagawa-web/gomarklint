@@ -7,6 +7,30 @@ weight: 1
 
 ## Install
 
+**Quick install** (macOS / Linux):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
+```
+
+**Via Homebrew:**
+
+```sh
+brew install shinagawa-web/tap/gomarklint
+```
+
+**Via npm:**
+
+```sh
+npm install -g @shinagawa-web/gomarklint
+```
+
+**Via `go install`:**
+
+```sh
+go install github.com/shinagawa-web/gomarklint@latest
+```
+
 **Download binary** (no Go required):
 
 Download the latest binary for your platform from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest).
@@ -26,12 +50,6 @@ mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
 Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
 # Add to PATH (run once)
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
-```
-
-**Via `go install`:**
-
-```sh
-go install github.com/shinagawa-web/gomarklint@latest
 ```
 
 **Build from source:**

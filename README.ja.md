@@ -8,7 +8,13 @@
 
 [English](README.md) | 日本語
 
-> エンジニアリングチームのための高速・実用的な Markdown リンター。Go 製、CI 向け設計。
+> 高速・実用的な Markdown リンター。Go 製、CI 向け設計。
+
+**かんたんインストール**（macOS / Linux）:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
+```
 
 **バイナリをダウンロード**（Go 環境不要）:
 
@@ -27,6 +33,12 @@ mkdir -p ~/.local/bin && mv gomarklint ~/.local/bin/
 Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALAPPDATA\Programs\gomarklint"
 # PATH に追加（初回のみ）
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
+```
+
+**Homebrew を使う場合:**
+
+```sh
+brew install shinagawa-web/tap/gomarklint
 ```
 
 **npm を使う場合:**
