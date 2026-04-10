@@ -14,12 +14,17 @@ title: "gomarklint"
 > A fast Markdown linter built in Go — for local dev and CI alike.
 
 ```sh
-# macOS — download binary (no Go required)
-tar -xzf gomarklint_Darwin_x86_64.tar.gz
-sudo mv gomarklint /usr/local/bin/
+# macOS / Linux — one-line install
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+
+# or via Homebrew
+brew install shinagawa-web/tap/gomarklint
+
+# or via npm
+npm install -g @shinagawa-web/gomarklint
 ```
 
-Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest) · [Quick Start →]({{< relref "/docs/quick-start" >}})
+[Quick Start →]({{< relref "/docs/quick-start" >}})
 
 - Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").

@@ -35,6 +35,12 @@ Expand-Archive -Path gomarklint_Windows_x86_64.zip -DestinationPath "$env:LOCALA
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\gomarklint", "User")
 ```
 
+**Homebrew を使う場合:**
+
+```sh
+brew install shinagawa-web/tap/gomarklint
+```
+
 **npm を使う場合:**
 
 ```sh
