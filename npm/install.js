@@ -87,7 +87,7 @@ async function main() {
 
   // Download checksums and archive in parallel
   const [checksumsText, archiveData] = await Promise.all([
-    download(`${baseUrl}/checksums.txt`).then((buf) => buf.toString("utf8")),
+    download(`${baseUrl}/gomarklint_${version}_checksums.txt`).then((buf) => buf.toString("utf8")),
     download(`${baseUrl}/${archiveName}`),
   ]);
 
