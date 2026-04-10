@@ -51,7 +51,7 @@ Full documentation is available at **[shinagawa-web.github.io/gomarklint](https:
 
 ## Other installation methods
 
-- **Shell:** `curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash`
+- **Shell:** `curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh`
 - **Homebrew:** `brew install shinagawa-web/tap/gomarklint`
 - **Go:** `go install github.com/shinagawa-web/gomarklint@latest`
 - **Binary:** Download from [GitHub Releases](https://github.com/shinagawa-web/gomarklint/releases/latest)

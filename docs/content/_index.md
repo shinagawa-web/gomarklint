@@ -15,7 +15,7 @@ title: "gomarklint"
 
 ```sh
 # macOS / Linux — one-line install
-curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
 
 # or via Homebrew
 brew install shinagawa-web/tap/gomarklint

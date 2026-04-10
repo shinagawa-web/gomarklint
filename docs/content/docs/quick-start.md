@@ -10,7 +10,7 @@ weight: 1
 **Quick install** (macOS / Linux):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
 ```
 
 **Via Homebrew:**

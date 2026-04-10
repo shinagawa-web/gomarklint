@@ -13,7 +13,7 @@ English | [日本語](README.ja.md)
 **Quick install** (macOS / Linux):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shinagawa-web/gomarklint/main/install.sh | sh
 ```
 
 **Download binary** (no Go required):
