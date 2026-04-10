@@ -8,7 +8,7 @@
 
 [English](README.md) | 日本語
 
-> エンジニアリングチームのための高速・実用的な Markdown リンター。Go 製、CI 向け設計。
+> 高速・実用的な Markdown リンター。Go 製、CI 向け設計。
 
 **かんたんインストール**（macOS / Linux）:
 

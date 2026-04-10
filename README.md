@@ -8,7 +8,7 @@
 
 English | [日本語](README.ja.md)
 
-> A fast, opinionated Markdown linter for engineering teams. Built in Go, designed for CI.
+> A fast, opinionated Markdown linter. Built in Go, designed for CI.
 
 **Quick install** (macOS / Linux):
 
