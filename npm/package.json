@@ -8,7 +8,7 @@
     "url": "https://github.com/shinagawa-web/gomarklint.git",
     "directory": "npm"
   },
-  "homepage": "https://github.com/shinagawa-web/gomarklint",
+  "homepage": "https://shinagawa-web.github.io/gomarklint/",
   "keywords": [
     "markdown",
     "linter",
