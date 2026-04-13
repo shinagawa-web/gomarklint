@@ -478,6 +478,25 @@ func TestRun_NoEmptyLinks(t *testing.T) {
 	}
 }
 
+func TestRun_NoTrailingSpaces(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-trailing-spaces"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "trailing-spaces.md")
+	if err := os.WriteFile(testFile, []byte("This line has trailing spaces   \n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for trailing spaces")
+	}
+}
+
 func TestRun_WarningSeverity(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = &config.RuleConfig{
