@@ -12,29 +12,44 @@ func stripCR(line string) string {
 	return line
 }
 
+// bodyHasTrailingWhitespace reports whether body contains any line ending with
+// a space or tab. It uses strings.IndexByte to locate each '\n' — IndexByte is
+// backed by AVX2 assembly on amd64 (1-byte SIMD search), which is far faster
+// than strings.Contains for 2-byte patterns on that architecture.
+// Total bytes scanned equals len(body): each call advances past the found '\n'.
+func bodyHasTrailingWhitespace(body string) bool {
+	s := body
+	for len(s) > 0 {
+		i := strings.IndexByte(s, '\n')
+		if i < 0 {
+			break
+		}
+		if i > 0 {
+			prev := s[i-1]
+			if prev == ' ' || prev == '\t' {
+				return true
+			}
+			// CRLF: "text   \r\n" — check byte before the \r
+			if prev == '\r' && i >= 2 && (s[i-2] == ' ' || s[i-2] == '\t') {
+				return true
+			}
+		}
+		s = s[i+1:]
+	}
+	// Handle trailing whitespace at EOF (file without a final newline)
+	n := len(body)
+	return n > 0 && (body[n-1] == ' ' || body[n-1] == '\t')
+}
+
 // CheckNoTrailingSpaces flags lines that end with one or more space or tab
 // characters. Lines inside fenced code blocks are ignored.
 //
 // body is the raw document string (before splitting); it is used for a fast-path
-// check using SIMD-optimised string search to skip line-by-line analysis on
-// clean documents. lines is the same content split on "\n".
+// check via bodyHasTrailingWhitespace, which uses IndexByte (AVX2 on amd64) to
+// locate newlines efficiently. lines is the same content split on "\n".
 func CheckNoTrailingSpaces(filename, body string, lines []string, offset int) []LintError {
-	// Fast path: use strings.Contains which Go's runtime implements with
-	// SIMD-optimised search on amd64. Scanning a contiguous string is far
-	// cheaper than iterating a []string with pointer indirection per element.
-	//
-	// " \r" covers CRLF trailing spaces ("text   \r\n" contains " \r").
-	// The final length+last-byte check handles a missing trailing newline.
-	if !strings.Contains(body, " \n") && !strings.Contains(body, "\t\n") &&
-		!strings.Contains(body, " \r") && !strings.Contains(body, "\t\r") {
-		n := len(body)
-		if n == 0 {
-			return nil
-		}
-		last := body[n-1]
-		if last != ' ' && last != '\t' {
-			return nil
-		}
+	if !bodyHasTrailingWhitespace(body) {
+		return nil
 	}
 
 	var errs []LintError
