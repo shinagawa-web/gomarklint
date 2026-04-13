@@ -18,6 +18,25 @@ func TestCheckNoTrailingSpaces(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "valid: CRLF line endings without trailing spaces",
+			content:  "Clean line\r\nAnother clean line\r\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: trailing space on CRLF line",
+			content: "This line has trailing spaces   \r\nClean line\r\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-trailing-spaces: trailing whitespace found"},
+			},
+		},
+		{
+			name:    "invalid: trailing tab on CRLF line",
+			content: "This line has a trailing tab\t\r\nClean line\r\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-trailing-spaces: trailing whitespace found"},
+			},
+		},
+		{
 			name:     "valid: empty file",
 			content:  "",
 			wantErrs: nil,

@@ -2,10 +2,21 @@ package rule
 
 import "strings"
 
+// stripCR removes a trailing carriage return from a line, if present.
+// This normalises CRLF input so that trailing-space detection works correctly
+// on files with Windows line endings.
+func stripCR(line string) string {
+	if len(line) > 0 && line[len(line)-1] == '\r' {
+		return line[:len(line)-1]
+	}
+	return line
+}
+
 // hasAnyTrailingWhitespace reports whether any line ends with a space or tab.
 // Used as a fast-path to skip detailed analysis on clean documents.
 func hasAnyTrailingWhitespace(lines []string) bool {
 	for _, line := range lines {
+		line = stripCR(line)
 		if len(line) > 0 {
 			last := line[len(line)-1]
 			if last == ' ' || last == '\t' {
@@ -29,6 +40,8 @@ func CheckNoTrailingSpaces(filename string, lines []string, offset int) []LintEr
 	fenceMarker := ""
 
 	for i, line := range lines {
+		line = stripCR(line)
+
 		if inBlock {
 			if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false

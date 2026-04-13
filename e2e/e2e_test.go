@@ -374,6 +374,8 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "bare URL found")
 		assertOutputContains(t, output, "Errors in fixtures/no_empty_links_violation.md:")
 		assertOutputContains(t, output, "link has empty destination")
+		assertOutputContains(t, output, "Errors in fixtures/no_trailing_spaces_violation.md:")
+		assertOutputContains(t, output, "trailing whitespace found")
 		assertOutputContains(t, output, "Checked 33 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
