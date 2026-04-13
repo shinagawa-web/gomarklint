@@ -10,21 +10,21 @@ func CheckNoTrailingSpaces(filename string, lines []string, offset int) []LintEr
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
+		// Only compute TrimSpace for potential fence opener lines (starts with ` or ~).
+		if len(line) >= 3 && (line[0] == '`' || line[0] == '~') {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
 		}
 
 		if len(line) > 0 {
