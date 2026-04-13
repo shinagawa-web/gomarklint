@@ -41,6 +41,6 @@ func BenchmarkCheckNoTrailingSpaces(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = CheckNoTrailingSpaces("test.md", lines, 0)
+		_ = CheckNoTrailingSpaces("test.md", content, lines, 0)
 	}
 }

@@ -12,27 +12,29 @@ func stripCR(line string) string {
 	return line
 }
 
-// hasAnyTrailingWhitespace reports whether any line ends with a space or tab.
-// Used as a fast-path to skip detailed analysis on clean documents.
-func hasAnyTrailingWhitespace(lines []string) bool {
-	for _, line := range lines {
-		line = stripCR(line)
-		if len(line) > 0 {
-			last := line[len(line)-1]
-			if last == ' ' || last == '\t' {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // CheckNoTrailingSpaces flags lines that end with one or more space or tab
 // characters. Lines inside fenced code blocks are ignored.
-func CheckNoTrailingSpaces(filename string, lines []string, offset int) []LintError {
-	// Fast path: skip detailed analysis when the document has no trailing whitespace.
-	if !hasAnyTrailingWhitespace(lines) {
-		return nil
+//
+// body is the raw document string (before splitting); it is used for a fast-path
+// check using SIMD-optimised string search to skip line-by-line analysis on
+// clean documents. lines is the same content split on "\n".
+func CheckNoTrailingSpaces(filename, body string, lines []string, offset int) []LintError {
+	// Fast path: use strings.Contains which Go's runtime implements with
+	// SIMD-optimised search on amd64. Scanning a contiguous string is far
+	// cheaper than iterating a []string with pointer indirection per element.
+	//
+	// " \r" covers CRLF trailing spaces ("text   \r\n" contains " \r").
+	// The final length+last-byte check handles a missing trailing newline.
+	if !strings.Contains(body, " \n") && !strings.Contains(body, "\t\n") &&
+		!strings.Contains(body, " \r") && !strings.Contains(body, "\t\r") {
+		n := len(body)
+		if n == 0 {
+			return nil
+		}
+		last := body[n-1]
+		if last != ' ' && last != '\t' {
+			return nil
+		}
 	}
 
 	var errs []LintError
