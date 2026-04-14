@@ -1,0 +1,117 @@
+name: Benchmark Investigation
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  investigate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      # Test 1: 12 rules vs 13 rules (with count=6 for statistical significance)
+      - name: "Test 1: 12 vs 13 rules (count=6)"
+        run: |
+          echo "=== 12 rules vs 13 rules (1000 sections) ==="
+          go test -bench='BenchmarkWith1[23]Rules$' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test1.txt
+
+      # Test 2: 12 vs 13 rules ExtraLarge
+      - name: "Test 2: 12 vs 13 rules XL (count=6)"
+        run: |
+          echo "=== 12 vs 13 rules (5000 sections) ==="
+          go test -bench='BenchmarkWith1[23]Rules_XL' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test2.txt
+
+      # Test 3: Noop rule (does adding ANY 13th rule cause regression?)
+      - name: "Test 3: 12 rules vs 12+noop vs 13 vs 13+noop (count=6)"
+        run: |
+          echo "=== Noop test ==="
+          go test -bench='BenchmarkWith1[23](Rules$|PlusNoop$)' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test3.txt
+
+      # Test 4: Per-rule isolation (which rules are expensive on EPYC?)
+      - name: "Test 4: Per-rule costs"
+        run: |
+          echo "=== Individual rule costs ==="
+          go test -bench='BenchmarkIsolated_' -benchmem -count=3 ./cmd/ -run='^$' 2>&1 | tee test4.txt
+
+      # Test 5: CPU profile of full linting with 13 rules
+      - name: "Test 5: CPU profile"
+        run: |
+          go test -bench='BenchmarkWith13Rules$' -cpuprofile=cpu.prof -count=1 ./cmd/ -run='^$'
+          go tool pprof -text -cum cpu.prof 2>&1 | head -60 | tee test5.txt
+
+      - name: Collect results
+        id: results
+        run: |
+          {
+            echo "## Benchmark Investigation (EPYC amd64)"
+            echo ""
+            echo "### Test 1: 12 vs 13 rules (1000 sections, count=6)"
+            echo '```'
+            cat test1.txt
+            echo '```'
+            echo ""
+            echo "### Test 2: 12 vs 13 rules (5000 sections, count=6)"
+            echo '```'
+            cat test2.txt
+            echo '```'
+            echo ""
+            echo "### Test 3: Noop rule test"
+            echo "Does adding ANY 13th call site cause regression?"
+            echo '```'
+            cat test3.txt
+            echo '```'
+            echo ""
+            echo "### Test 4: Per-rule costs on EPYC"
+            echo '```'
+            cat test4.txt
+            echo '```'
+            echo ""
+            echo "### Test 5: CPU profile (top functions)"
+            echo '```'
+            cat test5.txt
+            echo '```'
+          } > results.md
+          cat results.md
+
+      - name: Comment PR
+        uses: actions/github-script@v9
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = '<!-- bench-investigate -->\n' + fs.readFileSync('results.md', 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const existing = comments.find(c => c.body.includes('<!-- bench-investigate -->'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }

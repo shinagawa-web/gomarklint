@@ -209,6 +209,12 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("no-empty-links") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckNoEmptyLinks(path, lines, offset), "no-empty-links")...)
 	}
+	if l.config.IsEnabled("no-trailing-spaces") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoTrailingSpaces(path, body, lines, offset), "no-trailing-spaces")...)
+	}
+	if l.config.IsEnabled("noop") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop(path, lines, offset), "noop")...)
+	}
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
