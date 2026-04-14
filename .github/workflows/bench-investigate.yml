@@ -22,66 +22,74 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      # Test 1: 12 rules vs 13 rules (with count=6 for statistical significance)
-      - name: "Test 1: 12 vs 13 rules (count=6)"
+      # Test A: How does the number of enabled rules (if-block count) affect perf?
+      - name: "Test A: if-block count scaling (12, 13, 15, 20, 25 rules)"
         run: |
-          echo "=== 12 rules vs 13 rules (1000 sections) ==="
-          go test -bench='BenchmarkWith1[23]Rules$' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test1.txt
+          go test -bench='BenchmarkBlocks' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee testA.txt
 
-      # Test 2: 12 vs 13 rules ExtraLarge
-      - name: "Test 2: 12 vs 13 rules XL (count=6)"
+      # Test B: Does splitting collectErrors into two smaller functions help?
+      - name: "Test B: single vs split function"
         run: |
-          echo "=== 12 vs 13 rules (5000 sections) ==="
-          go test -bench='BenchmarkWith1[23]Rules_XL' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test2.txt
+          go test -bench='Benchmark(Single|Split)Function' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee testB.txt
 
-      # Test 3: Noop rule (does adding ANY 13th rule cause regression?)
-      - name: "Test 3: 12 rules vs 12+noop vs 13 vs 13+noop (count=6)"
+      # Test C: Cross-binary comparison (simulates what the original benchmark.yml does)
+      # Build two separate test binaries and compare
+      - name: "Test C: cross-binary comparison"
         run: |
-          echo "=== Noop test ==="
-          go test -bench='BenchmarkWith1[23](Rules$|PlusNoop$)' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee test3.txt
+          echo "=== Build binary with 26 if-blocks (current source) ==="
+          go test -c -o bench_26blocks ./cmd/
 
-      # Test 4: Per-rule isolation (which rules are expensive on EPYC?)
-      - name: "Test 4: Per-rule costs"
-        run: |
-          echo "=== Individual rule costs ==="
-          go test -bench='BenchmarkIsolated_' -benchmem -count=3 ./cmd/ -run='^$' 2>&1 | tee test4.txt
+          echo "=== Run 13 rules on 26-block binary ==="
+          ./bench_26blocks -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_26blocks.txt
 
-      # Test 5: CPU profile of full linting with 13 rules
-      - name: "Test 5: CPU profile"
-        run: |
-          go test -bench='BenchmarkWith13Rules$' -cpuprofile=cpu.prof -count=1 ./cmd/ -run='^$'
-          go tool pprof -text -cum cpu.prof 2>&1 | head -60 | tee test5.txt
+          echo "=== Now strip noop blocks from source and rebuild ==="
+          # Remove noop if-blocks from linter.go to get a 13-block binary
+          sed -i '/Noop blocks for benchmark/,/noop13/d' internal/linter/linter.go
+          go test -c -o bench_13blocks ./cmd/
+
+          echo "=== Run 13 rules on 13-block binary ==="
+          ./bench_13blocks -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_13blocks.txt
+
+          echo "=== Now also strip no-trailing-spaces to get 12-block binary ==="
+          sed -i '/no-trailing-spaces/d' internal/linter/linter.go
+          go test -c -o bench_12blocks ./cmd/
+
+          echo "=== Run 12 rules on 12-block binary ==="
+          ./bench_12blocks -test.bench='BenchmarkBlocks12' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_12blocks.txt
 
       - name: Collect results
         id: results
         run: |
           {
-            echo "## Benchmark Investigation (EPYC amd64)"
+            echo "## Benchmark Investigation Round 2 (EPYC amd64)"
             echo ""
-            echo "### Test 1: 12 vs 13 rules (1000 sections, count=6)"
+            echo "### Test A: if-block count scaling"
+            echo "All run in the same binary (26 if-blocks in source). Only the enabled rule count changes."
             echo '```'
-            cat test1.txt
-            echo '```'
-            echo ""
-            echo "### Test 2: 12 vs 13 rules (5000 sections, count=6)"
-            echo '```'
-            cat test2.txt
+            cat testA.txt
             echo '```'
             echo ""
-            echo "### Test 3: Noop rule test"
-            echo "Does adding ANY 13th call site cause regression?"
+            echo "### Test B: single function vs split (7+6 blocks)"
             echo '```'
-            cat test3.txt
-            echo '```'
-            echo ""
-            echo "### Test 4: Per-rule costs on EPYC"
-            echo '```'
-            cat test4.txt
+            cat testB.txt
             echo '```'
             echo ""
-            echo "### Test 5: CPU profile (top functions)"
+            echo "### Test C: cross-binary comparison (the real test)"
+            echo "Same rules enabled, but compiled from source with different numbers of if-blocks."
+            echo ""
+            echo "#### 12-block binary (12 rules, no no-trailing-spaces in source)"
             echo '```'
-            cat test5.txt
+            cat testC_12blocks.txt
+            echo '```'
+            echo ""
+            echo "#### 13-block binary (13 rules, no-trailing-spaces in source)"
+            echo '```'
+            cat testC_13blocks.txt
+            echo '```'
+            echo ""
+            echo "#### 26-block binary (13 real + 13 noop in source)"
+            echo '```'
+            cat testC_26blocks.txt
             echo '```'
           } > results.md
           cat results.md

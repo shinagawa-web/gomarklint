@@ -212,8 +212,45 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("no-trailing-spaces") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckNoTrailingSpaces(path, body, lines, offset), "no-trailing-spaces")...)
 	}
-	if l.config.IsEnabled("noop") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop(path, lines, offset), "noop")...)
+	// Noop blocks for benchmark investigation: simulate more if-blocks
+	if l.config.IsEnabled("noop1") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop1(path, lines, offset), "noop1")...)
+	}
+	if l.config.IsEnabled("noop2") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop2(path, lines, offset), "noop2")...)
+	}
+	if l.config.IsEnabled("noop3") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop3(path, lines, offset), "noop3")...)
+	}
+	if l.config.IsEnabled("noop4") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop4(path, lines, offset), "noop4")...)
+	}
+	if l.config.IsEnabled("noop5") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop5(path, lines, offset), "noop5")...)
+	}
+	if l.config.IsEnabled("noop6") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop6(path, lines, offset), "noop6")...)
+	}
+	if l.config.IsEnabled("noop7") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop7(path, lines, offset), "noop7")...)
+	}
+	if l.config.IsEnabled("noop8") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop8(path, lines, offset), "noop8")...)
+	}
+	if l.config.IsEnabled("noop9") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop9(path, lines, offset), "noop9")...)
+	}
+	if l.config.IsEnabled("noop10") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop10(path, lines, offset), "noop10")...)
+	}
+	if l.config.IsEnabled("noop11") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop11(path, lines, offset), "noop11")...)
+	}
+	if l.config.IsEnabled("noop12") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop12(path, lines, offset), "noop12")...)
+	}
+	if l.config.IsEnabled("noop13") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckNoop13(path, lines, offset), "noop13")...)
 	}
 
 	linksChecked := 0
