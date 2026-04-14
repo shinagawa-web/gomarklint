@@ -22,7 +22,7 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      # Test A: How does the number of enabled rules (if-block count) affect perf?
+      # Test A: How does the number of enabled rules affect perf in the same binary?
       - name: "Test A: if-block count scaling (12, 13, 15, 20, 25 rules)"
         run: |
           go test -bench='BenchmarkBlocks' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee testA.txt
@@ -32,30 +32,51 @@ jobs:
         run: |
           go test -bench='Benchmark(Single|Split)Function' -benchmem -count=6 ./cmd/ -run='^$' 2>&1 | tee testB.txt
 
-      # Test C: Cross-binary comparison (simulates what the original benchmark.yml does)
-      # Build two separate test binaries and compare
+      # Test C: Cross-binary comparison
+      # Build separate binaries from different source states
       - name: "Test C: cross-binary comparison"
         run: |
-          echo "=== Build binary with 26 if-blocks (current source) ==="
-          go test -c -o bench_26blocks ./cmd/
+          echo "=== Binary A: full source (26 if-blocks) ==="
+          go test -c -o bench_full ./cmd/
+          ./bench_full -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_full.txt
 
-          echo "=== Run 13 rules on 26-block binary ==="
-          ./bench_26blocks -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_26blocks.txt
+          echo "=== Binary B: remove noop blocks (13 if-blocks) ==="
+          cp internal/linter/linter.go internal/linter/linter.go.bak
+          python3 -c "
+          import re
+          with open('internal/linter/linter.go') as f:
+              src = f.read()
+          # Remove the noop section (from comment to last noop13 block)
+          src = re.sub(r'\n\t// Noop blocks for benchmark.*?\n\t\}', '', src, flags=re.DOTALL)
+          with open('internal/linter/linter.go', 'w') as f:
+              f.write(src)
+          "
+          go test -c -o bench_13 ./cmd/
+          ./bench_13 -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_13.txt
 
-          echo "=== Now strip noop blocks from source and rebuild ==="
-          # Remove noop if-blocks from linter.go to get a 13-block binary
-          sed -i '/Noop blocks for benchmark/,/noop13/d' internal/linter/linter.go
-          go test -c -o bench_13blocks ./cmd/
+          echo "=== Binary C: also remove no-trailing-spaces (12 if-blocks) ==="
+          python3 -c "
+          with open('internal/linter/linter.go') as f:
+              lines = f.readlines()
+          out = []
+          skip = False
+          for line in lines:
+              if 'no-trailing-spaces' in line:
+                  skip = True
+                  continue
+              if skip and line.strip() == '}':
+                  skip = False
+                  continue
+              skip = False
+              out.append(line)
+          with open('internal/linter/linter.go', 'w') as f:
+              f.writelines(out)
+          "
+          go test -c -o bench_12 ./cmd/
+          ./bench_12 -test.bench='BenchmarkBlocks12' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_12.txt
 
-          echo "=== Run 13 rules on 13-block binary ==="
-          ./bench_13blocks -test.bench='BenchmarkSingleFunction' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_13blocks.txt
-
-          echo "=== Now also strip no-trailing-spaces to get 12-block binary ==="
-          sed -i '/no-trailing-spaces/d' internal/linter/linter.go
-          go test -c -o bench_12blocks ./cmd/
-
-          echo "=== Run 12 rules on 12-block binary ==="
-          ./bench_12blocks -test.bench='BenchmarkBlocks12' -test.benchmem -test.count=6 -test.run='^$' 2>&1 | tee testC_12blocks.txt
+          # Restore
+          cp internal/linter/linter.go.bak internal/linter/linter.go
 
       - name: Collect results
         id: results
@@ -63,8 +84,8 @@ jobs:
           {
             echo "## Benchmark Investigation Round 2 (EPYC amd64)"
             echo ""
-            echo "### Test A: if-block count scaling"
-            echo "All run in the same binary (26 if-blocks in source). Only the enabled rule count changes."
+            echo "### Test A: if-block count scaling (same binary)"
+            echo "All run in the same binary (26 if-blocks in source). Only the enabled rule count changes via config."
             echo '```'
             cat testA.txt
             echo '```'
@@ -74,22 +95,23 @@ jobs:
             cat testB.txt
             echo '```'
             echo ""
-            echo "### Test C: cross-binary comparison (the real test)"
-            echo "Same rules enabled, but compiled from source with different numbers of if-blocks."
+            echo "### Test C: cross-binary comparison"
+            echo "Same rules running, but compiled from source with different if-block counts."
+            echo "This simulates what the original benchmark.yml does (PR binary vs main binary)."
             echo ""
-            echo "#### 12-block binary (12 rules, no no-trailing-spaces in source)"
+            echo "#### Binary with 12 if-blocks (no no-trailing-spaces in source)"
             echo '```'
-            cat testC_12blocks.txt
-            echo '```'
-            echo ""
-            echo "#### 13-block binary (13 rules, no-trailing-spaces in source)"
-            echo '```'
-            cat testC_13blocks.txt
+            cat testC_12.txt
             echo '```'
             echo ""
-            echo "#### 26-block binary (13 real + 13 noop in source)"
+            echo "#### Binary with 13 if-blocks (with no-trailing-spaces in source)"
             echo '```'
-            cat testC_26blocks.txt
+            cat testC_13.txt
+            echo '```'
+            echo ""
+            echo "#### Binary with 26 if-blocks (13 real + 13 noop in source)"
+            echo '```'
+            cat testC_full.txt
             echo '```'
           } > results.md
           cat results.md
