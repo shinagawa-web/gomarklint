@@ -59,10 +59,8 @@ var punctuationChars = map[rune]struct{}{
 
 // endsWithPunctuation reports whether s ends with sentence-ending punctuation.
 // When true, the emphasis is likely inline prose, not a heading.
+// s is always non-empty when called from CheckNoEmphasisAsHeading.
 func endsWithPunctuation(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
 	runes := []rune(s)
 	_, ok := punctuationChars[runes[len(runes)-1]]
 	return ok
