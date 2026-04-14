@@ -7,16 +7,22 @@ weight: 2
 
 `gomarklint` currently runs the following checks (ordered as executed):
 
-| Rule key                       | What it detects                                         | Notes / Options                                                                                        |
-| ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `final-blank-line`             | Missing final blank line at EOF                         | Toggle: `--enable-final-blank-line-check` (default **on**)                                             |
-| `unclosed-code-block`          | Unclosed fenced code blocks (`` ``` ``)                 | Always on                                                                                              |
-| `empty-alt-text`               | Image syntax with an empty alt text                     | Always on                                                                                              |
-| `heading-level`                | Invalid heading level progression (e.g., H2 → H4 skip) | Toggle: `--enable-heading-level-check` (default **on**) / `--min-heading` (default **2**)              |
-| `duplicate-heading`            | Duplicate headings within one file                      | Toggle: `--enable-duplicate-heading-check` (default **on**)                                            |
-| `no-multiple-blank-lines`      | Multiple consecutive blank lines                        | Toggle: `--enable-no-multiple-blank-lines-check` (default **on**)                                      |
-| `external-link`                | External links that fail validation                     | Toggle: `--enable-link-check` (default **off**). Skips URLs that match `--skip-link-patterns` (regex). |
-| `no-setext-headings`           | Setext heading used instead of ATX style                | Toggle: `--enable-no-setext-headings-check` (default **on**)                                           |
+| Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
+| ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `final-blank-line`             | Missing final blank line at EOF                                         | Default **on**                                                                                        |
+| `unclosed-code-block`          | Unclosed fenced code blocks (`` ``` ``)                                 | Default **on**                                                                                        |
+| `empty-alt-text`               | Image syntax with an empty alt text                                     | Default **on**                                                                                        |
+| `heading-level`                | Invalid heading level progression (e.g., H2 → H4 skip)                 | Default **on**. Option: `minLevel` (default `2`)                                                      |
+| `fenced-code-language`         | Fenced code blocks without a language identifier                        | Default **on**                                                                                        |
+| `duplicate-heading`            | Duplicate headings within one file                                      | Default **on**                                                                                        |
+| `no-multiple-blank-lines`      | Multiple consecutive blank lines                                        | Default **on**                                                                                        |
+| `no-setext-headings`           | Setext heading used instead of ATX style                                | Default **on**                                                                                        |
+| `single-h1`                    | More than one H1 heading in a file                                      | Default **on**                                                                                        |
+| `blanks-around-headings`       | Headings not surrounded by blank lines                                  | Default **on**                                                                                        |
+| `no-bare-urls`                 | HTTP/HTTPS URLs written as bare text instead of proper Markdown links   | Default **on**                                                                                        |
+| `no-empty-links`               | Links or images with an empty destination (`[]()`, `[](#)`, `[](<>)`)  | Default **on**                                                                                        |
+| `no-emphasis-as-heading`       | Bold/italic text used as a heading substitute instead of ATX headings   | Default **on**. Punctuation-ending spans (`. , ; : ! ? 。 、 ； ： ！ ？`) are excluded              |
+| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
 
 ## Execution details
 
