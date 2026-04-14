@@ -5,45 +5,62 @@ import (
 	"strings"
 )
 
+// matchDoubleDelim returns the inner text if line is entirely wrapped in a
+// two-character delimiter (e.g. "**" or "__"). The inner text must not contain
+// the delimiter itself.
+func matchDoubleDelim(line, delim string) (string, bool) {
+	if len(line) <= len(delim)*2 {
+		return "", false
+	}
+	if !strings.HasPrefix(line, delim) || !strings.HasSuffix(line, delim) {
+		return "", false
+	}
+	inner := line[len(delim) : len(line)-len(delim)]
+	if strings.Contains(inner, delim) {
+		return "", false
+	}
+	return inner, true
+}
+
+// matchSingleDelim returns the inner text if line is entirely wrapped in a
+// single-character delimiter (e.g. '*' or '_') that is not doubled. The inner
+// text must not contain the delimiter character.
+func matchSingleDelim(line string, ch byte) (string, bool) {
+	double := string([]byte{ch, ch})
+	if len(line) <= 2 || line[0] != ch || line[len(line)-1] != ch {
+		return "", false
+	}
+	if strings.HasPrefix(line, double) {
+		return "", false
+	}
+	inner := line[1 : len(line)-1]
+	if strings.ContainsRune(inner, rune(ch)) {
+		return "", false
+	}
+	return inner, true
+}
+
 // emphasisContent extracts the inner text if line is entirely a single bold or
 // italic span. Returns ("", false) when the line is not a bare emphasis span.
 //
-// Recognised forms (CommonMark):
+// Recognized forms (CommonMark):
 //
 //	**text**   __text__   (strong)
 //	*text*     _text_     (emphasis)
 //
 // The span must cover the entire trimmed line — no surrounding text allowed.
 func emphasisContent(line string) (string, bool) {
-	// Strong: **...**
-	if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && len(line) > 4 {
-		inner := line[2 : len(line)-2]
-		if !strings.Contains(inner, "**") {
-			return inner, true
-		}
+	if inner, ok := matchDoubleDelim(line, "**"); ok {
+		return inner, true
 	}
-	// Strong: __...__
-	if strings.HasPrefix(line, "__") && strings.HasSuffix(line, "__") && len(line) > 4 {
-		inner := line[2 : len(line)-2]
-		if !strings.Contains(inner, "__") {
-			return inner, true
-		}
+	if inner, ok := matchDoubleDelim(line, "__"); ok {
+		return inner, true
 	}
-	// Emphasis: *...*  (not **)
-	if len(line) > 2 && line[0] == '*' && line[len(line)-1] == '*' &&
-		!strings.HasPrefix(line, "**") {
-		inner := line[1 : len(line)-1]
-		if !strings.Contains(inner, "*") {
-			return inner, true
-		}
+	if inner, ok := matchSingleDelim(line, '*'); ok {
+		return inner, true
 	}
-	// Emphasis: _..._  (not __)
-	if len(line) > 2 && line[0] == '_' && line[len(line)-1] == '_' &&
-		!strings.HasPrefix(line, "__") {
-		inner := line[1 : len(line)-1]
-		if !strings.Contains(inner, "_") {
-			return inner, true
-		}
+	if inner, ok := matchSingleDelim(line, '_'); ok {
+		return inner, true
 	}
 	return "", false
 }

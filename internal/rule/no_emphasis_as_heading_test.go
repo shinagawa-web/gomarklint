@@ -163,9 +163,9 @@ func TestCheckNoEmphasisAsHeading(t *testing.T) {
 			},
 		},
 		{
-			name:   "invalid: offset shifts line numbers",
+			name:    "invalid: offset shifts line numbers",
 			content: "**Heading**\n",
-			offset: 10,
+			offset:  10,
 			wantErrs: []LintError{
 				{File: "test.md", Line: 11, Message: "no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: **Heading**"},
 			},
@@ -181,6 +181,27 @@ func TestCheckNoEmphasisAsHeading(t *testing.T) {
 		{
 			name:     "valid: empty file",
 			content:  "",
+			wantErrs: nil,
+		},
+		// ── delimiter inside span (not a heading) ────────────────────────────
+		{
+			name:     "valid: double-asterisk with nested delimiter",
+			content:  "**bold**text**\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: double-underscore with nested delimiter",
+			content:  "__under__score__\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: single-asterisk with nested delimiter",
+			content:  "*ital*ic*\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: single-underscore with nested delimiter",
+			content:  "_under_score_\n",
 			wantErrs: nil,
 		},
 	}
