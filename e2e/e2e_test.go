@@ -233,6 +233,24 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "link has empty destination: ![broken image](<>)")
 		assertOutputContains(t, output, "3 issues found")
 	})
+
+	t.Run("NoTrailingSpacesValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/no_trailing_spaces_valid.md", "--config", "config-no-trailing-spaces.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "trailing whitespace found")
+	})
+
+	t.Run("NoTrailingSpacesViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/no_trailing_spaces_violation.md", "--config", "config-no-trailing-spaces.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/no_trailing_spaces_violation.md:")
+		assertOutputContains(t, output, "fixtures/no_trailing_spaces_violation.md:3:")
+		assertOutputContains(t, output, "trailing whitespace found")
+		assertOutputContains(t, output, "fixtures/no_trailing_spaces_violation.md:7:")
+		assertOutputContains(t, output, "2 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -356,7 +374,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "bare URL found")
 		assertOutputContains(t, output, "Errors in fixtures/no_empty_links_violation.md:")
 		assertOutputContains(t, output, "link has empty destination")
-		assertOutputContains(t, output, "Checked 31 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/no_trailing_spaces_violation.md:")
+		assertOutputContains(t, output, "trailing whitespace found")
+		assertOutputContains(t, output, "Checked 33 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
