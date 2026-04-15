@@ -183,6 +183,35 @@ func TestCheckNoEmphasisAsHeading(t *testing.T) {
 			content:  "",
 			wantErrs: nil,
 		},
+		// ── inline code on same line ─────────────────────────────────────────
+		{
+			name:     "valid: emphasis plus inline code on same line",
+			content:  "**Heading** `code`\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: entire line is inline code span",
+			content:  "`**bold**`\n",
+			wantErrs: nil,
+		},
+		// ── nested emphasis with trailing punctuation ─────────────────────────
+		{
+			name:     "valid: triple-asterisk bold-italic ending with colon",
+			content:  "***Note:***\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: triple-asterisk bold-italic ending with period",
+			content:  "***This is a sentence.***\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: triple-asterisk bold-italic without punctuation",
+			content: "***Section Title***\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: ***Section Title***"},
+			},
+		},
 		// ── delimiter inside span (not a heading) ────────────────────────────
 		{
 			name:     "valid: double-asterisk with nested delimiter",

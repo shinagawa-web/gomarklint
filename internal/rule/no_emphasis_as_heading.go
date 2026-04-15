@@ -112,24 +112,21 @@ func CheckNoEmphasisAsHeading(filename string, lines []string, offset int) []Lin
 			continue
 		}
 
-		// Strip inline code before checking so that e.g. `**bold**` is ignored.
-		scanned := trimmed
-		if strings.ContainsRune(trimmed, '`') {
-			scanned = strings.TrimSpace(stripInlineCode(trimmed))
-		}
-
-		inner, ok := emphasisContent(scanned)
+		inner, ok := emphasisContent(trimmed)
 		if !ok {
 			continue
 		}
-		if endsWithPunctuation(inner) {
+		// Trim nested emphasis delimiters from inner before the punctuation
+		// check so that e.g. "***Note:***" (inner="*Note:*") is correctly
+		// recognized as ending with ':' rather than '*'.
+		if endsWithPunctuation(strings.TrimRight(inner, "*_")) {
 			continue
 		}
 
 		errs = append(errs, LintError{
 			File:    filename,
 			Line:    offset + i + 1,
-			Message: fmt.Sprintf("no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: %s", scanned),
+			Message: fmt.Sprintf("no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: %s", trimmed),
 		})
 	}
 
