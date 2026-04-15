@@ -233,6 +233,25 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "link has empty destination: ![broken image](<>)")
 		assertOutputContains(t, output, "3 issues found")
 	})
+
+	t.Run("NoEmphasisAsHeadingValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/no_emphasis_as_heading_valid.md", "--config", "config-no-emphasis-as-heading.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "emphasis used as heading")
+	})
+
+	t.Run("NoEmphasisAsHeadingViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/no_emphasis_as_heading_violation.md", "--config", "config-no-emphasis-as-heading.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/no_emphasis_as_heading_violation.md:")
+		assertOutputContains(t, output, "fixtures/no_emphasis_as_heading_violation.md:3:")
+		assertOutputContains(t, output, "emphasis used as heading, use ATX heading instead: **Section Title**")
+		assertOutputContains(t, output, "fixtures/no_emphasis_as_heading_violation.md:5:")
+		assertOutputContains(t, output, "emphasis used as heading, use ATX heading instead: _Another Heading_")
+		assertOutputContains(t, output, "2 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -356,7 +375,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "bare URL found")
 		assertOutputContains(t, output, "Errors in fixtures/no_empty_links_violation.md:")
 		assertOutputContains(t, output, "link has empty destination")
-		assertOutputContains(t, output, "Checked 31 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/no_emphasis_as_heading_violation.md:")
+		assertOutputContains(t, output, "emphasis used as heading")
+		assertOutputContains(t, output, "Checked 33 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
@@ -365,6 +386,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_headings_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_bare_urls_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_empty_links_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/no_emphasis_as_heading_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {
