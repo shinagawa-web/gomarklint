@@ -385,6 +385,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_headings_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_bare_urls_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_empty_links_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/no_trailing_spaces_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

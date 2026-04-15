@@ -27,7 +27,7 @@ func CheckNoTrailingSpaces(filename string, lines []string, offset int) []LintEr
 		}
 
 		// Strip trailing CR to handle CRLF line endings.
-		stripped := strings.TrimRight(line, "\r")
+		stripped := strings.TrimSuffix(line, "\r")
 		if len(stripped) > 0 && (stripped[len(stripped)-1] == ' ' || stripped[len(stripped)-1] == '\t') {
 			errs = append(errs, LintError{
 				File:    filename,
