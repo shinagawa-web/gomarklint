@@ -260,6 +260,14 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputNotContains(t, output, "list must be followed by a blank line")
 	})
 
+	t.Run("BlanksAroundListsNestedValid", func(t *testing.T) {
+		// Nested list items must not trigger a false positive between parent and child.
+		output := runTest(t, "fixtures/blanks_around_lists_valid.md", "--config", "config-blanks-around-lists.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "fixtures/blanks_around_lists_valid.md:6:")
+		assertOutputNotContains(t, output, "fixtures/blanks_around_lists_valid.md:7:")
+	})
+
 	t.Run("BlanksAroundListsViolation", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/blanks_around_lists_violation.md", "--config", "config-blanks-around-lists.json")
 		if err == nil {
