@@ -166,55 +166,60 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
+// collectLineErrors runs all non-network rule checks and returns their errors.
+func (l *Linter) collectLineErrors(path string, lines []string, offset int) []rule.LintError {
+	var errs []rule.LintError
+	if l.config.IsEnabled("final-blank-line") {
+		errs = append(errs, l.withSeverity(rule.CheckFinalBlankLine(path, lines, offset), "final-blank-line")...)
+	}
+	if l.config.IsEnabled("unclosed-code-block") {
+		errs = append(errs, l.withSeverity(rule.CheckUnclosedCodeBlocks(path, lines, offset), "unclosed-code-block")...)
+	}
+	if l.config.IsEnabled("empty-alt-text") {
+		errs = append(errs, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
+	}
+	if l.config.IsEnabled("heading-level") {
+		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
+	}
+	if l.config.IsEnabled("fenced-code-language") {
+		errs = append(errs, l.withSeverity(rule.CheckFencedCodeLanguage(path, lines, offset), "fenced-code-language")...)
+	}
+	if l.config.IsEnabled("duplicate-heading") {
+		errs = append(errs, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
+	}
+	if l.config.IsEnabled("no-multiple-blank-lines") {
+		errs = append(errs, l.withSeverity(rule.CheckNoMultipleBlankLines(path, lines, offset), "no-multiple-blank-lines")...)
+	}
+	if l.config.IsEnabled("no-setext-headings") {
+		errs = append(errs, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
+	}
+	if l.config.IsEnabled("single-h1") {
+		errs = append(errs, l.withSeverity(rule.CheckSingleH1(path, lines, offset), "single-h1")...)
+	}
+	if l.config.IsEnabled("blanks-around-headings") {
+		errs = append(errs, l.withSeverity(rule.CheckBlanksAroundHeadings(path, lines, offset), "blanks-around-headings")...)
+	}
+	if l.config.IsEnabled("no-bare-urls") {
+		errs = append(errs, l.withSeverity(rule.CheckNoBareURLs(path, lines, offset), "no-bare-urls")...)
+	}
+	if l.config.IsEnabled("no-empty-links") {
+		errs = append(errs, l.withSeverity(rule.CheckNoEmptyLinks(path, lines, offset), "no-empty-links")...)
+	}
+	if l.config.IsEnabled("no-emphasis-as-heading") {
+		errs = append(errs, l.withSeverity(rule.CheckNoEmphasisAsHeading(path, lines, offset), "no-emphasis-as-heading")...)
+	}
+	if l.config.IsEnabled("blanks-around-lists") {
+		errs = append(errs, l.withSeverity(rule.CheckBlanksAroundLists(path, lines, offset), "blanks-around-lists")...)
+	}
+	return errs
+}
+
 // collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")
 
-	var allErrors []rule.LintError
-
-	if l.config.IsEnabled("final-blank-line") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckFinalBlankLine(path, lines, offset), "final-blank-line")...)
-	}
-	if l.config.IsEnabled("unclosed-code-block") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckUnclosedCodeBlocks(path, lines, offset), "unclosed-code-block")...)
-	}
-	if l.config.IsEnabled("empty-alt-text") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
-	}
-	if l.config.IsEnabled("heading-level") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
-	}
-	if l.config.IsEnabled("fenced-code-language") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckFencedCodeLanguage(path, lines, offset), "fenced-code-language")...)
-	}
-	if l.config.IsEnabled("duplicate-heading") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
-	}
-	if l.config.IsEnabled("no-multiple-blank-lines") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoMultipleBlankLines(path, lines, offset), "no-multiple-blank-lines")...)
-	}
-	if l.config.IsEnabled("no-setext-headings") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
-	}
-	if l.config.IsEnabled("single-h1") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckSingleH1(path, lines, offset), "single-h1")...)
-	}
-	if l.config.IsEnabled("blanks-around-headings") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckBlanksAroundHeadings(path, lines, offset), "blanks-around-headings")...)
-	}
-	if l.config.IsEnabled("no-bare-urls") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoBareURLs(path, lines, offset), "no-bare-urls")...)
-	}
-	if l.config.IsEnabled("no-empty-links") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoEmptyLinks(path, lines, offset), "no-empty-links")...)
-	}
-	if l.config.IsEnabled("no-emphasis-as-heading") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckNoEmphasisAsHeading(path, lines, offset), "no-emphasis-as-heading")...)
-	}
-	if l.config.IsEnabled("blanks-around-lists") {
-		allErrors = append(allErrors, l.withSeverity(rule.CheckBlanksAroundLists(path, lines, offset), "blanks-around-lists")...)
-	}
+	allErrors := l.collectLineErrors(path, lines, offset)
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {

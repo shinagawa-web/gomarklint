@@ -94,7 +94,7 @@ func TestCheckBlanksAroundLists(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid: multiple list blocks with violations",
+			name:    "invalid: multiple list blocks with violations",
 			content: "Some text\n- item 1\n\nOther text\n- item 2\nEnd text\n",
 			wantErrs: []LintError{
 				{File: "test.md", Line: 2, Message: "blanks-around-lists: list must be preceded by a blank line"},
