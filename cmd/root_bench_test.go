@@ -49,11 +49,11 @@ func generateComplexMarkdown(sections int) string {
 
 		// Image
 		if i%4 == 0 {
-			sb.WriteString(fmt.Sprintf("![Diagram %d](diagram%d.png)\n\n", i, i))
+			fmt.Fprintf(&sb, "![Diagram %d](diagram%d.png)\n\n", i, i)
 		}
 
 		// Subsection
-		sb.WriteString(fmt.Sprintf("### Subsection %d.1\n\n", i))
+		fmt.Fprintf(&sb, "### Subsection %d.1\n\n", i)
 		sb.WriteString("More detailed information goes here.\n\n")
 	}
 
