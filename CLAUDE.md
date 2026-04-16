@@ -17,6 +17,7 @@ Use `make` targets — do not run raw `go build` / `go test` commands.
 
 - **Commits**: no `Co-Authored-By` trailer
 - **Updating a feature branch**: `git fetch origin main && git rebase origin/main` — never merge main into a feature branch
+- **Pre-push hook**: run `make install-hooks` once after cloning to automatically run lint and unit tests before each push
 
 ## GitHub (issues, PRs, comments, commit messages)
 
