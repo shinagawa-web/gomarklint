@@ -497,6 +497,25 @@ func TestRun_NoEmphasisAsHeading(t *testing.T) {
 	}
 }
 
+func TestRun_BlanksAroundLists(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["blanks-around-lists"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "lists.md")
+	if err := os.WriteFile(testFile, []byte("Some text\n- item 1\n- item 2\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for list not preceded by blank line")
+	}
+}
+
 func TestRun_WarningSeverity(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = &config.RuleConfig{
