@@ -31,7 +31,7 @@ When creating an issue for a new lint rule:
 2. Add a follow-up **comment** titled `## Implementation Plan` containing:
    - `### Files to create` — new files list
    - `### Files to modify` — modified files list
-   - `### Checklist` — implementation, tests, config registration, linter integration, e2e, `go test ./...`
+   - `### Checklist` — implementation, tests, config registration, linter integration, e2e, `make test-all`
 
 See [#106](https://github.com/shinagawa-web/gomarklint/issues/106#issuecomment-4205193874) as the canonical example.
 
