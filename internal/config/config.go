@@ -23,6 +23,7 @@ const DefaultConfigJSON = `{
     "no-bare-urls": true,
     "no-empty-links": true,
     "no-emphasis-as-heading": true,
+    "blanks-around-lists": true,
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
   "include": ["README.md", "testdata"],
@@ -260,6 +261,11 @@ func Default() Config {
 				Options:  map[string]interface{}{},
 			},
 			"no-emphasis-as-heading": {
+				Enabled:  true,
+				Severity: SeverityError,
+				Options:  map[string]interface{}{},
+			},
+			"blanks-around-lists": {
 				Enabled:  true,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{},

@@ -212,6 +212,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	if l.config.IsEnabled("no-emphasis-as-heading") {
 		allErrors = append(allErrors, l.withSeverity(rule.CheckNoEmphasisAsHeading(path, lines, offset), "no-emphasis-as-heading")...)
 	}
+	if l.config.IsEnabled("blanks-around-lists") {
+		allErrors = append(allErrors, l.withSeverity(rule.CheckBlanksAroundLists(path, lines, offset), "blanks-around-lists")...)
+	}
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
