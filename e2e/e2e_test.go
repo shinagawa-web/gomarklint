@@ -642,32 +642,59 @@ func TestE2E_Severity(t *testing.T) {
 }
 
 func TestE2E_DisableComments(t *testing.T) {
-	t.Run("BlockDisableSuppressesViolation", func(t *testing.T) {
-		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
-		if err == nil {
-			t.Error("expected exit 1 (unreachable violations remain)")
-		}
-		// line 4 suppressed by block disable
+	// fixture line map:
+	//  4  suppressed: <!-- gomarklint-disable -->
+	//  6  reported:   after <!-- gomarklint-enable -->
+	//  9  suppressed: <!-- gomarklint-disable no-bare-urls -->
+	// 11  reported:   after <!-- gomarklint-enable no-bare-urls -->
+	// 13  suppressed: <!-- gomarklint-disable-line -->
+	// 15  suppressed: <!-- gomarklint-disable-line no-bare-urls -->
+	// 18  suppressed: <!-- gomarklint-disable-next-line -->
+	// 21  suppressed: <!-- gomarklint-disable-next-line no-bare-urls -->
+
+	t.Run("BlockDisableAll", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
 		assertOutputNotContains(t, output, "fixtures/disable_comment.md:4:")
 	})
 
-	t.Run("DisableLineSuppressesViolation", func(t *testing.T) {
-		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
-		// line 7 suppressed by disable-line
-		assertOutputNotContains(t, output, "fixtures/disable_comment.md:7:")
-	})
-
-	t.Run("DisableNextLineSuppressesViolation", func(t *testing.T) {
-		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
-		// line 10 suppressed by disable-next-line
-		assertOutputNotContains(t, output, "fixtures/disable_comment.md:10:")
-	})
-
-	t.Run("ViolationOutsideDirectiveIsReported", func(t *testing.T) {
+	t.Run("EnableAll", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
 		if err == nil {
-			t.Error("expected exit 1: line 12 has no directive and should be reported")
+			t.Error("expected exit 1: violations after enable should be reported")
 		}
-		assertOutputContains(t, output, "fixtures/disable_comment.md:12:")
+		assertOutputContains(t, output, "fixtures/disable_comment.md:6:")
+	})
+
+	t.Run("BlockDisableNamedRule", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:9:")
+	})
+
+	t.Run("EnableNamedRule", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		if err == nil {
+			t.Error("expected exit 1: violations after enable should be reported")
+		}
+		assertOutputContains(t, output, "fixtures/disable_comment.md:11:")
+	})
+
+	t.Run("DisableLineAll", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:13:")
+	})
+
+	t.Run("DisableLineNamedRule", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:15:")
+	})
+
+	t.Run("DisableNextLineAll", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:18:")
+	})
+
+	t.Run("DisableNextLineNamedRule", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:21:")
 	})
 }
