@@ -63,9 +63,20 @@ go install github.com/shinagawa-web/gomarklint@latest
 ### GitHub Actions
 
 ```yaml
-- uses: shinagawa-web/gomarklint-action@v1
-  with:
-    args: '.'
+name: gomarklint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shinagawa-web/gomarklint-action@v1
+        with:
+          args: '.'
 ```
 
 Full options and examples: [gomarklint-action](https://github.com/shinagawa-web/gomarklint-action)
