@@ -551,3 +551,101 @@ func TestRun_WarningSeverity(t *testing.T) {
 		}
 	}
 }
+
+func TestRun_DisableComment_BlockDisableAll(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+
+	content := "# Heading\n\n<!-- gomarklint-disable -->\nhttps://example.com\n<!-- gomarklint-enable -->\nhttps://example.com\n"
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", content)
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error (line 6), got %d: %v", len(errors), errors)
+	}
+	if errors[0].Line != 6 {
+		t.Errorf("expected error on line 6, got line %d", errors[0].Line)
+	}
+}
+
+func TestRun_DisableComment_BlockDisableNamedRule(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+	cfg.Rules["no-empty-links"] = on()
+
+	content := "<!-- gomarklint-disable no-bare-urls -->\nhttps://example.com\n[]()\n<!-- gomarklint-enable no-bare-urls -->\nhttps://example.com\n"
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", content)
+
+	// line 3 (empty link) should still be reported; line 2 (bare URL) should be suppressed
+	// line 5 (bare URL after enable) should be reported
+	var lines []int
+	for _, e := range errors {
+		lines = append(lines, e.Line)
+	}
+	for _, e := range errors {
+		if e.Line == 2 && e.Rule == "no-bare-urls" {
+			t.Errorf("line 2 no-bare-urls should be suppressed, got %v", e)
+		}
+	}
+	reported := map[int]bool{}
+	for _, e := range errors {
+		reported[e.Line] = true
+	}
+	if !reported[3] {
+		t.Errorf("line 3 (empty link) should be reported, errors: %v", lines)
+	}
+	if !reported[5] {
+		t.Errorf("line 5 (bare URL after enable) should be reported, errors: %v", lines)
+	}
+}
+
+func TestRun_DisableComment_DisableLine(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+
+	content := "https://example.com <!-- gomarklint-disable-line no-bare-urls -->\nhttps://example.com\n"
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", content)
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error (line 2), got %d: %v", len(errors), errors)
+	}
+	if errors[0].Line != 2 {
+		t.Errorf("expected error on line 2, got line %d", errors[0].Line)
+	}
+}
+
+func TestRun_DisableComment_DisableNextLine(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+
+	content := "<!-- gomarklint-disable-next-line no-bare-urls -->\nhttps://example.com\nhttps://example.com\n"
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", content)
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error (line 3), got %d: %v", len(errors), errors)
+	}
+	if errors[0].Line != 3 {
+		t.Errorf("expected error on line 3, got line %d", errors[0].Line)
+	}
+}
+
+func TestRun_DisableComment_NoDisableKeyword_NoOverhead(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-bare-urls"] = on()
+
+	content := "<!-- some comment -->\nhttps://example.com\n"
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", content)
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}

@@ -8,6 +8,7 @@ import (
 type LintError struct {
 	File     string `json:"file"`
 	Line     int    `json:"line"`
+	Rule     string `json:"rule,omitempty"`
 	Message  string `json:"message"`
 	Severity string `json:"severity"`
 }

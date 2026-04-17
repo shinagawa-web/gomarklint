@@ -407,7 +407,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "emphasis used as heading")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_lists_violation.md:")
 		assertOutputContains(t, output, "list must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 35 file(s)")
+		assertOutputContains(t, output, "Checked 36 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
@@ -638,5 +638,36 @@ func TestE2E_Severity(t *testing.T) {
 		}
 		assertOutputContains(t, output, "No issues found")
 		assertOutputNotContains(t, output, "Setext heading found")
+	})
+}
+
+func TestE2E_DisableComments(t *testing.T) {
+	t.Run("BlockDisableSuppressesViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		if err == nil {
+			t.Error("expected exit 1 (unreachable violations remain)")
+		}
+		// line 4 suppressed by block disable
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:4:")
+	})
+
+	t.Run("DisableLineSuppressesViolation", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		// line 7 suppressed by disable-line
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:7:")
+	})
+
+	t.Run("DisableNextLineSuppressesViolation", func(t *testing.T) {
+		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		// line 10 suppressed by disable-next-line
+		assertOutputNotContains(t, output, "fixtures/disable_comment.md:10:")
+	})
+
+	t.Run("ViolationOutsideDirectiveIsReported", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		if err == nil {
+			t.Error("expected exit 1: line 12 has no directive and should be reported")
+		}
+		assertOutputContains(t, output, "fixtures/disable_comment.md:12:")
 	})
 }
