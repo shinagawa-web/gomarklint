@@ -135,10 +135,11 @@ func (l *Linter) LintContent(path string, content string) ([]rule.LintError, int
 	return l.collectErrors(path, content)
 }
 
-// withSeverity tags each error in errs with the configured severity for ruleName.
+// withSeverity tags each error in errs with the configured severity and rule name.
 func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.LintError {
 	sev := l.config.RuleSeverity(ruleName)
 	for i := range errs {
+		errs[i].Rule = ruleName
 		errs[i].Severity = sev
 	}
 	return errs
@@ -219,6 +220,11 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 	body, offset := file.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")
 
+	var disabled disabledSet
+	if strings.Contains(body, "gomarklint-disable") {
+		disabled = parseDisableComments(lines, offset)
+	}
+
 	allErrors := l.collectLineErrors(path, lines, offset)
 
 	linksChecked := 0
@@ -226,6 +232,16 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.urlCache)
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
+	}
+
+	if len(disabled) > 0 {
+		filtered := allErrors[:0]
+		for _, e := range allErrors {
+			if !disabled.isDisabled(e.Line, e.Rule) {
+				filtered = append(filtered, e)
+			}
+		}
+		allErrors = filtered
 	}
 
 	sort.Slice(allErrors, func(i, j int) bool {
