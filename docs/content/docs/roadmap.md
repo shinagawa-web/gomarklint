@@ -21,15 +21,12 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 
 ## Rules — Planned
 
-### Priority 1
+### Priority 2
 
 - [ ] `max-line-length`: Enforce a maximum line length (MD013)
 - [ ] `no-hard-tabs`: No hard tab characters in body text (MD010)
 - [ ] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
-
-### Priority 2
-
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
 - [ ] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
 - [ ] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
