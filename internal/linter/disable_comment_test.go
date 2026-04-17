@@ -215,16 +215,16 @@ func TestParseDisableComments_WithFrontmatterOffset(t *testing.T) {
 
 func TestDisabledSet_IsDisabled(t *testing.T) {
 	set := make(disabledSet)
-	set[10] = nil // all rules
+	set[10] = []string{} // empty non-nil = all rules
 
 	if !set.isDisabled(10, "any-rule") {
-		t.Error("nil entry should disable all rules")
+		t.Error("empty slice entry should disable all rules")
 	}
 	if set.isDisabled(11, "any-rule") {
 		t.Error("unregistered line should not be disabled")
 	}
 
-	set[20] = map[string]struct{}{"no-bare-urls": {}}
+	set[20] = []string{"no-bare-urls"}
 	if !set.isDisabled(20, "no-bare-urls") {
 		t.Error("named rule should be disabled")
 	}

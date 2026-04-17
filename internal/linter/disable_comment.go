@@ -3,55 +3,56 @@ package linter
 import "strings"
 
 // disabledSet maps absolute line numbers to disabled rule names.
-// A nil map value means all rules are disabled on that line.
-type disabledSet map[int]map[string]struct{}
+// An empty (non-nil) slice means all rules are disabled on that line.
+// A non-empty slice lists the specific disabled rule names.
+type disabledSet map[int][]string
 
 func (d disabledSet) isDisabled(line int, ruleName string) bool {
 	rules, ok := d[line]
 	if !ok {
 		return false
 	}
-	if rules == nil {
-		return true
+	if len(rules) == 0 {
+		return true // all rules disabled
 	}
-	_, found := rules[ruleName]
-	return found
+	for _, r := range rules {
+		if r == ruleName {
+			return true
+		}
+	}
+	return false
 }
 
 func (d disabledSet) addLine(line int, ruleNames []string) {
 	if len(ruleNames) == 0 {
-		d[line] = nil
+		d[line] = []string{} // empty non-nil = all rules
 		return
 	}
-	if existing, exists := d[line]; exists && existing == nil {
-		return // already all-disabled; nil takes priority
+	existing, exists := d[line]
+	if exists && len(existing) == 0 {
+		return // all-disabled takes priority
 	}
-	if _, exists := d[line]; !exists {
-		d[line] = make(map[string]struct{})
-	}
-	for _, r := range ruleNames {
-		d[line][r] = struct{}{}
-	}
+	d[line] = append(existing, ruleNames...)
 }
 
 // applyBlockState stamps the current block-level disable state onto absLine in set.
 func applyBlockState(set disabledSet, absLine int, blockAllDisabled bool, blockRules map[string]struct{}) {
 	if blockAllDisabled {
-		set[absLine] = nil
+		set[absLine] = []string{}
 		return
 	}
 	if len(blockRules) == 0 {
 		return
 	}
-	if existing, exists := set[absLine]; exists && existing == nil {
-		return // nil (all-disabled) takes priority
+	existing, exists := set[absLine]
+	if exists && len(existing) == 0 {
+		return // all-disabled takes priority
 	}
-	if _, exists := set[absLine]; !exists {
-		set[absLine] = make(map[string]struct{})
-	}
+	names := make([]string, 0, len(blockRules))
 	for r := range blockRules {
-		set[absLine][r] = struct{}{}
+		names = append(names, r)
 	}
+	set[absLine] = append(existing, names...)
 }
 
 // parseDisableComments scans lines for gomarklint-disable directives and returns

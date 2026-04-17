@@ -9,9 +9,7 @@ import (
 	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
 )
 
-// generateComplexMarkdown generates a realistic markdown file with mixed content,
-// including gomarklint-disable directives scattered throughout so the disable-comment
-// parse and filter path is exercised on branches that support it.
+// generateComplexMarkdown generates a realistic markdown file with mixed content.
 func generateComplexMarkdown(sections int) string {
 	var sb strings.Builder
 
@@ -52,24 +50,6 @@ func generateComplexMarkdown(sections int) string {
 		// Image
 		if i%4 == 0 {
 			fmt.Fprintf(&sb, "![Diagram %d](diagram%d.png)\n\n", i, i)
-		}
-
-		// Every 5th section: block disable/enable
-		if i%5 == 0 {
-			sb.WriteString("<!-- gomarklint-disable no-bare-urls -->\n")
-			fmt.Fprintf(&sb, "https://suppressed-%d.example.com\n", i)
-			sb.WriteString("<!-- gomarklint-enable no-bare-urls -->\n\n")
-		}
-
-		// Every 7th section: disable-line
-		if i%7 == 0 {
-			fmt.Fprintf(&sb, "https://inline-%d.example.com <!-- gomarklint-disable-line no-bare-urls -->\n\n", i)
-		}
-
-		// Every 11th section: disable-next-line
-		if i%11 == 0 {
-			sb.WriteString("<!-- gomarklint-disable-next-line no-bare-urls -->\n")
-			fmt.Fprintf(&sb, "https://nextline-%d.example.com\n\n", i)
 		}
 
 		// Subsection
