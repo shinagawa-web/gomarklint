@@ -23,6 +23,7 @@ const DefaultConfigJSON = `{
     "no-bare-urls": true,
     "no-empty-links": true,
     "no-emphasis-as-heading": true,
+    "blanks-around-lists": true,
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
   "include": ["README.md", "testdata"],
@@ -194,75 +195,33 @@ func (c *Config) RuleSeverity(name string) string {
 	return string(rc.Severity)
 }
 
+// enabledRule returns a RuleConfig with Enabled=true, Severity=error, and no options.
+func enabledRule() *RuleConfig {
+	return &RuleConfig{Enabled: true, Severity: SeverityError, Options: map[string]interface{}{}}
+}
+
 // Default returns the default configuration with all standard rules enabled.
 func Default() Config {
 	return Config{
 		Default: true,
 		Rules: map[string]*RuleConfig{
-			"final-blank-line": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"unclosed-code-block": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"empty-alt-text": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"fenced-code-language": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
+			"final-blank-line":        enabledRule(),
+			"unclosed-code-block":     enabledRule(),
+			"empty-alt-text":          enabledRule(),
+			"fenced-code-language":    enabledRule(),
+			"duplicate-heading":       enabledRule(),
+			"no-multiple-blank-lines": enabledRule(),
+			"no-setext-headings":      enabledRule(),
+			"single-h1":               enabledRule(),
+			"blanks-around-headings":  enabledRule(),
+			"no-bare-urls":            enabledRule(),
+			"no-empty-links":          enabledRule(),
+			"no-emphasis-as-heading":  enabledRule(),
+			"blanks-around-lists":     enabledRule(),
 			"heading-level": {
 				Enabled:  true,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{"minLevel": float64(2)},
-			},
-			"duplicate-heading": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"no-multiple-blank-lines": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"no-setext-headings": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"single-h1": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"blanks-around-headings": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"no-bare-urls": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"no-empty-links": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
-			},
-			"no-emphasis-as-heading": {
-				Enabled:  true,
-				Severity: SeverityError,
-				Options:  map[string]interface{}{},
 			},
 			"external-link": {
 				Enabled:  false,
