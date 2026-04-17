@@ -3,42 +3,69 @@ title: "Roadmap"
 weight: 8
 ---
 
-# Roadmap (Post v1.0.0)
+# Roadmap
 
-## Core Quality & Rule Expansion
+## Rules — Completed
 
-- [ ] `max-line-length`: Enforce maximum line width
-- [x] `no-multiple-consecutive-blank-lines`: Disallow multiple blank lines
-- [ ] `image-alt-text` improvements: Enforce alt text style and length
-- [ ] Rule severity levels (e.g. `warning`, `error`)
+All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shinagawa-web/gomarklint/issues/76) have landed.
+
+- [x] `no-multiple-blank-lines`: Disallow multiple consecutive blank lines
+- [x] `fenced-code-language`: Fenced code blocks must specify a language
+- [x] `single-h1`: Only one H1 heading per document
+- [x] `blanks-around-headings`: Headings must be surrounded by blank lines
+- [x] `no-bare-urls`: URLs must use proper link syntax, not bare text
+- [x] `no-empty-links`: Links must not have an empty destination
+- [x] `no-emphasis-as-heading`: Bold/italic must not substitute for headings
+- [x] `no-setext-headings`: Setext-style headings must use ATX style instead
+- [x] `blanks-around-lists`: Lists must be surrounded by blank lines
+
+## Rules — Planned
+
+### Priority 1
+
+- [ ] `max-line-length`: Enforce a maximum line length (MD013)
+- [ ] `no-hard-tabs`: No hard tab characters in body text (MD010)
+- [ ] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
+- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
+
+### Priority 2
+
+- [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
+- [ ] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
+- [ ] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
+- [ ] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
+
+### Priority 3
+
+- [ ] `link-fragments`: Internal anchor links must resolve to an existing heading (MD051)
+- [ ] `no-undefined-references`: Reference-style links/images must have a matching definition (MD052/MD053)
+- [ ] `table-formatting`: Table structure and cell-padding consistency (MD055/MD056/MD058)
+- [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here") (MD059)
 
 ## Extensibility
 
+- [ ] Allow disabling rules via inline comments (e.g. `<!-- gomarklint-disable -->`)
 - [ ] Plugin system for custom rules (via Go interface or external binary)
-- [ ] Allow disabling specific rules via inline comments (e.g. `<!-- gomarklint-disable -->`)
 
-## Testing & Stability
-
-- [ ] Snapshot testing support for easier rule verification
-- [ ] Regression test suite for real-world Markdown samples
-
-## Developer UX
-
-- [ ] VS Code extension using gomarklint core
-- [ ] Interactive mode (e.g. prompt to fix or explain errors)
-- [ ] File caching for faster repeated linting
-
-## Ecosystem & CI
+## Distribution & CI
 
 - [x] GitHub Actions integration
 - [x] Prebuilt binaries via `goreleaser` (macOS/Linux/Windows)
-- [ ] Homebrew formula
+- [x] Homebrew tap (`brew install shinagawa-web/tap/gomarklint`)
+- [x] npm package (`npm install -g @shinagawa-web/gomarklint`)
 - [ ] Docker image (e.g. `ghcr.io/shinagawa-web/gomarklint`)
+
+## Developer UX
+
+- [x] Rule severity levels (`error` / `warning` / `off`)
+- [ ] Rule messages with IDs and documentation links
+- [ ] File caching for faster repeated linting
+- [ ] VS Code extension using gomarklint core
+- [ ] Interactive mode (e.g. prompt to fix or explain errors)
 
 ## Internationalization
 
-- [ ] Localized messages (e.g. Japanese, Spanish)
-- [ ] Rule messages with IDs and documentation links
+- [ ] Localized error messages (e.g. Japanese, Spanish)
 
 ---
 
