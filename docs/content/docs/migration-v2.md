@@ -1,6 +1,6 @@
 ---
 title: "Migrating to v2"
-weight: 9
+weight: 10
 ---
 
 # Migrating to v2

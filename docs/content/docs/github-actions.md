@@ -1,6 +1,6 @@
 ---
 title: "GitHub Actions"
-weight: 7
+weight: 8
 ---
 
 # GitHub Actions Integration
