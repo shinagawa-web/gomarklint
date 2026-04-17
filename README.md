@@ -8,7 +8,7 @@
 
 English | [日本語](README.ja.md)
 
-> A fast, opinionated Markdown linter. Built in Go, designed for CI.
+> A fast Markdown linter built in Go. Single binary, no Node.js required — with built-in HTTP link validation.
 
 **Quick install** (macOS / Linux):
 
@@ -57,6 +57,30 @@ go install github.com/shinagawa-web/gomarklint@latest
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).
 - Process **100,000+ lines in ~170ms** — fast enough for local dev, robust enough for CI.
+
+## CI Integration
+
+### GitHub Actions
+
+```yaml
+- uses: shinagawa-web/gomarklint-action@v1
+  with:
+    args: '.'
+```
+
+Full options and examples: [gomarklint-action](https://github.com/shinagawa-web/gomarklint-action)
+
+### pre-commit
+
+Add to your `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/shinagawa-web/gomarklint
+    rev: v2.8.0
+    hooks:
+      - id: gomarklint
+```
 
 ## Documentation
 
