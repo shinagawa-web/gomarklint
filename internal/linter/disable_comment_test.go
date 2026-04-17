@@ -79,6 +79,11 @@ func TestParseDirectiveLine(t *testing.T) {
 			line:          "<!-- gomarklint-disable",
 			wantDirective: "",
 		},
+		{
+			name:          "prefix only, no command",
+			line:          "<!-- gomarklint- -->",
+			wantDirective: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -258,5 +263,81 @@ func TestParseDisableComments_EnableNamedRuleInsideBlockDisableAll(t *testing.T)
 	}
 	if set.isDisabled(6, "no-bare-urls") {
 		t.Error("line 6 should be fully enabled")
+	}
+}
+
+// addLine: all-disabled (no exceptions) priority when line already fully disabled
+func TestAddLine_AllDisabledTakesPriority(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable-next-line -->", // line 1: addLine(2, nil)
+		"x <!-- gomarklint-disable-line -->",    // line 2: addLine(2, nil) again — should be no-op
+	}
+	set := parseDisableComments(lines, 0)
+
+	if !set.isDisabled(2, "any-rule") {
+		t.Error("line 2 should still be all-disabled")
+	}
+}
+
+// applyTo: block-all-disabled skips line already fully disabled (set by disable-next-line)
+func TestApplyTo_BlockAllDisabledSkipsAlreadyFullyDisabledLine(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable -->",           // line 1
+		"<!-- gomarklint-disable-next-line -->", // line 2: addLine(3, nil)
+		"https://example.com",                   // line 3: applyTo sees existing all-disabled
+		"<!-- gomarklint-enable -->",            // line 4
+	}
+	set := parseDisableComments(lines, 0)
+
+	if !set.isDisabled(3, "any-rule") {
+		t.Error("line 3 should be all-disabled")
+	}
+}
+
+// applyTo: block-named-disable skips line already all-disabled (set by disable-next-line)
+func TestApplyTo_BlockNamedDisableSkipsAllDisabledLine(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable no-bare-urls -->", // line 1
+		"<!-- gomarklint-disable-next-line -->",    // line 2: addLine(3, nil) → all-disabled
+		"https://example.com",                      // line 3
+		"<!-- gomarklint-enable no-bare-urls -->",  // line 4
+	}
+	set := parseDisableComments(lines, 0)
+
+	if !set.isDisabled(3, "heading-level") {
+		t.Error("line 3 should be all-disabled (disable-next-line wins)")
+	}
+}
+
+// applyTo: block-all-disable overwrites an existing named-disable entry
+func TestApplyTo_BlockAllDisabledOverwritesNamedDisabledLine(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable-next-line no-bare-urls -->", // line 1: addLine(2, ["no-bare-urls"])
+		"<!-- gomarklint-disable -->",                        // line 2: applyTo sees existing named entry, overwrites with all-disabled
+		"https://example.com",                                // line 3
+		"<!-- gomarklint-enable -->",                         // line 4
+	}
+	set := parseDisableComments(lines, 0)
+
+	// line 2 should be all-disabled (block-all overwrites the named-disable from disable-next-line)
+	if !set.isDisabled(2, "heading-level") {
+		t.Error("line 2 should be all-disabled after block-all overwrite")
+	}
+}
+
+// removeAll: keeps rules not in the remove list
+func TestRemoveAll_KeepsUnmatchedRules(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable no-bare-urls heading-level -->", // line 1
+		"<!-- gomarklint-enable no-bare-urls -->",                // line 2: only no-bare-urls re-enabled
+		"https://example.com",                                    // line 3
+	}
+	set := parseDisableComments(lines, 0)
+
+	if set.isDisabled(3, "no-bare-urls") {
+		t.Error("line 3 no-bare-urls should be re-enabled")
+	}
+	if !set.isDisabled(3, "heading-level") {
+		t.Error("line 3 heading-level should still be disabled")
 	}
 }
