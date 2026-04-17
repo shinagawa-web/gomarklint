@@ -19,3 +19,8 @@ https://next-line-all-suppressed.example.com
 
 <!-- gomarklint-disable-next-line no-bare-urls -->
 https://next-line-named-suppressed.example.com
+
+https://wrong-rule-name.example.com <!-- gomarklint-disable-line no-bare-url -->
+
+<!-- gomarklint-disable-next-line nonexistent-rule -->
+https://nonexistent-rule.example.com

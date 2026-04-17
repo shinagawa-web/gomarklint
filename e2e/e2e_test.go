@@ -651,6 +651,8 @@ func TestE2E_DisableComments(t *testing.T) {
 	// 15  suppressed: <!-- gomarklint-disable-line no-bare-urls -->
 	// 18  suppressed: <!-- gomarklint-disable-next-line -->
 	// 21  suppressed: <!-- gomarklint-disable-next-line no-bare-urls -->
+	// 23  reported:   typo rule name "no-bare-url" (missing trailing 's') — disable has no effect
+	// 26  reported:   nonexistent rule "nonexistent-rule" — disable has no effect
 
 	t.Run("BlockDisableAll", func(t *testing.T) {
 		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
@@ -696,5 +698,21 @@ func TestE2E_DisableComments(t *testing.T) {
 	t.Run("DisableNextLineNamedRule", func(t *testing.T) {
 		output := runTest(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
 		assertOutputNotContains(t, output, "fixtures/disable_comment.md:21:")
+	})
+
+	t.Run("WrongRuleName", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		if err == nil {
+			t.Error("expected exit 1: typo rule name should not suppress the violation")
+		}
+		assertOutputContains(t, output, "fixtures/disable_comment.md:23:")
+	})
+
+	t.Run("NonexistentRule", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/disable_comment.md", "--config", "config-no-bare-urls.json")
+		if err == nil {
+			t.Error("expected exit 1: nonexistent rule name should not suppress the violation")
+		}
+		assertOutputContains(t, output, "fixtures/disable_comment.md:26:")
 	})
 }
