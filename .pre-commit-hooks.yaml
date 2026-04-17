@@ -1,0 +1,6 @@
+- id: gomarklint
+  name: gomarklint
+  description: Lint Markdown files with gomarklint
+  language: golang
+  entry: gomarklint
+  types: [markdown]
