@@ -3,22 +3,23 @@ package rule
 import "strings"
 
 // isListItem reports whether line is a list item (unordered or ordered),
-// allowing any amount of leading indentation.
+// allowing any amount of leading indentation. The marker must be followed by
+// at least one space or tab, matching CommonMark's list item definition.
 func isListItem(line string) bool {
 	s := strings.TrimLeft(line, " \t")
 	if len(s) < 2 {
 		return false
 	}
-	// Unordered: "- ", "* ", or "+ "
-	if (s[0] == '-' || s[0] == '*' || s[0] == '+') && s[1] == ' ' {
+	// Unordered: "- ", "* ", or "+ " (space or tab after marker)
+	if (s[0] == '-' || s[0] == '*' || s[0] == '+') && (s[1] == ' ' || s[1] == '\t') {
 		return true
 	}
-	// Ordered: one or more digits followed by '.' or ')' then a space
+	// Ordered: one or more digits followed by '.' or ')' then a space or tab
 	i := 0
 	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
 		i++
 	}
-	if i > 0 && i < len(s) && (s[i] == '.' || s[i] == ')') && i+1 < len(s) && s[i+1] == ' ' {
+	if i > 0 && i < len(s) && (s[i] == '.' || s[i] == ')') && i+1 < len(s) && (s[i+1] == ' ' || s[i+1] == '\t') {
 		return true
 	}
 	return false

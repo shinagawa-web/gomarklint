@@ -135,6 +135,30 @@ func TestCheckBlanksAroundLists(t *testing.T) {
 				{File: "test.md", Line: 2, Message: "blanks-around-lists: list must be preceded by a blank line"},
 			},
 		},
+		{
+			name:     "valid: unordered marker followed by tab",
+			content:  "Some text\n\n-\titem 1\n\nMore text\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: ordered marker followed by tab",
+			content:  "Some text\n\n1.\tFirst\n\nMore text\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: tab-separated unordered list missing blank before",
+			content: "Some text\n-\titem 1\n\nMore text\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "blanks-around-lists: list must be preceded by a blank line"},
+			},
+		},
+		{
+			name:    "invalid: tab-separated ordered list missing blank before",
+			content: "Some text\n1.\tFirst\n\nMore text\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "blanks-around-lists: list must be preceded by a blank line"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
