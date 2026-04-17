@@ -10,19 +10,36 @@ func isListItem(line string) bool {
 	if len(s) < 2 {
 		return false
 	}
-	// Unordered: "- ", "* ", or "+ " (space or tab after marker)
-	if (s[0] == '-' || s[0] == '*' || s[0] == '+') && (s[1] == ' ' || s[1] == '\t') {
-		return true
+	return isUnorderedListItem(s) || isOrderedListItem(s)
+}
+
+// isUnorderedListItem reports whether s (already left-trimmed) starts with an
+// unordered list marker ("- ", "* ", or "+ ").
+func isUnorderedListItem(s string) bool {
+	if s[0] != '-' && s[0] != '*' && s[0] != '+' {
+		return false
 	}
-	// Ordered: one or more digits followed by '.' or ')' then a space or tab
+	return s[1] == ' ' || s[1] == '\t'
+}
+
+// isOrderedListItem reports whether s (already left-trimmed) starts with an
+// ordered list marker: one or more digits followed by '.' or ')' then a space
+// or tab.
+func isOrderedListItem(s string) bool {
 	i := 0
 	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
 		i++
 	}
-	if i > 0 && i < len(s) && (s[i] == '.' || s[i] == ')') && i+1 < len(s) && (s[i+1] == ' ' || s[i+1] == '\t') {
-		return true
+	if i == 0 || i >= len(s) {
+		return false
 	}
-	return false
+	if s[i] != '.' && s[i] != ')' {
+		return false
+	}
+	if i+1 >= len(s) {
+		return false
+	}
+	return s[i+1] == ' ' || s[i+1] == '\t'
 }
 
 // CheckBlanksAroundLists flags list blocks that are not preceded or followed by
