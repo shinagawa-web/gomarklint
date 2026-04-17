@@ -2,20 +2,24 @@ package linter
 
 import "strings"
 
-// disabledSet maps absolute line numbers to disabled rule names.
-// An empty (non-nil) slice means all rules are disabled on that line.
-// A non-empty slice lists the specific disabled rule names.
-type disabledSet map[int][]string
+// lineDisable describes which rules are disabled on a single line.
+// If allDisabled is true, all rules are disabled except those listed in names (exceptions).
+// If allDisabled is false, only the rules listed in names are disabled.
+type lineDisable struct {
+	allDisabled bool
+	names       []string
+}
 
-func (d disabledSet) isDisabled(line int, ruleName string) bool {
-	rules, ok := d[line]
-	if !ok {
-		return false
+func (ld lineDisable) isRuleDisabled(ruleName string) bool {
+	if ld.allDisabled {
+		for _, r := range ld.names {
+			if r == ruleName {
+				return false // exception: explicitly re-enabled
+			}
+		}
+		return true
 	}
-	if len(rules) == 0 {
-		return true // all rules disabled
-	}
-	for _, r := range rules {
+	for _, r := range ld.names {
 		if r == ruleName {
 			return true
 		}
@@ -23,36 +27,57 @@ func (d disabledSet) isDisabled(line int, ruleName string) bool {
 	return false
 }
 
-func (d disabledSet) addLine(line int, ruleNames []string) {
-	if len(ruleNames) == 0 {
-		d[line] = []string{} // empty non-nil = all rules
-		return
+// disabledSet maps absolute line numbers to their disable state.
+type disabledSet map[int]lineDisable
+
+func (d disabledSet) isDisabled(line int, ruleName string) bool {
+	ld, ok := d[line]
+	if !ok {
+		return false
 	}
-	existing, exists := d[line]
-	if exists && len(existing) == 0 {
-		return // all-disabled takes priority
-	}
-	d[line] = append(existing, ruleNames...)
+	return ld.isRuleDisabled(ruleName)
 }
 
-// applyBlockState stamps the current block-level disable state onto absLine in set.
-func applyBlockState(set disabledSet, absLine int, blockAllDisabled bool, blockRules map[string]struct{}) {
-	if blockAllDisabled {
-		set[absLine] = []string{}
+func (d disabledSet) addLine(line int, ruleNames []string) {
+	existing, exists := d[line]
+	if exists && existing.allDisabled && len(existing.names) == 0 {
+		return // all-disabled (no exceptions) takes priority
+	}
+	if len(ruleNames) == 0 {
+		d[line] = lineDisable{allDisabled: true}
 		return
 	}
-	if len(blockRules) == 0 {
+	d[line] = lineDisable{names: append(existing.names, ruleNames...)}
+}
+
+// blockState holds the current block-level disable state while scanning lines.
+type blockState struct {
+	allDisabled bool
+	exceptions  []string // re-enabled rules when allDisabled=true
+	rules       []string // named disabled rules when allDisabled=false
+}
+
+func (bs *blockState) applyTo(set disabledSet, absLine int) {
+	if !bs.allDisabled && len(bs.rules) == 0 {
 		return
 	}
 	existing, exists := set[absLine]
-	if exists && len(existing) == 0 {
+	if bs.allDisabled {
+		if !exists {
+			set[absLine] = lineDisable{allDisabled: true, names: bs.exceptions}
+			return
+		}
+		if existing.allDisabled && len(existing.names) == 0 {
+			return // already fully disabled; keep it
+		}
+		set[absLine] = lineDisable{allDisabled: true, names: bs.exceptions}
+		return
+	}
+	// named-disable mode
+	if exists && existing.allDisabled {
 		return // all-disabled takes priority
 	}
-	names := make([]string, 0, len(blockRules))
-	for r := range blockRules {
-		names = append(names, r)
-	}
-	set[absLine] = append(existing, names...)
+	set[absLine] = lineDisable{names: append(existing.names, bs.rules...)}
 }
 
 // parseDisableComments scans lines for gomarklint-disable directives and returns
@@ -60,8 +85,7 @@ func applyBlockState(set disabledSet, absLine int, blockAllDisabled bool, blockR
 // offset is the frontmatter line count used to compute absolute line numbers.
 func parseDisableComments(lines []string, offset int) disabledSet {
 	set := make(disabledSet)
-	blockAllDisabled := false
-	blockRules := make(map[string]struct{})
+	var bs blockState
 
 	for i, line := range lines {
 		absLine := i + 1 + offset
@@ -70,21 +94,17 @@ func parseDisableComments(lines []string, offset int) disabledSet {
 		switch directive {
 		case "disable":
 			if len(ruleNames) == 0 {
-				blockAllDisabled = true
-				blockRules = make(map[string]struct{})
+				bs = blockState{allDisabled: true}
 			} else {
-				for _, r := range ruleNames {
-					blockRules[r] = struct{}{}
-				}
+				bs.rules = append(bs.rules, ruleNames...)
 			}
 		case "enable":
 			if len(ruleNames) == 0 {
-				blockAllDisabled = false
-				blockRules = make(map[string]struct{})
+				bs = blockState{}
+			} else if bs.allDisabled {
+				bs.exceptions = append(bs.exceptions, ruleNames...)
 			} else {
-				for _, r := range ruleNames {
-					delete(blockRules, r)
-				}
+				bs.rules = removeAll(bs.rules, ruleNames)
 			}
 		case "disable-line":
 			set.addLine(absLine, ruleNames)
@@ -94,10 +114,28 @@ func parseDisableComments(lines []string, offset int) disabledSet {
 			}
 		}
 
-		applyBlockState(set, absLine, blockAllDisabled, blockRules)
+		bs.applyTo(set, absLine)
 	}
 
 	return set
+}
+
+// removeAll returns s with all elements in remove filtered out.
+func removeAll(s []string, remove []string) []string {
+	result := s[:0]
+	for _, v := range s {
+		found := false
+		for _, r := range remove {
+			if v == r {
+				found = true
+				break
+			}
+		}
+		if !found {
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 // parseDirectiveLine extracts the directive keyword and optional rule names

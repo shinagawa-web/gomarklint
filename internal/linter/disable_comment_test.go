@@ -215,20 +215,48 @@ func TestParseDisableComments_WithFrontmatterOffset(t *testing.T) {
 
 func TestDisabledSet_IsDisabled(t *testing.T) {
 	set := make(disabledSet)
-	set[10] = []string{} // empty non-nil = all rules
+	set[10] = lineDisable{allDisabled: true} // all rules
 
 	if !set.isDisabled(10, "any-rule") {
-		t.Error("empty slice entry should disable all rules")
+		t.Error("allDisabled entry should disable all rules")
 	}
 	if set.isDisabled(11, "any-rule") {
 		t.Error("unregistered line should not be disabled")
 	}
 
-	set[20] = []string{"no-bare-urls"}
+	set[20] = lineDisable{names: []string{"no-bare-urls"}}
 	if !set.isDisabled(20, "no-bare-urls") {
 		t.Error("named rule should be disabled")
 	}
 	if set.isDisabled(20, "heading-level") {
 		t.Error("other rule should not be disabled")
+	}
+}
+
+func TestParseDisableComments_EnableNamedRuleInsideBlockDisableAll(t *testing.T) {
+	lines := []string{
+		"<!-- gomarklint-disable -->",             // line 1
+		"https://example.com",                     // line 2: both rules disabled
+		"<!-- gomarklint-enable no-bare-urls -->", // line 3
+		"https://example.com",                     // line 4: no-bare-urls re-enabled, heading-level still disabled
+		"<!-- gomarklint-enable -->",              // line 5
+		"https://example.com",                     // line 6: everything enabled
+	}
+	set := parseDisableComments(lines, 0)
+
+	if !set.isDisabled(2, "no-bare-urls") {
+		t.Error("line 2 should be disabled for no-bare-urls")
+	}
+	if !set.isDisabled(2, "heading-level") {
+		t.Error("line 2 should be disabled for heading-level")
+	}
+	if set.isDisabled(4, "no-bare-urls") {
+		t.Error("line 4 no-bare-urls should be re-enabled")
+	}
+	if !set.isDisabled(4, "heading-level") {
+		t.Error("line 4 heading-level should still be disabled")
+	}
+	if set.isDisabled(6, "no-bare-urls") {
+		t.Error("line 6 should be fully enabled")
 	}
 }
