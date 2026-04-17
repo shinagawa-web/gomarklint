@@ -38,6 +38,7 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [ ] `no-undefined-references`: Reference-style links/images must have a matching definition (MD052/MD053)
 - [ ] `table-formatting`: Table structure and cell-padding consistency (MD055/MD056/MD058)
 - [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here") (MD059)
+- [ ] `consistent-line-endings`: Enforce consistent line endings (LF vs CRLF)
 
 ## Extensibility
 
