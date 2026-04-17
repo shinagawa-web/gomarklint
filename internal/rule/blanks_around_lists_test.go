@@ -159,6 +159,16 @@ func TestCheckBlanksAroundLists(t *testing.T) {
 				{File: "test.md", Line: 2, Message: "blanks-around-lists: list must be preceded by a blank line"},
 			},
 		},
+		{
+			name:     "valid: digits followed by non-separator char are not a list item",
+			content:  "Some text\n12x foo\nMore text\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: ordered marker at end of line is not a list item",
+			content:  "Some text\n12.\nMore text\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
