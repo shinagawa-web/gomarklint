@@ -42,7 +42,7 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 
 ## Extensibility
 
-- [ ] Allow disabling rules via inline comments (e.g. `<!-- gomarklint-disable -->`)
+- [x] Allow disabling rules via inline comments (e.g. `<!-- gomarklint-disable -->`)
 - [ ] Plugin system for custom rules (via Go interface or external binary)
 
 ## Distribution & CI
@@ -51,7 +51,6 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] Prebuilt binaries via `goreleaser` (macOS/Linux/Windows)
 - [x] Homebrew tap (`brew install shinagawa-web/tap/gomarklint`)
 - [x] npm package (`npm install -g @shinagawa-web/gomarklint`)
-- [ ] Docker image (e.g. `ghcr.io/shinagawa-web/gomarklint`)
 
 ## Developer UX
 
