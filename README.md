@@ -50,7 +50,7 @@ npm install -g @shinagawa-web/gomarklint
 **Via `go install`:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint/v2@latest
 ```
 
 - **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.
