@@ -12,6 +12,7 @@ Follow this checklist whenever adding a new rule (e.g. `fenced-code-language`, `
 
 - [ ] `internal/config/config.go` — add to `Default()` AND `DefaultConfigJSON` (keep in sync)
 - [ ] `internal/linter/linter.go` — register in `collectErrors()`
+- [ ] `.gomarklint.example.json` — copy exact content from `DefaultConfigJSON` (do not hand-write)
 - [ ] `e2e/e2e_test.go` — add E2E test case, update file/violation counts if needed
 
 ## Code review checklist

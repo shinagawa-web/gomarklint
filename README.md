@@ -8,6 +8,8 @@
 
 English | [日本語](README.ja.md)
 
+[![Demo](https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif)](https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a)
+
 > Blazing-fast Markdown linter built in Go — **100,000+ lines in ~170ms**. Single binary, no Node.js required, and built-in HTTP link validation.
 
 **Quick install** (macOS / Linux):
@@ -50,7 +52,7 @@ npm install -g @shinagawa-web/gomarklint
 **Via `go install`:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint/v2@latest
 ```
 
 - **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.

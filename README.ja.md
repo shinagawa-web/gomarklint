@@ -8,6 +8,8 @@
 
 [English](README.md) | 日本語
 
+[![Demo](https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif)](https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a)
+
 > Go 製の超高速 Markdown リンター — **100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要、HTTP リンクバリデーション機能を内蔵。
 
 **かんたんインストール**（macOS / Linux）:
@@ -50,7 +52,7 @@ npm install -g @shinagawa-web/gomarklint
 **`go install` を使う場合:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint/v2@latest
 ```
 
 - **100,000 行以上を約 170ms** で処理 — JIT ウォームアップなし、ランタイムオーバーヘッドなし。

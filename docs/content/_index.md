@@ -10,6 +10,8 @@ title: "gomarklint"
 [![Go Reference](https://pkg.go.dev/badge/github.com/shinagawa-web/gomarklint.svg)](https://pkg.go.dev/github.com/shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/shinagawa-web/gomarklint/blob/main/LICENSE)
 
+[![Demo](https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif)](https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a)
+
 > Lint your Markdown like you lint your code.
 > A fast Markdown linter built in Go — for local dev and CI alike.
 
