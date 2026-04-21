@@ -280,6 +280,23 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "list must be followed by a blank line")
 		assertOutputContains(t, output, "2 issues found")
 	})
+
+	t.Run("MaxLineLengthValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/max_line_length_valid.md", "--config", "config-max-line-length.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "line exceeds")
+	})
+
+	t.Run("MaxLineLengthViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/max_line_length_violation.md", "--config", "config-max-line-length.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/max_line_length_violation.md:")
+		assertOutputContains(t, output, "fixtures/max_line_length_violation.md:5:")
+		assertOutputContains(t, output, "line exceeds 80 characters (100)")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -407,7 +424,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "emphasis used as heading")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_lists_violation.md:")
 		assertOutputContains(t, output, "list must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 36 file(s)")
+		assertOutputContains(t, output, "Checked 38 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")

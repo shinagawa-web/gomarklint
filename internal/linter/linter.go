@@ -156,6 +156,17 @@ func (l *Linter) headingMinLevel() int {
 	return minLevel
 }
 
+// maxLineLength returns the configured lineLength for the max-line-length rule.
+func (l *Linter) maxLineLength() int {
+	lineLength := 80
+	if v, ok := l.config.RuleOptions("max-line-length")["lineLength"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			lineLength = int(f)
+		}
+	}
+	return lineLength
+}
+
 // externalLinkTimeout returns the configured timeoutSeconds for the external-link rule.
 func (l *Linter) externalLinkTimeout() int {
 	timeoutSeconds := 5
@@ -211,6 +222,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 	}
 	if l.config.IsEnabled("blanks-around-lists") {
 		errs = append(errs, l.withSeverity(rule.CheckBlanksAroundLists(path, lines, offset), "blanks-around-lists")...)
+	}
+	if l.config.IsEnabled("max-line-length") {
+		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)
 	}
 	return errs
 }
