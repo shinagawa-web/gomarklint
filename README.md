@@ -8,6 +8,8 @@
 
 English | [日本語](README.ja.md)
 
+[![Demo](https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif)](https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a)
+
 > Blazing-fast Markdown linter built in Go — **100,000+ lines in ~170ms**. Single binary, no Node.js required, and built-in HTTP link validation.
 
 **Quick install** (macOS / Linux):
