@@ -18,7 +18,7 @@
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
-  "include": ["README.md", "docs"],
+  "include": ["README.md", "testdata"],
   "ignore": [],
   "output": "text"
 }
