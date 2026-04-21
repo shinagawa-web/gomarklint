@@ -8,7 +8,7 @@
 
 [English](README.md) | 日本語
 
-> Go 製の高速 Markdown リンター。シングルバイナリで Node.js 不要 — HTTP リンクバリデーション機能を内蔵。
+> Go 製の超高速 Markdown リンター — **100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要、HTTP リンクバリデーション機能を内蔵。
 
 **かんたんインストール**（macOS / Linux）:
 
@@ -53,10 +53,10 @@ npm install -g @shinagawa-web/gomarklint
 go install github.com/shinagawa-web/gomarklint@latest
 ```
 
+- **100,000 行以上を約 170ms** で処理 — JIT ウォームアップなし、ランタイムオーバーヘッドなし。
 - リンク切れや見出しの問題をドキュメント公開前にキャッチ。
 - 予測可能な構造を強制（「なぜ H2 の下に H4 があるの？」をなくす）。
 - 人間にも機械にも優しい出力（JSON 対応）。
-- **100,000 行以上を約 170ms** で処理 — ローカル開発にもCI にも十分な速さ。
 
 ## CI 連携
 

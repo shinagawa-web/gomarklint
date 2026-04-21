@@ -8,7 +8,7 @@
 
 English | [日本語](README.ja.md)
 
-> A fast Markdown linter built in Go. Single binary, no Node.js required — with built-in HTTP link validation.
+> Blazing-fast Markdown linter built in Go — **100,000+ lines in ~170ms**. Single binary, no Node.js required, and built-in HTTP link validation.
 
 **Quick install** (macOS / Linux):
 
@@ -53,10 +53,10 @@ npm install -g @shinagawa-web/gomarklint
 go install github.com/shinagawa-web/gomarklint@latest
 ```
 
+- **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.
 - Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).
-- Process **100,000+ lines in ~170ms** — fast enough for local dev, robust enough for CI.
 
 ## CI Integration
 
