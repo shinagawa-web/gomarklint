@@ -1,13 +1,24 @@
 {
-  "minHeadingLevel": 2,
-  "enableLinkCheck": false,
-  "skipLinkPatterns": [
-    "localhost",
-    "example.com"
-  ],
+  "default": true,
+  "rules": {
+    "final-blank-line": true,
+    "unclosed-code-block": true,
+    "empty-alt-text": true,
+    "fenced-code-language": true,
+    "heading-level": { "severity": "error", "minLevel": 2 },
+    "duplicate-heading": true,
+    "no-multiple-blank-lines": true,
+    "no-setext-headings": true,
+    "single-h1": true,
+    "blanks-around-headings": true,
+    "no-bare-urls": true,
+    "no-empty-links": true,
+    "no-emphasis-as-heading": true,
+    "blanks-around-lists": true,
+    "max-line-length": { "enabled": false, "lineLength": 80 },
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+  },
+  "include": ["README.md", "docs"],
   "ignore": [],
-  "output": "text",
-  "enableDuplicateHeadingCheck": true,
-  "enableHeadingLevelCheck": true,
-  "enableNoMultipleBlankLinesCheck": true
+  "output": "text"
 }
