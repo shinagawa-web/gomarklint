@@ -64,6 +64,7 @@ func BenchmarkFullLinting(b *testing.B) {
 	content := generateComplexMarkdown(1000)
 	cfg := config.Default()
 	cfg.Rules["external-link"].Enabled = false
+	cfg.Rules["max-line-length"].Enabled = true
 
 	lint := linter.New(cfg)
 
@@ -77,6 +78,7 @@ func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	content := generateComplexMarkdown(5000)
 	cfg := config.Default()
 	cfg.Rules["external-link"].Enabled = false
+	cfg.Rules["max-line-length"].Enabled = true
 
 	lint := linter.New(cfg)
 
