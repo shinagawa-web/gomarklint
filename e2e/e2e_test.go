@@ -294,7 +294,7 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		}
 		assertOutputContains(t, output, "Errors in fixtures/max_line_length_violation.md:")
 		assertOutputContains(t, output, "fixtures/max_line_length_violation.md:5:")
-		assertOutputContains(t, output, "line exceeds 80 characters (100)")
+		assertOutputContains(t, output, "line exceeds 80 bytes (100)")
 		assertOutputContains(t, output, "1 issues found")
 	})
 }

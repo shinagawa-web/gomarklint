@@ -41,19 +41,19 @@ func TestCheckMaxLineLength(t *testing.T) {
 		},
 		{
 			name:       "valid: bare https URL line exempt",
-			content:    "https://example.com/very/long/path/that/exceeds/eighty/characters/in/total/length\n",
+			content:    "https://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/length\n",
 			lineLength: 80,
 			wantErrs:   nil,
 		},
 		{
 			name:       "valid: bare http URL line exempt",
-			content:    "http://example.com/very/long/path/that/exceeds/eighty/characters/in/total/length\n",
+			content:    "http://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/length\n",
 			lineLength: 80,
 			wantErrs:   nil,
 		},
 		{
 			name:       "valid: angle-bracket URL line exempt",
-			content:    "<https://example.com/very/long/path/that/exceeds/eighty/characters/in/total/>\n",
+			content:    "<https://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/>\n",
 			lineLength: 80,
 			wantErrs:   nil,
 		},
@@ -75,13 +75,19 @@ func TestCheckMaxLineLength(t *testing.T) {
 			lineLength: 80,
 			wantErrs:   nil,
 		},
+		{
+			name:       "valid: URL-only line with no extra text exempt",
+			content:    "https://example.com/very/long/path/that/exceeds/eighty/characters/total/length/x\n",
+			lineLength: 80,
+			wantErrs:   nil,
+		},
 		// ── invalid cases ────────────────────────────────────────────────────
 		{
 			name:       "invalid: line one char over limit",
 			content:    strings.Repeat("a", 81) + "\n",
 			lineLength: 80,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 80 characters (81)"},
+				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 80 bytes (81)"},
 			},
 		},
 		{
@@ -89,8 +95,8 @@ func TestCheckMaxLineLength(t *testing.T) {
 			content:    strings.Repeat("a", 85) + "\n" + "ok\n" + strings.Repeat("b", 90) + "\n",
 			lineLength: 80,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 80 characters (85)"},
-				{File: "test.md", Line: 3, Message: "max-line-length: line exceeds 80 characters (90)"},
+				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 80 bytes (85)"},
+				{File: "test.md", Line: 3, Message: "max-line-length: line exceeds 80 bytes (90)"},
 			},
 		},
 		{
@@ -98,7 +104,7 @@ func TestCheckMaxLineLength(t *testing.T) {
 			content:    strings.Repeat("a", 101) + "\n",
 			lineLength: 100,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 100 characters (101)"},
+				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 100 bytes (101)"},
 			},
 		},
 		{
@@ -107,7 +113,7 @@ func TestCheckMaxLineLength(t *testing.T) {
 			lineLength: 80,
 			offset:     5,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 6, Message: "max-line-length: line exceeds 80 characters (81)"},
+				{File: "test.md", Line: 6, Message: "max-line-length: line exceeds 80 bytes (81)"},
 			},
 		},
 		{
@@ -116,7 +122,7 @@ func TestCheckMaxLineLength(t *testing.T) {
 			content:    "See https://example.com for details on " + strings.Repeat("a", 50) + ".\n",
 			lineLength: 80,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: fmt.Sprintf("max-line-length: line exceeds 80 characters (%d)", len("See https://example.com for details on "+strings.Repeat("a", 50)+"."))},
+				{File: "test.md", Line: 1, Message: fmt.Sprintf("max-line-length: line exceeds 80 bytes (%d)", len("See https://example.com for details on "+strings.Repeat("a", 50)+"."))},
 			},
 		},
 		{
@@ -124,7 +130,25 @@ func TestCheckMaxLineLength(t *testing.T) {
 			content:    "```go\n" + strings.Repeat("x", 100) + "\n```\n" + strings.Repeat("y", 81) + "\n",
 			lineLength: 80,
 			wantErrs: []LintError{
-				{File: "test.md", Line: 4, Message: "max-line-length: line exceeds 80 characters (81)"},
+				{File: "test.md", Line: 4, Message: "max-line-length: line exceeds 80 bytes (81)"},
+			},
+		},
+		{
+			name: "invalid: hash-tag line is not a heading and must be checked",
+			// "#not-a-heading" has no space after #, so it is not an ATX heading
+			content:    "#" + strings.Repeat("a", 80) + "\n",
+			lineLength: 80,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "max-line-length: line exceeds 80 bytes (81)"},
+			},
+		},
+		{
+			name: "invalid: URL at start of line with trailing text is not exempt",
+			// starts with a URL but has additional text after a space
+			content:    "https://example.com " + strings.Repeat("a", 65) + "\n",
+			lineLength: 80,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: fmt.Sprintf("max-line-length: line exceeds 80 bytes (%d)", len("https://example.com "+strings.Repeat("a", 65)))},
 			},
 		},
 	}

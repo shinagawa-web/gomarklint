@@ -5,14 +5,25 @@ import (
 	"strings"
 )
 
-// isBareURLLine reports whether the trimmed line consists solely of a URL
-// (http:// or https://), possibly wrapped in angle brackets.
+// isBareURLLine reports whether the trimmed line consists solely of a single
+// URL token (http:// or https://), possibly wrapped in angle brackets.
+// Lines like "https://example.com extra text" are NOT exempt.
 func isBareURLLine(trimmed string) bool {
 	s := trimmed
 	if strings.HasPrefix(s, "<") && strings.HasSuffix(s, ">") {
 		s = s[1 : len(s)-1]
 	}
-	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+	var schemeLen int
+	if strings.HasPrefix(s, "https://") {
+		schemeLen = len("https://")
+	} else if strings.HasPrefix(s, "http://") {
+		schemeLen = len("http://")
+	} else {
+		return false
+	}
+	// The body after the scheme must not contain whitespace — ensuring
+	// the entire line is exactly one URL token with no surrounding text.
+	return !strings.ContainsAny(s[schemeLen:], " \t")
 }
 
 // CheckMaxLineLength flags lines whose byte length exceeds lineLength.
@@ -41,7 +52,7 @@ func CheckMaxLineLength(filename string, lines []string, offset int, lineLength 
 			continue
 		}
 
-		if strings.HasPrefix(trimmed, "#") {
+		if isATXHeading(trimmed) {
 			continue
 		}
 
@@ -53,7 +64,7 @@ func CheckMaxLineLength(filename string, lines []string, offset int, lineLength 
 			errs = append(errs, LintError{
 				File:    filename,
 				Line:    offset + i + 1,
-				Message: fmt.Sprintf("max-line-length: line exceeds %d characters (%d)", lineLength, len(line)),
+				Message: fmt.Sprintf("max-line-length: line exceeds %d bytes (%d)", lineLength, len(line)),
 			})
 		}
 	}
