@@ -156,6 +156,17 @@ func (l *Linter) headingMinLevel() int {
 	return minLevel
 }
 
+// maxLineLength returns the configured lineLength for the max-line-length rule.
+func (l *Linter) maxLineLength() int {
+	lineLength := 80
+	if v, ok := l.config.RuleOptions("max-line-length")["lineLength"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			lineLength = int(f)
+		}
+	}
+	return lineLength
+}
+
 // externalLinkTimeout returns the configured timeoutSeconds for the external-link rule.
 func (l *Linter) externalLinkTimeout() int {
 	timeoutSeconds := 5
@@ -167,50 +178,42 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
+// simpleRules lists rules whose check function takes only (path, lines, offset).
+// Rules that require additional options are handled separately below.
+var simpleRules = []struct {
+	name string
+	fn   func(string, []string, int) []rule.LintError
+}{
+	{"final-blank-line", rule.CheckFinalBlankLine},
+	{"unclosed-code-block", rule.CheckUnclosedCodeBlocks},
+	{"empty-alt-text", rule.CheckEmptyAltText},
+	{"fenced-code-language", rule.CheckFencedCodeLanguage},
+	{"duplicate-heading", rule.CheckDuplicateHeadings},
+	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
+	{"no-setext-headings", rule.CheckNoSetextHeadings},
+	{"single-h1", rule.CheckSingleH1},
+	{"blanks-around-headings", rule.CheckBlanksAroundHeadings},
+	{"no-bare-urls", rule.CheckNoBareURLs},
+	{"no-empty-links", rule.CheckNoEmptyLinks},
+	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
+	{"blanks-around-lists", rule.CheckBlanksAroundLists},
+}
+
 // collectLineErrors runs all non-network rule checks and returns their errors.
 func (l *Linter) collectLineErrors(path string, lines []string, offset int) []rule.LintError {
 	var errs []rule.LintError
-	if l.config.IsEnabled("final-blank-line") {
-		errs = append(errs, l.withSeverity(rule.CheckFinalBlankLine(path, lines, offset), "final-blank-line")...)
+
+	for _, r := range simpleRules {
+		if l.config.IsEnabled(r.name) {
+			errs = append(errs, l.withSeverity(r.fn(path, lines, offset), r.name)...)
+		}
 	}
-	if l.config.IsEnabled("unclosed-code-block") {
-		errs = append(errs, l.withSeverity(rule.CheckUnclosedCodeBlocks(path, lines, offset), "unclosed-code-block")...)
-	}
-	if l.config.IsEnabled("empty-alt-text") {
-		errs = append(errs, l.withSeverity(rule.CheckEmptyAltText(path, lines, offset), "empty-alt-text")...)
-	}
+
 	if l.config.IsEnabled("heading-level") {
 		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
 	}
-	if l.config.IsEnabled("fenced-code-language") {
-		errs = append(errs, l.withSeverity(rule.CheckFencedCodeLanguage(path, lines, offset), "fenced-code-language")...)
-	}
-	if l.config.IsEnabled("duplicate-heading") {
-		errs = append(errs, l.withSeverity(rule.CheckDuplicateHeadings(path, lines, offset), "duplicate-heading")...)
-	}
-	if l.config.IsEnabled("no-multiple-blank-lines") {
-		errs = append(errs, l.withSeverity(rule.CheckNoMultipleBlankLines(path, lines, offset), "no-multiple-blank-lines")...)
-	}
-	if l.config.IsEnabled("no-setext-headings") {
-		errs = append(errs, l.withSeverity(rule.CheckNoSetextHeadings(path, lines, offset), "no-setext-headings")...)
-	}
-	if l.config.IsEnabled("single-h1") {
-		errs = append(errs, l.withSeverity(rule.CheckSingleH1(path, lines, offset), "single-h1")...)
-	}
-	if l.config.IsEnabled("blanks-around-headings") {
-		errs = append(errs, l.withSeverity(rule.CheckBlanksAroundHeadings(path, lines, offset), "blanks-around-headings")...)
-	}
-	if l.config.IsEnabled("no-bare-urls") {
-		errs = append(errs, l.withSeverity(rule.CheckNoBareURLs(path, lines, offset), "no-bare-urls")...)
-	}
-	if l.config.IsEnabled("no-empty-links") {
-		errs = append(errs, l.withSeverity(rule.CheckNoEmptyLinks(path, lines, offset), "no-empty-links")...)
-	}
-	if l.config.IsEnabled("no-emphasis-as-heading") {
-		errs = append(errs, l.withSeverity(rule.CheckNoEmphasisAsHeading(path, lines, offset), "no-emphasis-as-heading")...)
-	}
-	if l.config.IsEnabled("blanks-around-lists") {
-		errs = append(errs, l.withSeverity(rule.CheckBlanksAroundLists(path, lines, offset), "blanks-around-lists")...)
+	if l.config.IsEnabled("max-line-length") {
+		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)
 	}
 	return errs
 }

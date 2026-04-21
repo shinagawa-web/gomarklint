@@ -24,6 +24,7 @@ const DefaultConfigJSON = `{
     "no-empty-links": true,
     "no-emphasis-as-heading": true,
     "blanks-around-lists": true,
+    "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
   "include": ["README.md", "testdata"],
@@ -218,6 +219,11 @@ func Default() Config {
 			"no-empty-links":          enabledRule(),
 			"no-emphasis-as-heading":  enabledRule(),
 			"blanks-around-lists":     enabledRule(),
+			"max-line-length": {
+				Enabled:  false,
+				Severity: SeverityOff,
+				Options:  map[string]interface{}{"lineLength": float64(80)},
+			},
 			"heading-level": {
 				Enabled:  true,
 				Severity: SeverityError,

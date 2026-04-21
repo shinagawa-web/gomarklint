@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "max-line-length": { "enabled": true, "lineLength": 80 }
+  }
+}

@@ -636,6 +636,73 @@ func TestRun_DisableComment_DisableNextLine(t *testing.T) {
 	}
 }
 
+func TestRun_MaxLineLength_DefaultLimit(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["max-line-length"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"lineLength": float64(80)},
+	}
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "long.md")
+	longLine := "This line is intentionally long and exceeds the eighty character limit set here!!\n"
+	if err := os.WriteFile(testFile, []byte(longLine), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for line exceeding 80 characters")
+	}
+}
+
+func TestRun_MaxLineLength_CustomLimit(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["max-line-length"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"lineLength": float64(120)},
+	}
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "long.md")
+	// 100 chars — within 120 limit
+	shortEnough := make([]byte, 100)
+	for i := range shortEnough {
+		shortEnough[i] = 'a'
+	}
+	content := string(shortEnough) + "\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors != 0 {
+		t.Errorf("expected no errors for 100-char line with limit=120, got %d", result.TotalErrors)
+	}
+}
+
+func TestRun_MaxLineLength_NoOptionFallsBackToDefault(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["max-line-length"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{},
+	}
+
+	linter := New(cfg)
+	if linter.maxLineLength() != 80 {
+		t.Errorf("expected default maxLineLength 80, got %d", linter.maxLineLength())
+	}
+}
+
 func TestRun_DisableComment_NoDisableKeyword_NoOverhead(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-bare-urls"] = on()
