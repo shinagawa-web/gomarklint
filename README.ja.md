@@ -8,7 +8,7 @@
 
 [English](README.md) | 日本語
 
-[![Demo](https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif)](https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a)
+<a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
 
 > Go 製の超高速 Markdown リンター — **100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要、HTTP リンクバリデーション機能を内蔵。
 
