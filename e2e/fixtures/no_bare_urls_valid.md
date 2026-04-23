@@ -11,3 +11,9 @@ Use a Markdown link: [Example](https://example.com)
 <!-- closed comment --> <!-- unclosed with URL https://example.com
 still inside the second comment
 -->
+
+<!--
+```
+https://example.com
+```
+-->

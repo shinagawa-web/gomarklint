@@ -16,8 +16,19 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
+	inComment := false
 
 	for i, line := range lines {
+		// HTML comments take priority: fences inside comments are ignored.
+		if inComment {
+			if idx := strings.Index(line, "-->"); idx != -1 {
+				inComment = false
+				line = strings.Repeat(" ", idx+3) + line[idx+3:]
+			} else {
+				continue
+			}
+		}
+
 		trimmed := strings.TrimSpace(line)
 
 		if inBlock {
@@ -26,6 +37,14 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 				fenceMarker = ""
 			}
 			continue
+		}
+
+		if strings.Contains(line, "<!--") {
+			_, endedInComment := stripHTMLComments(line)
+			if endedInComment {
+				inComment = true
+				continue
+			}
 		}
 
 		marker := openingFenceMarker(trimmed)

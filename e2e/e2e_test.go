@@ -218,6 +218,13 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputNotContains(t, output, "fixtures/no_bare_urls_valid.md:11:")
 	})
 
+	t.Run("NoBareURLsFenceInsideCommentValid", func(t *testing.T) {
+		// Fence opener inside multi-line HTML comment must not be treated as a
+		// code block by either no-bare-urls or fenced-code-language.
+		output := runTest(t, "fixtures/no_bare_urls_valid.md", "--config", "config-no-bare-urls.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Fenced code block must have a language identifier")
+	})
 
 	t.Run("NoBareURLsViolation", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/no_bare_urls_violation.md", "--config", "config-no-bare-urls.json")
