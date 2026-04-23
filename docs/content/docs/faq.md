@@ -11,9 +11,9 @@ Quick answers to the most common problems. Each entry gives an immediate fix and
 
 ## Configuration
 
-### Config options are ignored / "unknown field" error
+### `unknown field: <field-name>`
 
-You are likely using a v1 config file with a v2 binary. v2 replaced the flat boolean fields (`enableLinkCheck`, `minHeadingLevel`, etc.) with a unified `rules` map.
+You are using a v1 config file with a v2 binary. v2 replaced the flat boolean fields (`enableLinkCheck`, `minHeadingLevel`, etc.) with a unified `rules` map.
 
 Run `gomarklint init` to generate a fresh v2 config, then migrate your settings.
 
