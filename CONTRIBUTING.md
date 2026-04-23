@@ -11,7 +11,8 @@ Thank you for your interest in contributing! This guide explains how to set up t
 ## Getting started
 
 ```sh
-git clone https://github.com/shinagawa-web/gomarklint.git
+# Fork the repository on GitHub, then clone your fork
+git clone https://github.com/<your-username>/gomarklint.git
 cd gomarklint
 
 # Install pre-push hooks (runs lint + unit tests before every push)
