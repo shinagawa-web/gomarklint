@@ -201,6 +201,32 @@ func TestCheckNoBareURLs(t *testing.T) {
 				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
 			},
 		},
+		{
+			name:    "invalid: URL surrounded by double quotes in normal prose is still flagged",
+			content: "See \"https://example.com\" for details.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
+			name:    "invalid: URL surrounded by single quotes in normal prose is still flagged",
+			content: "See 'https://example.com' for details.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
+			name:     "valid: multiple HTML comments on one line — second unclosed sets inComment",
+			content:  "<!-- closed --> <!-- https://example.com\nstill inside comment\n-->\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "valid: fence opener inside multi-line HTML comment is not treated as code block",
+			content: "<!--\n```\nhttps://example.com\n```\n-->\nhttps://after.example.com is bare\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 6, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://after.example.com"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -17,7 +17,7 @@ func countBacktickRun(s string, start int) int {
 
 // stripInlineCode replaces content inside backtick spans (including the
 // delimiters) with spaces so that URLs within inline code are not scanned.
-// Handles both single-backtick (` “ `) and multi-backtick (` “ `) spans per
+// Handles both single-backtick (` " `) and multi-backtick (` " `) spans per
 // CommonMark: a code span opens with a run of N backticks and closes with the
 // next run of exactly N backticks.
 func stripInlineCode(s string) string {
@@ -68,14 +68,14 @@ func stripInlineCode(s string) string {
 }
 
 // isURLBodyChar returns true for characters allowed in a URL body
-// (everything except whitespace and <>()[].)
+// (everything except whitespace, <>, ()[], and quotes).
 func isURLBodyChar(c byte) bool {
-	return c > ' ' && c != '<' && c != '>' && c != '(' && c != ')' && c != '[' && c != ']'
+	return c > ' ' && c != '<' && c != '>' && c != '(' && c != ')' && c != '[' && c != ']' && c != '"' && c != '\''
 }
 
 // isWrappedURL returns true if the URL starting at start in line is wrapped
 // in angle brackets, is a Markdown link/image destination, or appears inside
-// an HTML attribute value (quoted with " or ').
+// an HTML attribute value (a quote immediately preceded by '=').
 func isWrappedURL(line string, start int) bool {
 	if start > 0 && line[start-1] == '<' {
 		return true
@@ -83,13 +83,23 @@ func isWrappedURL(line string, start int) bool {
 	if start > 1 && line[start-1] == '(' && line[start-2] == ']' {
 		return true
 	}
-	return start > 0 && (line[start-1] == '"' || line[start-1] == '\'')
+	// HTML attribute value: require an '=' before the opening quote,
+	// optionally separated by whitespace (e.g. href="..." or attr = "...").
+	if start > 0 && (line[start-1] == '"' || line[start-1] == '\'') {
+		i := start - 2
+		for i >= 0 && (line[i] == ' ' || line[i] == '\t') {
+			i--
+		}
+		return i >= 0 && line[i] == '='
+	}
+	return false
 }
 
 // stripHTMLComments replaces content inside <!-- ... --> spans (including the
 // delimiters) with spaces so that URLs within HTML comments are not scanned.
-// Only handles comments that open and close on the same line.
-func stripHTMLComments(s string) string {
+// It handles multiple comment spans on a single line. The second return value
+// reports whether the line ended inside an unclosed comment.
+func stripHTMLComments(s string) (string, bool) {
 	var b strings.Builder
 	b.Grow(len(s))
 	for i := 0; i < len(s); {
@@ -100,7 +110,7 @@ func stripHTMLComments(s string) string {
 				for k := i; k < len(s); k++ {
 					b.WriteByte(' ')
 				}
-				return b.String()
+				return b.String(), true
 			}
 			spanLen := 4 + end + 3
 			for k := 0; k < spanLen; k++ {
@@ -112,7 +122,7 @@ func stripHTMLComments(s string) string {
 			i++
 		}
 	}
-	return b.String()
+	return b.String(), false
 }
 
 // scanURLEnd returns the end index of the URL body starting at bodyStart.
@@ -161,9 +171,37 @@ func findBareURLs(line string) []string {
 	return urls
 }
 
+// advanceComment advances a line that is currently inside a multi-line HTML
+// comment. It returns the (possibly modified) line and the updated inComment
+// state. If "-->" is found, inComment becomes false and the remainder of the
+// line after "-->" is returned for further processing.
+func advanceComment(line string) (string, bool) {
+	idx := strings.Index(line, "-->")
+	if idx == -1 {
+		return line, true
+	}
+	return strings.Repeat(" ", idx+3) + line[idx+3:], false
+}
+
+// prepareScanned strips inline code and HTML comments from line, returning the
+// sanitized string and whether the line ended inside an unclosed comment.
+func prepareScanned(line string) (string, bool) {
+	scanned := line
+	if strings.ContainsRune(scanned, '`') {
+		scanned = stripInlineCode(scanned)
+	}
+	if strings.Contains(scanned, "<!--") {
+		var endedInComment bool
+		scanned, endedInComment = stripHTMLComments(scanned)
+		return scanned, endedInComment
+	}
+	return scanned, false
+}
+
 // CheckNoBareURLs flags HTTP/HTTPS URLs that appear as bare text rather than
 // being wrapped in angle brackets or used inside a Markdown link or image.
-// URLs inside fenced code blocks and inline code spans are ignored.
+// URLs inside fenced code blocks, inline code spans, HTML comments, and HTML
+// attribute values are ignored.
 func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 	inBlock := false
@@ -171,6 +209,18 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 	inComment := false
 
 	for i, line := range lines {
+		// Multi-line HTML comment tracking takes priority: fences inside
+		// comments are not treated as code block delimiters.
+		if inComment {
+			var stillInComment bool
+			line, stillInComment = advanceComment(line)
+			if stillInComment {
+				continue
+			}
+			inComment = false
+			// Fall through to process the remainder of the line.
+		}
+
 		trimmed := strings.TrimSpace(line)
 
 		if inBlock {
@@ -181,40 +231,22 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
+		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
 			fenceMarker = marker
 			continue
 		}
 
-		// Multi-line HTML comment tracking.
-		if inComment {
-			if idx := strings.Index(line, "-->"); idx != -1 {
-				inComment = false
-				line = strings.Repeat(" ", idx+3) + line[idx+3:]
-			} else {
-				continue
-			}
-		}
-
 		if !strings.Contains(line, "http") {
-			// Still check for comment open even on non-http lines.
-			if strings.Contains(line, "<!--") && !strings.Contains(line, "-->") {
-				inComment = true
+			if strings.Contains(line, "<!--") {
+				_, inComment = stripHTMLComments(line)
 			}
 			continue
 		}
 
-		scanned := line
-		if strings.ContainsRune(scanned, '`') {
-			scanned = stripInlineCode(scanned)
-		}
-		if strings.Contains(scanned, "<!--") {
-			if !strings.Contains(scanned[strings.Index(scanned, "<!--")+4:], "-->") {
-				inComment = true
-			}
-			scanned = stripHTMLComments(scanned)
+		scanned, endedInComment := prepareScanned(line)
+		if endedInComment {
+			inComment = true
 		}
 
 		for _, url := range findBareURLs(scanned) {
