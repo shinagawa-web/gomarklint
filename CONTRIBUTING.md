@@ -63,12 +63,12 @@ Always run `make test-all` before opening a pull request.
 
 ## Adding a new lint rule
 
-1. Create the rule implementation under `internal/rules/`.
+1. Create the rule implementation under `internal/rule/`.
 2. Register the rule in the linter.
-3. Add unit tests in `internal/rules/`.
+3. Add unit tests in `internal/rule/`.
 4. Add a testdata fixture under `testdata/`.
 5. Add an E2E test.
-6. Document the rule in `docs/`.
+6. Document the rule in `docs/content/docs/`.
 7. Update the config example if applicable.
 
 See the issue for rule [#106](https://github.com/shinagawa-web/gomarklint/issues/106) as a canonical example of the expected issue format and implementation plan.

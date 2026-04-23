@@ -20,7 +20,7 @@ We are committed to making participation in this project a welcoming and respect
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported by opening a private issue or contacting the maintainers directly. All reports will be reviewed and investigated promptly and fairly.
+Instances of unacceptable behavior may be reported by opening an issue or contacting the maintainers directly via email. All reports will be reviewed and investigated promptly and fairly.
 
 Maintainers have the right to remove, edit, or reject contributions that do not align with this Code of Conduct.
 
