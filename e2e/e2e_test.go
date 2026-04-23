@@ -200,6 +200,25 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputNotContains(t, output, "bare URL found")
 	})
 
+	t.Run("NoBareURLsHTMLAttributeValid", func(t *testing.T) {
+		// URLs inside href/src attributes must not be flagged.
+		output := runTest(t, "fixtures/no_bare_urls_valid.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/no_bare_urls_valid.md:9:")
+	})
+
+	t.Run("NoBareURLsHTMLCommentValid", func(t *testing.T) {
+		// URLs inside single-line HTML comments must not be flagged.
+		output := runTest(t, "fixtures/no_bare_urls_valid.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/no_bare_urls_valid.md:7:")
+	})
+
+	t.Run("NoBareURLsMultipleCommentsOnLineValid", func(t *testing.T) {
+		// URL inside second unclosed comment on same line must not be flagged.
+		output := runTest(t, "fixtures/no_bare_urls_valid.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/no_bare_urls_valid.md:11:")
+	})
+
+
 	t.Run("NoBareURLsViolation", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/no_bare_urls_violation.md", "--config", "config-no-bare-urls.json")
 		if err == nil {
