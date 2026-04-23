@@ -52,7 +52,6 @@ Always run `make test-all` before opening a pull request.
 - Use the imperative mood: _"Add rule MD013"_, not _"Added rule MD013"_
 - Reference the related issue number: `feat: add max-line-length rule (MD013) (#145)`
 - Keep the subject line under 72 characters
-- No `Co-Authored-By` trailer
 
 ## Pull requests
 
