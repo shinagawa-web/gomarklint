@@ -22,10 +22,12 @@ Headings, code blocks, blank lines, etc.:
 ## Recommended usage
 
 **For rapid local feedback:**
+
 - Run without `--enable-link-check` → completes in milliseconds
 - Perfect for catching structural issues while editing
 
 **For comprehensive validation:**
+
 - Enable `--enable-link-check` for nightly CI runs, pre-release validation, or verifying newly added content
 
 > **TL;DR:** Fast enough for local dev (no link check), robust enough for CI (with link check).

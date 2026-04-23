@@ -13,7 +13,7 @@ v2 replaces the flat boolean config fields with a unified `rules` map. This enab
 
 ### Config file format
 
-**v1**
+### v1
 
 ```json
 {
@@ -32,7 +32,7 @@ v2 replaces the flat boolean config fields with a unified `rules` map. This enab
 }
 ```
 
-**v2**
+### v2
 
 ```json
 {
@@ -97,7 +97,7 @@ Per-rule CLI flags have been removed. Rule configuration belongs in the config f
 
 The following flags remain unchanged:
 
-```
+```text
 --config <path>     Path to config file (default: .gomarklint.json)
 --output <format>   Output format: text or json
 --severity <level>  Minimum severity to report: warning or error (new in v2)
@@ -107,7 +107,7 @@ The following flags remain unchanged:
 
 If you import gomarklint as a library, update your import paths:
 
-```
+```text
 github.com/shinagawa-web/gomarklint   →   github.com/shinagawa-web/gomarklint/v2
 ```
 
@@ -149,7 +149,7 @@ gomarklint --config .gomarklint.json README.md
 
 If the config format is wrong you will see:
 
-```
+```text
 [gomarklint error]: failed to parse config file: ...
 ```
 
