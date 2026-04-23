@@ -37,7 +37,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: shinagawa-web/gomarklint
-          files: ./coverage.txt
+          files: ./coverage/coverage.out
           fail_ci_if_error: true
 
       - name: Lint README
