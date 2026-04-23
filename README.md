@@ -105,6 +105,7 @@ Full documentation is available at **[shinagawa-web.github.io/gomarklint](https:
 - [CLI Reference](https://shinagawa-web.github.io/gomarklint/docs/cli/)
 - [Configuration](https://shinagawa-web.github.io/gomarklint/docs/configuration/)
 - [GitHub Actions Integration](https://shinagawa-web.github.io/gomarklint/docs/github-actions/)
+- [FAQ & Troubleshooting](https://shinagawa-web.github.io/gomarklint/docs/faq/)
 
 ## Contributing
 
