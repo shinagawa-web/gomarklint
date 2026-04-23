@@ -36,6 +36,8 @@ func runLint(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
+	rootCmd.Version = version
+	rootCmd.SetVersionTemplate("gomarklint version {{.Version}}\n")
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	rootCmd.Flags().StringVar(&configFilePath, "config", ".gomarklint.json", "path to config file (default: .gomarklint.json)")
