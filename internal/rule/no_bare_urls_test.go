@@ -190,6 +190,11 @@ func TestCheckNoBareURLs(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "valid: URL on same line as opening HTML comment tag (unclosed on that line)",
+			content:  "<!-- https://example.com\n-->\nMore text\n",
+			wantErrs: nil,
+		},
+		{
 			name:    "invalid: bare URL after closed HTML comment on same line",
 			content: "<!-- comment --> https://example.com\n",
 			wantErrs: []LintError{
