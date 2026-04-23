@@ -12,7 +12,7 @@ var (
 	// Link pattern matchers
 	inlineLinkPattern = regexp.MustCompile(`\[[^\]]*\]\((https?://[^\s)]+)\)`)
 	imageLinkPattern  = regexp.MustCompile(`!\[[^\]]*\]\((https?://[^\s)]+)\)`)
-	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://[^\s<>()]+).*?$`)
+	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://[^\s<>"'()]+).*?$`)
 )
 
 type cacheResult struct {
