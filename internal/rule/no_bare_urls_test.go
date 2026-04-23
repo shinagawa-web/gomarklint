@@ -159,6 +159,43 @@ func TestCheckNoBareURLs(t *testing.T) {
 			content:  "<https://example.com>\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "valid: URL inside HTML href attribute",
+			content:  `<a href="https://example.com">link</a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside HTML src attribute",
+			content:  `<img src="https://example.com/image.gif" alt="Demo">` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: multiple URLs inside HTML attributes on one line",
+			content:  `<a href="https://example.com"><img src="https://example.com/image.gif" width="800" alt="Demo"></a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside single-quoted HTML attribute",
+			content:  `<a href='https://example.com'>link</a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside single-line HTML comment",
+			content:  "<!-- FIXME update when fixed https://example.com/ -->\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside multi-line HTML comment",
+			content:  "<!--\nhttps://example.com\n-->\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: bare URL after closed HTML comment on same line",
+			content: "<!-- comment --> https://example.com\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -74,12 +74,45 @@ func isURLBodyChar(c byte) bool {
 }
 
 // isWrappedURL returns true if the URL starting at start in line is wrapped
-// in angle brackets or is a Markdown link/image destination.
+// in angle brackets, is a Markdown link/image destination, or appears inside
+// an HTML attribute value (quoted with " or ').
 func isWrappedURL(line string, start int) bool {
 	if start > 0 && line[start-1] == '<' {
 		return true
 	}
-	return start > 1 && line[start-1] == '(' && line[start-2] == ']'
+	if start > 1 && line[start-1] == '(' && line[start-2] == ']' {
+		return true
+	}
+	return start > 0 && (line[start-1] == '"' || line[start-1] == '\'')
+}
+
+// stripHTMLComments replaces content inside <!-- ... --> spans (including the
+// delimiters) with spaces so that URLs within HTML comments are not scanned.
+// Only handles comments that open and close on the same line.
+func stripHTMLComments(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); {
+		if i+4 <= len(s) && s[i:i+4] == "<!--" {
+			end := strings.Index(s[i+4:], "-->")
+			if end == -1 {
+				// Unclosed comment — blank the rest of the line.
+				for k := i; k < len(s); k++ {
+					b.WriteByte(' ')
+				}
+				return b.String()
+			}
+			spanLen := 4 + end + 3
+			for k := 0; k < spanLen; k++ {
+				b.WriteByte(' ')
+			}
+			i += spanLen
+		} else {
+			b.WriteByte(s[i])
+			i++
+		}
+	}
+	return b.String()
 }
 
 // scanURLEnd returns the end index of the URL body starting at bodyStart.
@@ -135,6 +168,7 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
+	inComment := false
 
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -154,13 +188,33 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
+		// Multi-line HTML comment tracking.
+		if inComment {
+			if idx := strings.Index(line, "-->"); idx != -1 {
+				inComment = false
+				line = strings.Repeat(" ", idx+3) + line[idx+3:]
+			} else {
+				continue
+			}
+		}
+
 		if !strings.Contains(line, "http") {
+			// Still check for comment open even on non-http lines.
+			if strings.Contains(line, "<!--") && !strings.Contains(line, "-->") {
+				inComment = true
+			}
 			continue
 		}
 
 		scanned := line
-		if strings.ContainsRune(line, '`') {
-			scanned = stripInlineCode(line)
+		if strings.ContainsRune(scanned, '`') {
+			scanned = stripInlineCode(scanned)
+		}
+		if strings.Contains(scanned, "<!--") {
+			if !strings.Contains(scanned[strings.Index(scanned, "<!--")+4:], "-->") {
+				inComment = true
+			}
+			scanned = stripHTMLComments(scanned)
 		}
 
 		for _, url := range findBareURLs(scanned) {
