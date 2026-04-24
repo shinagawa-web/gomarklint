@@ -110,6 +110,20 @@ func TestCheckBlanksAroundLists(t *testing.T) {
 			},
 		},
 		{
+			name:    "invalid: list immediately followed by fenced code block opener",
+			content: "- item 1\n- item 2\n```go\nfmt.Println()\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 3, Message: "blanks-around-lists: list must be followed by a blank line"},
+			},
+		},
+		{
+			name:    "invalid: list immediately followed by tilde fence opener",
+			content: "- item 1\n- item 2\n~~~go\nfmt.Println()\n~~~\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 3, Message: "blanks-around-lists: list must be followed by a blank line"},
+			},
+		},
+		{
 			name:    "offset shifts line numbers",
 			content: "Some text\n- item 1\nMore text\n",
 			offset:  5,

@@ -52,46 +52,63 @@ func CheckBlanksAroundLists(filename string, lines []string, offset int) []LintE
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
+	// prevBlank and prevWasListItem replace the TrimSpace look-behind on
+	// lines[i-1] for every list item encountered.
+	// prevBlank starts as true to model the pre-file boundary as blank; the
+	// first-line exemption is enforced by the i > 0 guard below.
+	prevBlank := true
+	prevWasListItem := false
+	prevLineNum := 0 // 1-indexed line number of the previous list item
 
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
+		isBlank := trimmed == ""
+		isList := isListItem(line)
+
+		// Check "end of block" before fence branches so a list item immediately
+		// followed by a fence opener is still flagged (lesson from PR-4).
+		if prevWasListItem && !isBlank && !isList {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + prevLineNum + 1,
+				Message: "blanks-around-lists: list must be followed by a blank line",
+			})
+		}
 
 		if inBlock {
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
+			prevBlank = false
+			prevWasListItem = false
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
+		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
 			fenceMarker = marker
+			prevBlank = false
+			prevWasListItem = false
 			continue
 		}
 
-		if !isListItem(line) {
-			continue
+		if isList {
+			// Check "start of block": first item of a block not preceded by blank.
+			if i > 0 && !prevBlank && !prevWasListItem {
+				errs = append(errs, LintError{
+					File:    filename,
+					Line:    offset + i + 1,
+					Message: "blanks-around-lists: list must be preceded by a blank line",
+				})
+			}
+			prevWasListItem = true
+			prevLineNum = i + 1
+		} else {
+			prevWasListItem = false
 		}
 
-		// Check "start of block": previous line is non-blank and not a list item.
-		if i > 0 && strings.TrimSpace(lines[i-1]) != "" && !isListItem(lines[i-1]) {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i + 1,
-				Message: "blanks-around-lists: list must be preceded by a blank line",
-			})
-		}
-
-		// Check "end of block": next line is non-blank and not a list item.
-		if i < len(lines)-1 && strings.TrimSpace(lines[i+1]) != "" && !isListItem(lines[i+1]) {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i + 2,
-				Message: "blanks-around-lists: list must be followed by a blank line",
-			})
-		}
+		prevBlank = isBlank
 	}
 
 	return errs
