@@ -38,12 +38,14 @@ func CheckNoHardTabs(filename string, lines []string, offset int) []LintError {
 			scanned = stripInlineCode(line)
 		}
 
-		for col, ch := range scanned {
+		col := 0
+		for _, ch := range scanned {
+			col++
 			if ch == '\t' {
 				errs = append(errs, LintError{
 					File:    filename,
 					Line:    offset + i + 1,
-					Message: fmt.Sprintf("no-hard-tabs: hard tab character found at column %d", col+1),
+					Message: fmt.Sprintf("no-hard-tabs: hard tab character found at column %d", col),
 				})
 			}
 		}
