@@ -104,6 +104,7 @@ repos:
 - [CLI リファレンス](https://shinagawa-web.github.io/gomarklint/docs/cli/)
 - [設定](https://shinagawa-web.github.io/gomarklint/docs/configuration/)
 - [GitHub Actions 連携](https://shinagawa-web.github.io/gomarklint/docs/github-actions/)
+- [FAQ & トラブルシューティング](https://shinagawa-web.github.io/gomarklint/docs/faq/)
 
 ## コントリビュート
 
