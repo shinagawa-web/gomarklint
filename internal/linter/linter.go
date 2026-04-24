@@ -197,6 +197,7 @@ var simpleRules = []struct {
 	{"no-empty-links", rule.CheckNoEmptyLinks},
 	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
+	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
