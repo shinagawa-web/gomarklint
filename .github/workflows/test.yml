@@ -40,5 +40,5 @@ jobs:
           files: ./coverage.txt
           fail_ci_if_error: true
 
-      - name: Lint README
-        run: ./gomarklint README.md --config .gomarklint.ci.json
+      - name: Lint Markdown files
+        run: ./gomarklint README.md README.ja.md docs/content --config .gomarklint.ci.json
