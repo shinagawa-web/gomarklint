@@ -20,13 +20,28 @@ import (
 // Returns:
 //   - A slice of LintError with entries for each occurrence of multiple consecutive blank lines.
 func CheckNoMultipleBlankLines(filename string, lines []string, offset int) []LintError {
-	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
-
 	var errs []LintError
-
 	consecutiveBlankCount := 0
+	inCodeBlock := false
+	var fenceMarker string
+
 	for i, line := range lines {
-		if !isInCodeBlock(i+1, codeBlockRanges) && strings.TrimSpace(line) == "" {
+		trimmed := strings.TrimSpace(line)
+		if inCodeBlock {
+			if IsClosingFence(trimmed, fenceMarker) {
+				inCodeBlock = false
+				fenceMarker = ""
+			}
+			consecutiveBlankCount = 0
+			continue
+		}
+		if marker := openingFenceMarker(trimmed); marker != "" {
+			inCodeBlock = true
+			fenceMarker = marker
+			consecutiveBlankCount = 0
+			continue
+		}
+		if trimmed == "" {
 			consecutiveBlankCount++
 			if consecutiveBlankCount > 1 {
 				errs = append(errs, LintError{
