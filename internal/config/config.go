@@ -24,6 +24,7 @@ const DefaultConfigJSON = `{
     "no-empty-links": true,
     "no-emphasis-as-heading": true,
     "blanks-around-lists": true,
+    "no-hard-tabs": true,
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
@@ -219,6 +220,7 @@ func Default() Config {
 			"no-empty-links":          enabledRule(),
 			"no-emphasis-as-heading":  enabledRule(),
 			"blanks-around-lists":     enabledRule(),
+			"no-hard-tabs":            enabledRule(),
 			"max-line-length": {
 				Enabled:  false,
 				Severity: SeverityOff,

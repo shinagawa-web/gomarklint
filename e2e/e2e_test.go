@@ -323,6 +323,26 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "line exceeds 80 bytes (100)")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("NoHardTabsValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/no_hard_tabs_valid.md", "--config", "config-no-hard-tabs.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "hard tab character")
+	})
+
+	t.Run("NoHardTabsViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/no_hard_tabs_violation.md", "--config", "config-no-hard-tabs.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/no_hard_tabs_violation.md:")
+		assertOutputContains(t, output, "fixtures/no_hard_tabs_violation.md:3:")
+		assertOutputContains(t, output, "hard tab character found at column 1")
+		assertOutputContains(t, output, "fixtures/no_hard_tabs_violation.md:5:")
+		assertOutputContains(t, output, "hard tab character found at column 4")
+		assertOutputContains(t, output, "fixtures/no_hard_tabs_violation.md:7:")
+		assertOutputContains(t, output, "3 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -450,7 +470,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "emphasis used as heading")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_lists_violation.md:")
 		assertOutputContains(t, output, "list must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 39 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/no_hard_tabs_violation.md:")
+		assertOutputContains(t, output, "hard tab character found")
+		assertOutputContains(t, output, "Checked 41 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -462,6 +484,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_lists_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_empty_links_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_emphasis_as_heading_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/no_hard_tabs_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

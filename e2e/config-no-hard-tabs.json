@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "no-hard-tabs": true
+  }
+}

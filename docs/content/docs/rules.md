@@ -22,6 +22,9 @@ weight: 2
 | `no-bare-urls`                 | HTTP/HTTPS URLs written as bare text instead of proper Markdown links   | Default **on**                                                                                        |
 | `no-empty-links`               | Links or images with an empty destination (`[]()`, `[](#)`, `[](<>)`)  | Default **on**                                                                                        |
 | `no-emphasis-as-heading`       | Bold/italic text used as a heading substitute instead of ATX headings   | Default **on**. Punctuation-ending spans (`. , ; : ! ? 。 、 ； ： ！ ？`) are excluded              |
+| `blanks-around-lists`          | Lists not surrounded by blank lines                                     | Default **on**                                                                                        |
+| `no-hard-tabs`                 | Hard tab characters (`\t`) outside fenced code blocks and inline code   | Default **on**                                                                                        |
+| `max-line-length`              | Lines exceeding the configured maximum length                           | Default **off**. Option: `lineLength` (default `80`)                                                  |
 | `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
 
 ## Execution details
