@@ -24,6 +24,7 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 ## Rules — Planned
 
 ### Priority 2
+
 - [ ] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
