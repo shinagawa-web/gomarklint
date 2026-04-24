@@ -43,7 +43,7 @@ Rule severity must be one of: `true`, `false`, `"error"`, `"warning"`, or `"off"
 
 ### `failed to access config file`
 
-The path passed to `--config` does not exist or is not readable. Check the path and verify the file is committed if running in CI.
+The file at the path passed to `--config` exists but cannot be accessed (for example, a permission error on the parent directory). If the file does not exist, `LoadOrDefault` falls back to the default configuration without an error. Check the file permissions and verify the file is committed if running in CI.
 
 → [CLI Reference](../cli/)
 
@@ -104,8 +104,8 @@ Go's default `User-Agent` (`Go-http-client/1.1`) is blocked by CDN-level bot pro
 
 **Workarounds:**
 
-- Add `"allowedStatuses": [403]` to your config to stop treating 403 as an error.
-- Add the domain to `skipPatterns` to skip it entirely.
+- Add the domain to `skipPatterns` to skip it during external link checks.
+- If only a few links are affected, verify them manually before treating the report as a real broken link.
 
 → [Configuration](../configuration/)
 
