@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	settextUnderlineRegex = regexp.MustCompile(`^ {0,3}(?:=+|-+)\s*$`)
+	setextUnderlineRegex = regexp.MustCompile(`^ {0,3}(?:=+|-+)\s*$`)
 	setextOtherBlockRegex = regexp.MustCompile(`^ {0,3}(?:[*+-]|\d+[.)]|>)\s*`)
 )
 
@@ -52,7 +52,7 @@ func CheckNoSetextHeadings(filename string, lines []string, offset int) []LintEr
 		isCurrentLineEmpty := trimmed == ""
 		isCurrentLineOtherBlock := setextOtherBlockRegex.MatchString(line)
 
-		if !inCodeBlock && settextUnderlineRegex.MatchString(line) &&
+		if !inCodeBlock && setextUnderlineRegex.MatchString(line) &&
 			!isPrevLineEmpty && !isPrevLineOtherBlock && !isInLazyBlockquote {
 			errs = append(errs, LintError{
 				File:    filename,
