@@ -24,6 +24,9 @@ func StripFrontmatter(content string) (string, int) {
 				for skip < len(lines) && strings.TrimSpace(lines[skip]) == "" {
 					skip++
 				}
+				if skip >= len(lines) {
+					return "\n", skip
+				}
 				return strings.Join(lines[skip:], "\n"), skip
 			}
 		}
