@@ -450,9 +450,10 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "emphasis used as heading")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_lists_violation.md:")
 		assertOutputContains(t, output, "list must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 38 file(s)")
+		assertOutputContains(t, output, "Checked 39 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
+		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid_external_links.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/mixed_link_types.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/longer_closing_fence.md")
@@ -506,6 +507,12 @@ func TestE2E_EdgeCases(t *testing.T) {
 		output := runTest(t, "fixtures/with_frontmatter.md", "--config", ".gomarklint.json")
 		assertOutputContains(t, output, "No issues found")
 		assertOutputNotContains(t, output, "Errors")
+	})
+
+	t.Run("FrontmatterOnlyNoFalsePositive", func(t *testing.T) {
+		output := runTest(t, "fixtures/frontmatter_only.md", "--config", ".gomarklint.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Missing final blank line")
 	})
 
 	t.Run("MultipleViolationsInSingleFile", func(t *testing.T) {

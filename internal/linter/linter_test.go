@@ -289,6 +289,26 @@ func TestRun_FinalBlankLine(t *testing.T) {
 	}
 }
 
+func TestRun_FinalBlankLine_FrontmatterOnly(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["final-blank-line"] = on()
+	cfg.Rules["no-multiple-blank-lines"] = on()
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "frontmatter_only.md")
+	if err := os.WriteFile(testFile, []byte("---\ntitle: \"Docs\"\nweight: 1\n---\n"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors != 0 {
+		t.Errorf("expected no violations for frontmatter-only file, got %d: %v", result.TotalErrors, result.Errors)
+	}
+}
+
 func TestRun_LinkCheck(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["external-link"] = &config.RuleConfig{
