@@ -76,19 +76,19 @@ title: "Oops"`,
 		{
 			name:     "frontmatter-only with trailing newline",
 			input:    "---\ntitle: \"Docs\"\nweight: 1\n---\n",
-			wantBody: "\n",
+			wantBody: "",
 			wantSkip: 5,
 		},
 		{
 			name:     "frontmatter-only with multiple trailing blank lines",
 			input:    "---\ntitle: \"Docs\"\n---\n\n\n",
-			wantBody: "\n",
+			wantBody: "",
 			wantSkip: 6,
 		},
 		{
 			name:     "frontmatter-only without trailing newline",
 			input:    "---\ntitle: \"Docs\"\n---",
-			wantBody: "\n",
+			wantBody: "",
 			wantSkip: 3,
 		},
 	}
