@@ -18,13 +18,12 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] `no-emphasis-as-heading`: Bold/italic must not substitute for headings
 - [x] `no-setext-headings`: Setext-style headings must use ATX style instead
 - [x] `blanks-around-lists`: Lists must be surrounded by blank lines
+- [x] `max-line-length`: Enforce a maximum line length (MD013)
+- [x] `no-hard-tabs`: No hard tab characters in body text (MD010)
 
 ## Rules — Planned
 
 ### Priority 2
-
-- [ ] `max-line-length`: Enforce a maximum line length (MD013)
-- [ ] `no-hard-tabs`: No hard tab characters in body text (MD010)
 - [ ] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
