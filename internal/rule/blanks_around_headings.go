@@ -21,44 +21,58 @@ func CheckBlanksAroundHeadings(filename string, lines []string, offset int) []Li
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
+	// prevBlank tracks whether the previous line was blank so we avoid a
+	// second TrimSpace call on lines[i-1] for every heading encountered.
+	// Initialized to true so the first line of the file is exempt.
+	prevBlank := true
+	prevWasHeading := false
 
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
+		isBlank := trimmed == ""
+
+		// Check "followed by blank" before the fence branches so a heading
+		// immediately followed by a fence opener is still flagged.
+		if prevWasHeading && !isBlank {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + i,
+				Message: "blanks-around-headings: heading must be followed by a blank line",
+			})
+		}
 
 		if inBlock {
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
+			prevBlank = false
+			prevWasHeading = false
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
+		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
 			fenceMarker = marker
+			prevBlank = false
+			prevWasHeading = false
 			continue
 		}
 
-		if !isATXHeading(trimmed) {
-			continue
+		if isATXHeading(trimmed) {
+			if i > 0 && !prevBlank {
+				errs = append(errs, LintError{
+					File:    filename,
+					Line:    offset + i + 1,
+					Message: "blanks-around-headings: heading must be preceded by a blank line",
+				})
+			}
+			prevWasHeading = true
+		} else {
+			prevWasHeading = false
 		}
 
-		if i > 0 && strings.TrimSpace(lines[i-1]) != "" {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i + 1,
-				Message: "blanks-around-headings: heading must be preceded by a blank line",
-			})
-		}
-
-		if i < len(lines)-1 && strings.TrimSpace(lines[i+1]) != "" {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i + 1,
-				Message: "blanks-around-headings: heading must be followed by a blank line",
-			})
-		}
+		prevBlank = isBlank
 	}
 
 	return errs
