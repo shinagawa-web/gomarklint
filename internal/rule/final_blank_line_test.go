@@ -9,6 +9,7 @@ func TestCheckFinalBlankLine(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string
+		offset   int
 		wantErrs []LintError
 	}{
 		{
@@ -35,12 +36,18 @@ func TestCheckFinalBlankLine(t *testing.T) {
 			content:  "\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "frontmatter-only: empty body with positive offset is not flagged",
+			content:  "",
+			offset:   5,
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
-			got := CheckFinalBlankLine("test.md", lines, 0)
+			got := CheckFinalBlankLine("test.md", lines, tt.offset)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
