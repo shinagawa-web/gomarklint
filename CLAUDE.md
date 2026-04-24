@@ -35,6 +35,15 @@ When creating an issue for a new lint rule:
 
 See [#106](https://github.com/shinagawa-web/gomarklint/issues/106#issuecomment-4205193874) as the canonical example.
 
+## Adding a new rule
+
+When adding a new lint rule:
+
+1. Ensure `generateComplexMarkdown` in `cmd/root_bench_test.go` contains content that exercises the new rule's main scan path without producing violations.
+2. If the rule is disabled by default, explicitly enable it in `benchmarkConfig()` with violation-free option values.
+3. Do **not** add a rule-level `_bench_test.go` under `internal/rule/` — the CI benchmark comparison runs only on `cmd/root_bench_test.go`.
+4. Verify `TestBenchmarkContentIsViolationFree` still passes after your changes.
+
 ## Project context
 
 - **#76**: master tracking issue for rule expansion (Priority 1 → 2 → 3)
