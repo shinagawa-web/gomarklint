@@ -125,6 +125,28 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 			content:  "~~~py\ncode\n~~~~~\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "fence opener inside single-line HTML comment is ignored",
+			content:  "<!-- ```\nsome text\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "fence opener inside multi-line HTML comment is ignored",
+			content:  "<!--\n```\ncode\n```\n-->\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "fence after closed multi-line HTML comment is flagged",
+			content: "<!--\ncomment\n-->\n```\ncode\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 4, Message: "Fenced code block must have a language identifier"},
+			},
+		},
+		{
+			name:     "fence opener on same line as --> closing comment is not flagged",
+			content:  "<!-- comment --> ``` not a fence\ntext\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {

@@ -159,6 +159,74 @@ func TestCheckNoBareURLs(t *testing.T) {
 			content:  "<https://example.com>\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "valid: URL inside HTML href attribute",
+			content:  `<a href="https://example.com">link</a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside HTML src attribute",
+			content:  `<img src="https://example.com/image.gif" alt="Demo">` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: multiple URLs inside HTML attributes on one line",
+			content:  `<a href="https://example.com"><img src="https://example.com/image.gif" width="800" alt="Demo"></a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside single-quoted HTML attribute",
+			content:  `<a href='https://example.com'>link</a>` + "\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside single-line HTML comment",
+			content:  "<!-- FIXME update when fixed https://example.com/ -->\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL inside multi-line HTML comment",
+			content:  "<!--\nhttps://example.com\n-->\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: URL on same line as opening HTML comment tag (unclosed on that line)",
+			content:  "<!-- https://example.com\n-->\nMore text\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: bare URL after closed HTML comment on same line",
+			content: "<!-- comment --> https://example.com\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
+			name:    "invalid: URL surrounded by double quotes in normal prose is still flagged",
+			content: "See \"https://example.com\" for details.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
+			name:    "invalid: URL surrounded by single quotes in normal prose is still flagged",
+			content: "See 'https://example.com' for details.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
+			name:     "valid: multiple HTML comments on one line — second unclosed sets inComment",
+			content:  "<!-- closed --> <!-- https://example.com\nstill inside comment\n-->\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "valid: fence opener inside multi-line HTML comment is not treated as code block",
+			content: "<!--\n```\nhttps://example.com\n```\n-->\nhttps://after.example.com is bare\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 6, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://after.example.com"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
