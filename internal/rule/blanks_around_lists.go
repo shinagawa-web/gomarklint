@@ -54,7 +54,8 @@ func CheckBlanksAroundLists(filename string, lines []string, offset int) []LintE
 	fenceMarker := ""
 	// prevBlank and prevWasListItem replace the TrimSpace look-behind on
 	// lines[i-1] for every list item encountered.
-	// prevBlank is initialized to true so the first line is exempt.
+	// prevBlank starts as true to model the pre-file boundary as blank; the
+	// first-line exemption is enforced by the i > 0 guard below.
 	prevBlank := true
 	prevWasListItem := false
 	prevLineNum := 0 // 1-indexed line number of the previous list item
