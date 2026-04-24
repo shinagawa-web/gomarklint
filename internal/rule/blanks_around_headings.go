@@ -31,6 +31,16 @@ func CheckBlanksAroundHeadings(filename string, lines []string, offset int) []Li
 		trimmed := strings.TrimSpace(line)
 		isBlank := trimmed == ""
 
+		// Check "followed by blank" before the fence branches so a heading
+		// immediately followed by a fence opener is still flagged.
+		if prevWasHeading && !isBlank {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + i,
+				Message: "blanks-around-headings: heading must be followed by a blank line",
+			})
+		}
+
 		if inBlock {
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
@@ -47,16 +57,6 @@ func CheckBlanksAroundHeadings(filename string, lines []string, offset int) []Li
 			prevBlank = false
 			prevWasHeading = false
 			continue
-		}
-
-		// Check "followed by blank" for the previous heading on this iteration
-		// so we avoid looking ahead with TrimSpace(lines[i+1]).
-		if prevWasHeading && !isBlank {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i,
-				Message: "blanks-around-headings: heading must be followed by a blank line",
-			})
 		}
 
 		if isATXHeading(trimmed) {

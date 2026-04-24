@@ -98,6 +98,20 @@ func TestCheckBlanksAroundHeadings(t *testing.T) {
 			},
 		},
 		{
+			name:    "invalid: heading immediately followed by fenced code block opener",
+			content: "## Heading\n```go\nfmt.Println()\n```\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "blanks-around-headings: heading must be followed by a blank line"},
+			},
+		},
+		{
+			name:    "invalid: heading immediately followed by tilde fence opener",
+			content: "## Heading\n~~~go\nfmt.Println()\n~~~\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "blanks-around-headings: heading must be followed by a blank line"},
+			},
+		},
+		{
 			name:    "offset shifts line numbers",
 			content: "Some text\n## Heading\nMore text\n",
 			offset:  5,
