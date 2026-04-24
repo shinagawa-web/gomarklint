@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	setextUnderlineRegex = regexp.MustCompile(`^ {0,3}(?:=+|-+)\s*$`)
+	setextUnderlineRegex  = regexp.MustCompile(`^ {0,3}(?:=+|-+)\s*$`)
 	setextOtherBlockRegex = regexp.MustCompile(`^ {0,3}(?:[*+-]|\d+[.)]|>)\s*`)
 )
 
