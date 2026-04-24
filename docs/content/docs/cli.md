@@ -48,7 +48,7 @@ Each rule can be configured with a severity of `"error"` or `"warning"` in the c
 }
 ```
 
-```
+```text
 $ gomarklint README.md
   README.md:10: [warning] no-setext-headings: Setext heading found
   README.md:20: [error]   unclosed-code-block: Unclosed code block

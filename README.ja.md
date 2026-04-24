@@ -97,7 +97,7 @@ repos:
 
 ## ドキュメント
 
-完全なドキュメントは **[https://shinagawa-web.github.io/gomarklint/](https://shinagawa-web.github.io/gomarklint/)** で参照できます。
+完全なドキュメントは **[shinagawa-web.github.io/gomarklint](https://shinagawa-web.github.io/gomarklint/)** で参照できます。
 
 - [クイックスタート](https://shinagawa-web.github.io/gomarklint/docs/quick-start/)
 - [ルール一覧](https://shinagawa-web.github.io/gomarklint/docs/rules/)
