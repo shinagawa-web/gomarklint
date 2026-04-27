@@ -47,6 +47,10 @@ var reRefDef = regexp.MustCompile(`^\s*\[([^\]]+)\]:\s+#(\S+)`)
 func collectRefDefs(lines []string) map[string]string {
 	defs := make(map[string]string)
 	for _, line := range lines {
+		// Reference definitions must start with optional whitespace then '['.
+		if !strings.HasPrefix(strings.TrimLeft(line, " \t"), "[") {
+			continue
+		}
 		m := reRefDef.FindStringSubmatch(line)
 		if m == nil {
 			continue
@@ -93,6 +97,67 @@ func collectHeadingSlugs(lines []string, algorithm string) map[string]struct{} {
 	return buildSlugSet(headings, algorithm)
 }
 
+// hasAnyFragmentLinks reports whether lines contain at least one potential
+// fragment link. The check is intentionally coarse (no code-block awareness)
+// to stay O(n) with a single pass and minimal overhead.
+func hasAnyFragmentLinks(lines []string, refDefs map[string]string) bool {
+	for _, line := range lines {
+		if strings.Contains(line, "(#") {
+			return true
+		}
+		if len(refDefs) > 0 && strings.Contains(line, "][") {
+			return true
+		}
+	}
+	return false
+}
+
+// parseSlugAlgorithm extracts the slug-algorithm option, defaulting to "github".
+func parseSlugAlgorithm(options map[string]interface{}) string {
+	if v, ok := options["slug-algorithm"]; ok {
+		if s, ok := v.(string); ok && s != "" {
+			return s
+		}
+	}
+	return "github"
+}
+
+// checkInlineFragments checks inline fragment links ([text](#frag)) on one line.
+func checkInlineFragments(filename string, lineNum int, scanned string, slugs map[string]struct{}) []LintError {
+	var errs []LintError
+	for _, m := range reFragmentLink.FindAllStringSubmatch(scanned, -1) {
+		fragment := m[1]
+		if _, ok := slugs[fragment]; !ok {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    lineNum,
+				Message: fmt.Sprintf("link-fragments: fragment #%s not found in this document", fragment),
+			})
+		}
+	}
+	return errs
+}
+
+// checkRefFragments checks reference-style fragment links ([text][ref] with [ref]: #frag) on one line.
+func checkRefFragments(filename string, lineNum int, scanned string, slugs map[string]struct{}, refDefs map[string]string) []LintError {
+	var errs []LintError
+	for _, m := range reRefLinkUsage.FindAllStringSubmatch(scanned, -1) {
+		label := strings.ToLower(strings.TrimSpace(m[1]))
+		fragment, ok := refDefs[label]
+		if !ok {
+			continue
+		}
+		if _, found := slugs[fragment]; !found {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    lineNum,
+				Message: fmt.Sprintf("link-fragments: fragment #%s not found in this document", fragment),
+			})
+		}
+	}
+	return errs
+}
+
 // CheckLinkFragments validates that every internal fragment link in the document
 // resolves to an actual heading slug. Both inline links ([text](#frag)) and
 // reference links ([text][ref] + [ref]: #frag) are checked. Content inside fenced
@@ -102,15 +167,11 @@ func collectHeadingSlugs(lines []string, algorithm string) map[string]struct{} {
 //   - "slug-algorithm": string — one of github, gitlab, zenn, pandoc, pandoc-gfm,
 //     kramdown, mkdocs, docfx, hugo (default: "github")
 func CheckLinkFragments(filename string, lines []string, offset int, options map[string]interface{}) []LintError {
-	algorithm := "github"
-	if v, ok := options["slug-algorithm"]; ok {
-		if s, ok := v.(string); ok && s != "" {
-			algorithm = s
-		}
-	}
-
-	slugs := collectHeadingSlugs(lines, algorithm)
 	refDefs := collectRefDefs(lines)
+	if !hasAnyFragmentLinks(lines, refDefs) {
+		return nil
+	}
+	slugs := collectHeadingSlugs(lines, parseSlugAlgorithm(options))
 
 	var errs []LintError
 	inBlock := false
@@ -132,37 +193,24 @@ func CheckLinkFragments(filename string, lines []string, offset int, options map
 			continue
 		}
 
+		// Fast path: skip lines with no potential fragment links.
+		hasInlineLink := strings.Contains(line, "(#")
+		hasRefLink := len(refDefs) > 0 && strings.Contains(line, "][")
+		if !hasInlineLink && !hasRefLink {
+			continue
+		}
+
 		scanned := line
 		if strings.ContainsRune(scanned, '`') {
 			scanned = stripInlineCode(scanned)
 		}
 
 		lineNum := offset + i + 1
-
-		for _, m := range reFragmentLink.FindAllStringSubmatch(scanned, -1) {
-			fragment := m[1]
-			if _, ok := slugs[fragment]; !ok {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    lineNum,
-					Message: fmt.Sprintf("link-fragments: fragment #%s not found in this document", fragment),
-				})
-			}
+		if hasInlineLink {
+			errs = append(errs, checkInlineFragments(filename, lineNum, scanned, slugs)...)
 		}
-
-		for _, m := range reRefLinkUsage.FindAllStringSubmatch(scanned, -1) {
-			label := strings.ToLower(strings.TrimSpace(m[1]))
-			fragment, ok := refDefs[label]
-			if !ok {
-				continue
-			}
-			if _, found := slugs[fragment]; !found {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    lineNum,
-					Message: fmt.Sprintf("link-fragments: fragment #%s not found in this document", fragment),
-				})
-			}
+		if hasRefLink {
+			errs = append(errs, checkRefFragments(filename, lineNum, scanned, slugs, refDefs)...)
 		}
 	}
 

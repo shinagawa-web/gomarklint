@@ -44,6 +44,10 @@ var reSlugCode = regexp.MustCompile("`+([^`]+)`+")
 // returning plain text for slug generation.
 // Order: HTML comments → HTML tags → images → links → bold → italic → code spans.
 func stripHeadingFormatting(s string) string {
+	// Fast path: plain headings with no formatting markers need no processing.
+	if !strings.ContainsAny(s, "*_[<`") {
+		return s
+	}
 	s = reSlugHTMLComment.ReplaceAllString(s, "")
 	s = reSlugHTMLTag.ReplaceAllString(s, "")
 	s = reSlugRefImage.ReplaceAllString(s, "$1")
@@ -82,10 +86,10 @@ func githubStripRune(r rune) bool {
 // Lowercases, strips specific punctuation ranges, replaces whitespace with hyphens.
 // Consecutive whitespace produces consecutive hyphens (no collapsing).
 func slugGitHub(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
 		} else if !githubStripRune(r) {
@@ -98,10 +102,10 @@ func slugGitHub(text string) string {
 // slugGitLab computes the GitLab (goldmark slugify) slug.
 // Lowercases, keeps Unicode letters/numbers/hyphens/underscores, collapses consecutive hyphens.
 func slugGitLab(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
 		} else if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' || r == '-' {
@@ -114,10 +118,10 @@ func slugGitLab(text string) string {
 // slugZenn computes the Zenn (markdown-it-anchor default) slug.
 // Lowercases and replaces whitespace with hyphens; all other characters are preserved.
 func slugZenn(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
 		} else {
@@ -130,10 +134,10 @@ func slugZenn(text string) string {
 // slugPandoc computes the Pandoc auto_identifiers slug.
 // Lowercases, keeps only ASCII letters/digits/hyphens/underscores, collapses consecutive hyphens.
 func slugPandoc(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
 		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
@@ -146,10 +150,10 @@ func slugPandoc(text string) string {
 // slugKramdown computes the kramdown header_ids slug.
 // Lowercases, keeps only ASCII letters/digits/hyphens, replaces spaces with hyphens, collapses.
 func slugKramdown(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		switch {
 		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-':
 			sb.WriteRune(r)
@@ -163,10 +167,10 @@ func slugKramdown(text string) string {
 // slugMkDocs computes the MkDocs (Python-Markdown toc.py) slug.
 // Lowercases, strips non-ASCII characters, replaces spaces with hyphens, collapses.
 func slugMkDocs(text string) string {
-	text = strings.ToLower(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
+		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
 		} else if r < 128 && ((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {

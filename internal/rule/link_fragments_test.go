@@ -97,6 +97,12 @@ func TestCheckLinkFragments(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "valid: reference link label not in fragment defs is ignored",
+			content:  "## Section\n\n[frag-ref]: #section\n\nSee [text][other-ref].\n",
+			opts:     map[string]interface{}{"slug-algorithm": "github"},
+			wantErrs: nil,
+		},
+		{
 			name:     "valid: non-fragment inline links are ignored",
 			content:  "## Hello\n\nSee [Example](https://example.com) for details.\n",
 			opts:     map[string]interface{}{"slug-algorithm": "github"},
