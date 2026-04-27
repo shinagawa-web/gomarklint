@@ -11,7 +11,7 @@ import (
 
 // benchmarkConfig returns the linter configuration used for all CI benchmarks.
 // external-link is excluded (network cost).
-// heading-level uses minLevel:1 to match the H1 intro; PR-7 will raise it to 2.
+// heading-level uses minLevel:1 to match the H1 intro in generateComplexMarkdown.
 // max-line-length is enabled at 120 to exercise the rule without violations.
 func benchmarkConfig() config.Config {
 	cfg := config.Default()
