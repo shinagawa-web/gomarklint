@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "blanks-around-fences": true
+  }
+}
