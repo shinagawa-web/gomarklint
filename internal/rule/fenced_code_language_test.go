@@ -147,6 +147,16 @@ func TestCheckFencedCodeLanguage(t *testing.T) {
 			content:  "<!-- comment --> ``` not a fence\ntext\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "line starting with backtick but not a fence marker is skipped",
+			content:  "`inline code` on its own line\ntext\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "non-fence-starting line inside code block does not close block",
+			content:  "```go\nsome code line\n```\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {

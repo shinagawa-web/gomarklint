@@ -29,9 +29,13 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 			}
 		}
 
-		trimmed := strings.TrimSpace(line)
-
 		if inBlock {
+			// Only lines starting with the same fence character as the opener can close a fence.
+			first := firstNonSpaceByte(line)
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
@@ -39,7 +43,8 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 			continue
 		}
 
-		if strings.Contains(line, "<!--") {
+		// Cheap guard: '<' must be present before invoking stripHTMLComments.
+		if strings.IndexByte(line, '<') >= 0 && strings.Contains(line, "<!--") {
 			_, endedInComment := stripHTMLComments(line)
 			if endedInComment {
 				inComment = true
@@ -47,6 +52,13 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 			}
 		}
 
+		// Only backtick or tilde lines can open a fence; skip TrimSpace for all others.
+		first := firstNonSpaceByte(line)
+		if first != '`' && first != '~' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
 		marker := openingFenceMarker(trimmed)
 		if marker == "" {
 			continue
