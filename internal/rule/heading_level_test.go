@@ -18,8 +18,8 @@ func TestAtxHeadingLevel(t *testing.T) {
 		{"#", 1},                // lone '#' with no text (level == len(line))
 		{"##\tTab", 2},          // tab after '#'
 		{"not a heading", 0},    // no '#'
-		{"#\r", 0},   // bare '#' + CRLF remnant: '\r' is not a valid terminator — caller must TrimSpace first
-		{"##\r", 0},  // bare '##' + CRLF remnant: same
+		{"#\r", 0},              // bare '#' + CRLF remnant: '\r' is not a valid terminator — caller must TrimSpace first
+		{"##\r", 0},             // bare '##' + CRLF remnant: same
 	}
 	for _, tt := range tests {
 		got := atxHeadingLevel(tt.line)
