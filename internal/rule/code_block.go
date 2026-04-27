@@ -29,6 +29,13 @@ func CheckUnclosedCodeBlocks(filename string, lines []string, offset int) []Lint
 	return errs
 }
 
+// GetCodeBlockLineRanges scans lines and returns the 1-based line ranges of all
+// closed fenced code blocks and the 0-based start lines of any unclosed ones.
+//
+// Optimization: a byte-level prefilter (firstNonSpaceByte) avoids calling
+// strings.TrimSpace on the ~95% of lines that cannot be fence openers or
+// closers. Inside a block, only a line whose first non-space byte matches the
+// opening fence character can close the block.
 func GetCodeBlockLineRanges(lines []string) (closed [][2]int, unclosed []int) {
 	inBlock := false
 	var start int
@@ -37,8 +44,14 @@ func GetCodeBlockLineRanges(lines []string) (closed [][2]int, unclosed []int) {
 	var unclosedStarts []int
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 		if inBlock {
+			// Only a line whose first non-space byte matches the opener's fence
+			// character can close the block; all others are content.
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				closedRanges = append(closedRanges, [2]int{start + 1, i + 1})
 				inBlock = false
@@ -46,6 +59,11 @@ func GetCodeBlockLineRanges(lines []string) (closed [][2]int, unclosed []int) {
 			}
 			continue
 		}
+		// Outside a block, only backtick or tilde lines can open a fence.
+		if first != '`' && first != '~' {
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
 		marker := openingFenceMarker(trimmed)
 		if marker != "" {
 			start = i
