@@ -108,10 +108,38 @@ func TestCheckNoBareURLs(t *testing.T) {
 			},
 		},
 		{
-			name:    "invalid: bare URL on second line",
-			content: "## Section\n\nhttps://example.com\n",
+			name:     "valid: link card — standalone URL after heading with surrounding blank lines",
+			content:  "## Section\n\nhttps://example.com\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: link card — URL surrounded by blank lines in prose",
+			content:  "Some text above.\n\nhttps://example.com\n\nSome text below.\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: link card — URL at start of file followed by blank line",
+			content:  "https://example.com\n\nSome text.\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: link card — URL at end of file preceded by blank line",
+			content:  "Some text.\n\nhttps://example.com\n",
+			wantErrs: nil,
+		},
+		{
+			name:    "invalid: two URLs on one line surrounded by blank lines",
+			content: "\nhttps://foo.com https://bar.com\n\n",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 3, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+				{File: "test.md", Line: 2, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://foo.com"},
+				{File: "test.md", Line: 2, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://bar.com"},
+			},
+		},
+		{
+			name:    "invalid: bare URL not surrounded by blank lines",
+			content: "Above.\nhttps://example.com\nBelow.\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
 			},
 		},
 		{

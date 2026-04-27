@@ -198,10 +198,28 @@ func prepareScanned(line string) (string, bool) {
 	return scanned, false
 }
 
+// isLinkCard reports whether line i is a standalone link-card URL: the
+// trimmed line is a single http/https URL with no surrounding prose, preceded
+// and followed by a blank line (or the file boundary). Such lines are
+// intentionally placed by the author to trigger renderer-level link card
+// previews (GitHub, Zenn, etc.) and must not be flagged.
+func isLinkCard(lines []string, i int, trimmed string) bool {
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		return false
+	}
+	if strings.ContainsAny(trimmed, " \t") {
+		return false
+	}
+	prevBlank := i == 0 || strings.TrimSpace(lines[i-1]) == ""
+	nextBlank := i >= len(lines)-1 || strings.TrimSpace(lines[i+1]) == ""
+	return prevBlank && nextBlank
+}
+
 // CheckNoBareURLs flags HTTP/HTTPS URLs that appear as bare text rather than
 // being wrapped in angle brackets or used inside a Markdown link or image.
 // URLs inside fenced code blocks, inline code spans, HTML comments, and HTML
-// attribute values are ignored.
+// attribute values are ignored. A URL that stands alone on its own line
+// surrounded by blank lines is treated as a link card and not flagged.
 func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 	inBlock := false
@@ -241,6 +259,10 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			if strings.Contains(line, "<!--") {
 				_, inComment = stripHTMLComments(line)
 			}
+			continue
+		}
+
+		if isLinkCard(lines, i, trimmed) {
 			continue
 		}
 
