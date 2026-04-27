@@ -53,34 +53,45 @@ func CheckHeadingLevels(filename string, lines []string, offset int, minLevel in
 	var fenceMarker string
 
 	for i, line := range lines {
-		// First-byte prefilter: headings start with '#'; fence markers start
-		// with '`' or '~'. Skip everything else without further work.
 		if len(line) == 0 {
 			continue
 		}
 
-		trimmed := strings.TrimSpace(line)
+		// First-byte prefilter: skip lines that cannot start a fence or heading
+		// before calling strings.TrimSpace.
+		first := firstNonSpaceByte(line)
 
 		// Inline code-block tracking — avoids the O(n×k) isInCodeBlock lookup.
 		if inCodeBlock {
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				inCodeBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
+
+		if first != '#' && first != '`' && first != '~' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+
 		if marker := openingFenceMarker(trimmed); marker != "" {
 			inCodeBlock = true
 			fenceMarker = marker
 			continue
 		}
 
-		// Fast path: only lines that start with '#' can be ATX headings.
-		if line[0] != '#' {
+		if first != '#' {
 			continue
 		}
 
-		currentLevel := atxHeadingLevel(line)
+		// Pass trimmed so that CRLF '\r' and leading spaces are already removed.
+		currentLevel := atxHeadingLevel(trimmed)
 		if currentLevel == 0 {
 			continue
 		}

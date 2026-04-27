@@ -18,6 +18,8 @@ func TestAtxHeadingLevel(t *testing.T) {
 		{"#", 1},                // lone '#' with no text (level == len(line))
 		{"##\tTab", 2},          // tab after '#'
 		{"not a heading", 0},    // no '#'
+		{"#\r", 0},   // bare '#' + CRLF remnant: '\r' is not a valid terminator — caller must TrimSpace first
+		{"##\r", 0},  // bare '##' + CRLF remnant: same
 	}
 	for _, tt := range tests {
 		got := atxHeadingLevel(tt.line)
@@ -104,6 +106,21 @@ func TestCheckHeadingLevels(t *testing.T) {
 		{
 			name:     "non-heading lines outside code blocks are skipped",
 			content:  "## Section\nSome paragraph text.\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "backtick-starting non-fence line is ignored",
+			content:  "## Section\n`inline code`\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name: "CRLF bare headings are recognized end-to-end",
+			// Simulates reading a CRLF file split on "\n": each line retains a
+			// trailing '\r'. CheckHeadingLevels calls strings.TrimSpace before
+			// atxHeadingLevel, so bare headings like "##\r" are handled correctly.
+			content:  "##\r\n###\r",
 			minLevel: 2,
 			wantErrs: nil,
 		},
