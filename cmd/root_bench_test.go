@@ -26,12 +26,18 @@ func benchmarkConfig() config.Config {
 		Severity: config.SeverityError,
 		Options:  map[string]interface{}{"lineLength": float64(120)},
 	}
+	cfg.Rules["link-fragments"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"slug-algorithm": "github"},
+	}
 	return cfg
 }
 
 func writeIntro(sb *strings.Builder) {
 	sb.WriteString("# Main Title\n\n")
 	sb.WriteString("This is the introduction to the document.\n\n")
+	sb.WriteString("See [Main Title](#main-title) for this section.\n\n")
 }
 
 func writeHeading(sb *strings.Builder, i int) {
@@ -71,7 +77,7 @@ func writeImage(sb *strings.Builder, i int) {
 
 func writeSubsection(sb *strings.Builder, i int) {
 	fmt.Fprintf(sb, "### Subsection %d.1\n\n", i)
-	sb.WriteString("More detailed information goes here.\n\n")
+	fmt.Fprintf(sb, "See [Section %d](#section-%d) for the parent section.\n\n", i, i)
 }
 
 // generateComplexMarkdown generates a realistic markdown file with mixed content.

@@ -242,6 +242,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 	if l.config.IsEnabled("no-trailing-punctuation") {
 		errs = append(errs, l.withSeverity(rule.CheckNoTrailingPunctuation(path, lines, offset, l.noTrailingPunctuation()), "no-trailing-punctuation")...)
 	}
+	if l.config.IsEnabled("link-fragments") {
+		errs = append(errs, l.withSeverity(rule.CheckLinkFragments(path, lines, offset, l.config.RuleOptions("link-fragments")), "link-fragments")...)
+	}
 	return errs
 }
 

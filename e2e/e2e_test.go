@@ -391,6 +391,24 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, `heading ends with "!"`)
 		assertOutputContains(t, output, "3 issues found")
 	})
+
+	t.Run("LinkFragmentsValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/link_fragments_valid.md", "--config", "config-link-fragments.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "link-fragments")
+	})
+
+	t.Run("LinkFragmentsViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/link_fragments_violation.md", "--config", "config-link-fragments.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/link_fragments_violation.md:")
+		assertOutputContains(t, output, "fixtures/link_fragments_violation.md:3:")
+		assertOutputContains(t, output, "link-fragments")
+		assertOutputContains(t, output, "#setup")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
