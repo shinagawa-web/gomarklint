@@ -1,7 +1,10 @@
-.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench bench-compare lint-self install-hooks
+.PHONY: build test test-e2e test-coverage check-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench bench-compare lint-self install-hooks
 
 # Default target
 .DEFAULT_GOAL := help
+
+# Coverage threshold (percentage, integer)
+COVERAGE_THRESHOLD ?= 100
 
 # Binary name
 BINARY_NAME=gomarklint
@@ -46,12 +49,23 @@ clean-e2e: ## Clean E2E test binary
 test-all: test test-e2e ## Run all tests (unit + E2E)
 	@echo "All tests completed!"
 
-test-coverage: ## Run tests with coverage
+test-coverage: ## Run tests with coverage (report only)
 	@echo "Running tests with coverage..."
 	@mkdir -p coverage
 	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage/coverage.out
 	$(GOCMD) tool cover -html=coverage/coverage.out -o coverage/coverage.html
 	@echo "Coverage report generated: coverage/coverage.html"
+
+check-coverage: ## Run tests with coverage and enforce minimum threshold
+	@echo "Running tests with coverage (threshold: $(COVERAGE_THRESHOLD)%)..."
+	@mkdir -p coverage
+	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage/coverage.out
+	@total=$$($(GOCMD) tool cover -func=coverage/coverage.out | grep '^total' | awk '{print $$3}' | tr -d '%'); \
+	echo "Total coverage: $${total}%"; \
+	if ! awk "BEGIN { exit !($$total >= $(COVERAGE_THRESHOLD)) }"; then \
+		echo "FAIL: coverage $${total}% is below threshold $(COVERAGE_THRESHOLD)%"; exit 1; \
+	fi
+	@echo "Coverage OK."
 
 bench: ## Run benchmark tests
 	@echo "Running benchmark tests..."
