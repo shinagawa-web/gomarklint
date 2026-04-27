@@ -1,5 +1,7 @@
 package rule
 
+import "strings"
+
 // CheckSingleH1 flags every ATX-style H1 heading (`# ...`) after the first one in the file.
 // H1 headings inside fenced code blocks are ignored.
 func CheckSingleH1(filename string, lines []string, offset int) []LintError {
@@ -9,8 +11,8 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 	foundFirst := false
 
 	for i, line := range lines {
-		// Byte-level prefilter: skip lines whose first non-space byte cannot
-		// start a fence opener or an H1 heading, avoiding TrimSpace on the
+		// Byte-level prefilter: skip lines whose first non-ASCII-space byte cannot
+		// start a fence opener or an H1 heading, avoiding strings.TrimSpace on the
 		// vast majority of lines (paragraphs, list items, blank lines, etc.).
 		first := firstNonSpaceByte(line)
 		if inBlock {
@@ -19,7 +21,7 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 			if first != fenceMarker[0] {
 				continue
 			}
-			trimmed := trimSpaceBytes(line)
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
@@ -32,7 +34,7 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
-		trimmed := trimSpaceBytes(line)
+		trimmed := strings.TrimSpace(line)
 
 		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
@@ -63,9 +65,10 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 	return errs
 }
 
-// firstNonSpaceByte returns the first non-whitespace byte in s, or 0 if s is
-// empty or all whitespace. It is used as a cheap prefilter to skip lines that
-// cannot match any rule-relevant pattern before doing heavier string work.
+// firstNonSpaceByte returns the first non-ASCII-whitespace byte in s, or 0 if
+// s is empty or all ASCII whitespace. Used as a cheap prefilter so that
+// strings.TrimSpace is only called on lines that can plausibly match a
+// rule-relevant pattern (fence opener/closer, ATX heading).
 func firstNonSpaceByte(s string) byte {
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -74,27 +77,4 @@ func firstNonSpaceByte(s string) byte {
 		}
 	}
 	return 0
-}
-
-// trimSpaceBytes returns s with leading and trailing ASCII whitespace removed.
-// It operates purely on bytes and avoids the reflect overhead of
-// strings.TrimSpace for the common ASCII-only case.
-func trimSpaceBytes(s string) string {
-	start := 0
-	for start < len(s) {
-		c := s[start]
-		if c != ' ' && c != '\t' && c != '\r' && c != '\n' {
-			break
-		}
-		start++
-	}
-	end := len(s)
-	for end > start {
-		c := s[end-1]
-		if c != ' ' && c != '\t' && c != '\r' && c != '\n' {
-			break
-		}
-		end--
-	}
-	return s[start:end]
 }
