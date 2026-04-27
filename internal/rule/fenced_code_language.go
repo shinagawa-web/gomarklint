@@ -30,14 +30,15 @@ func CheckFencedCodeLanguage(filename string, lines []string, offset int) []Lint
 		}
 
 		if inBlock {
-			// Only backtick or tilde lines can close a fence; skip TrimSpace for all others.
+			// Only lines starting with the same fence character as the opener can close a fence.
 			first := firstNonSpaceByte(line)
-			if first == '`' || first == '~' {
-				trimmed := strings.TrimSpace(line)
-				if IsClosingFence(trimmed, fenceMarker) {
-					inBlock = false
-					fenceMarker = ""
-				}
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			if IsClosingFence(trimmed, fenceMarker) {
+				inBlock = false
+				fenceMarker = ""
 			}
 			continue
 		}
