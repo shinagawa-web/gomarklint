@@ -10,8 +10,8 @@ make static-lint
 echo "==> Running all tests (unit + E2E)..."
 make test-all
 
-echo "==> Running test coverage..."
-make test-coverage
+echo "==> Checking test coverage..."
+make check-coverage
 
 echo "==> Running self-lint..."
 make lint-self
