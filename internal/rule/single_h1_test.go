@@ -89,6 +89,28 @@ func TestCheckSingleH1(t *testing.T) {
 				{File: "test.md", Line: 7, Message: "Multiple H1 headings found; only one H1 is allowed per file"},
 			},
 		},
+		{
+			name:     "H1 with trailing spaces is still a valid single H1",
+			content:  "# Title   \n\n## Section\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "H1 with leading spaces is recognized",
+			content:  "  # Title\n\n## Section\n",
+			wantErrs: nil,
+		},
+		{
+			name:     "backtick-starting non-fence line is ignored",
+			content:  "# Title\n\n`inline code` here\n",
+			wantErrs: nil,
+		},
+		{
+			name: "fence char inside block that does not close it is ignored",
+			// The ``` line inside the ``````-fenced block starts with '`' but is
+			// shorter than the opener, so IsClosingFence returns false.
+			content:  "# Title\n\n``````go\n```not-closing\n``````\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
