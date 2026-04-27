@@ -11,9 +11,17 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 	foundFirst := false
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
+		// Byte-level prefilter: skip lines whose first non-ASCII-space byte cannot
+		// start a fence opener or an H1 heading, avoiding strings.TrimSpace on the
+		// vast majority of lines (paragraphs, list items, blank lines, etc.).
+		first := firstNonSpaceByte(line)
 		if inBlock {
+			// Inside a fence block only a closing fence matters; the closing
+			// fence character must match the opening fence character.
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
@@ -21,14 +29,24 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
+		// Outside a block, only '`', '~', and '#' are relevant.
+		if first != '`' && first != '~' && first != '#' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+
+		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
 			fenceMarker = marker
 			continue
 		}
 
-		if !strings.HasPrefix(trimmed, "# ") && trimmed != "#" {
+		if len(trimmed) == 0 || trimmed[0] != '#' {
+			continue
+		}
+		// Must be "# ..." (H1 with space) or bare "#" (also H1).
+		if len(trimmed) >= 2 && trimmed[1] != ' ' {
 			continue
 		}
 
@@ -45,4 +63,18 @@ func CheckSingleH1(filename string, lines []string, offset int) []LintError {
 	}
 
 	return errs
+}
+
+// firstNonSpaceByte returns the first non-ASCII-whitespace byte in s, or 0 if
+// s is empty or all ASCII whitespace. Used as a cheap prefilter so that
+// strings.TrimSpace is only called on lines that can plausibly match a
+// rule-relevant pattern (fence opener/closer, ATX heading).
+func firstNonSpaceByte(s string) byte {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c != ' ' && c != '\t' && c != '\r' && c != '\n' {
+			return c
+		}
+	}
+	return 0
 }
