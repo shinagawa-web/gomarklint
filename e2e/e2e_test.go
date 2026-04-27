@@ -314,6 +314,26 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "2 issues found")
 	})
 
+	t.Run("BlanksAroundFencesValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/blanks_around_fences_valid.md", "--config", "config-blanks-around-fences.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "fenced code block must be preceded by a blank line")
+		assertOutputNotContains(t, output, "fenced code block must be followed by a blank line")
+	})
+
+	t.Run("BlanksAroundFencesViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/blanks_around_fences_violation.md", "--config", "config-blanks-around-fences.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
+		assertOutputContains(t, output, "fixtures/blanks_around_fences_violation.md:4:")
+		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
+		assertOutputContains(t, output, "fixtures/blanks_around_fences_violation.md:8:")
+		assertOutputContains(t, output, "fenced code block must be followed by a blank line")
+		assertOutputContains(t, output, "2 issues found")
+	})
+
 	t.Run("MaxLineLengthValid", func(t *testing.T) {
 		output := runTest(t, "fixtures/max_line_length_valid.md", "--config", "config-max-line-length.json")
 		assertOutputContains(t, output, "No issues found")
@@ -479,7 +499,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "list must be preceded by a blank line")
 		assertOutputContains(t, output, "Errors in fixtures/no_hard_tabs_violation.md:")
 		assertOutputContains(t, output, "hard tab character found")
-		assertOutputContains(t, output, "Checked 41 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
+		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
+		assertOutputContains(t, output, "Checked 43 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -492,6 +514,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/no_empty_links_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_emphasis_as_heading_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_hard_tabs_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_fences_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

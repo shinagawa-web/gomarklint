@@ -209,6 +209,7 @@ var simpleRules = []struct {
 	{"no-empty-links", rule.CheckNoEmptyLinks},
 	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
+	{"blanks-around-fences", rule.CheckBlanksAroundFences},
 	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
