@@ -104,6 +104,18 @@ func TestCheckBlanksAroundFences(t *testing.T) {
 			content:  "<!--\ncomment\n-->\n\n```go\ncode\n```\n\nMore text\n",
 			wantErrs: nil,
 		},
+		{
+			name:    "invalid: code block containing <!-- still detects missing trailing blank",
+			content: "text\n\n```\n<!--\n```\ntext\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 5, Message: "blanks-around-fences: fenced code block must be followed by a blank line"},
+			},
+		},
+		{
+			name:     "valid: code block containing balanced <!-- and --> closes correctly",
+			content:  "text\n\n```\n<!--\n-->\n```\n\ntext\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {

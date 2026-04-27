@@ -16,20 +16,15 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 		trimmed := strings.TrimSpace(line)
 		isBlank := trimmed == ""
 
-		// Track HTML comment blocks (<!-- ... -->).
-		// Fences inside comments are not real fenced code blocks.
-		if !inHTMLComment {
-			if strings.Contains(trimmed, "<!--") && !strings.Contains(trimmed, "-->") {
-				inHTMLComment = true
+		// HTML comment tracking only applies outside fenced code blocks;
+		// `<!--`-like content inside a fenced block is just code and must not
+		// interfere with detecting the closing fence.
+		if !inBlock {
+			if skip, stillInComment := stepHTMLComment(trimmed, inHTMLComment); skip {
+				inHTMLComment = stillInComment
 				prevBlank = false
 				continue
 			}
-		} else {
-			if strings.Contains(trimmed, "-->") {
-				inHTMLComment = false
-			}
-			prevBlank = false
-			continue
 		}
 
 		if inBlock {
@@ -68,4 +63,20 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 	}
 
 	return errs
+}
+
+// stepHTMLComment advances the HTML-comment state machine for one line.
+// It returns (skip, inComment) where skip indicates the caller should
+// `continue` past this line, and inComment is the updated state.
+func stepHTMLComment(trimmed string, inComment bool) (bool, bool) {
+	if inComment {
+		if strings.Contains(trimmed, "-->") {
+			return true, false
+		}
+		return true, true
+	}
+	if strings.Contains(trimmed, "<!--") && !strings.Contains(trimmed, "-->") {
+		return true, true
+	}
+	return false, false
 }
