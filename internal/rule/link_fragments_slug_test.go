@@ -23,6 +23,8 @@ func TestComputeSlug(t *testing.T) {
 		{"github: plus stripped", "C++", "github", "c"},
 		{"github: colon stripped", "foo: bar", "github", "foo-bar"},
 		{"github: section number", "Section 1", "github", "section-1"},
+		{"github: em dash (U+2014, General Punctuation) stripped", "hello—world", "github", "helloworld"},
+		{"github: supplemental punctuation (U+2E3A) stripped", "hello⸺world", "github", "helloworld"},
 
 		// GitLab (goldmark)
 		{"gitlab: simple text", "Hello World", "gitlab", "hello-world"},

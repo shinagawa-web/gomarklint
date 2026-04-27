@@ -193,6 +193,7 @@ func TestExtractHeadingText(t *testing.T) {
 		{"heading with extra spaces trimmed", "##   Hello  ", "Hello", 2},
 		{"heading with inline formatting kept", "## **Hello** World", "**Hello** World", 2},
 		{"empty string", "", "", 0},
+		{"bare hash no space or content", "##", "", 2},
 	}
 
 	for _, tt := range tests {
