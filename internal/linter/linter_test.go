@@ -1,6 +1,9 @@
 package linter
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -734,5 +737,43 @@ func TestRun_DisableComment_NoDisableKeyword_NoOverhead(t *testing.T) {
 
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
+
+func TestRun_LinkCheckWithAllowedStatuses(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/allowed":
+			w.WriteHeader(http.StatusForbidden) // 403, in allowedStatuses
+		case "/blocked":
+			w.WriteHeader(http.StatusNotFound) // 404, not in allowedStatuses
+		}
+	}))
+	defer ts.Close()
+
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options: map[string]interface{}{
+			"timeoutSeconds":  float64(5),
+			"skipPatterns":    []interface{}{},
+			"allowedStatuses": []interface{}{float64(403)},
+		},
+	}
+
+	linter := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "links.md")
+	content := fmt.Sprintf("[allowed](%s/allowed)\n[blocked](%s/blocked)\n", ts.URL, ts.URL)
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := linter.Run([]string{testFile})
+
+	if result.TotalErrors != 1 {
+		t.Errorf("expected 1 error (404 only), got %d", result.TotalErrors)
 	}
 }
