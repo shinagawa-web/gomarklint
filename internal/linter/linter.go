@@ -178,6 +178,18 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
+// externalLinkAllowedStatuses returns the configured allowedStatuses for the external-link rule.
+func (l *Linter) externalLinkAllowedStatuses() []int {
+	raw, _ := l.config.RuleOptions("external-link")["allowedStatuses"].([]interface{})
+	statuses := make([]int, 0, len(raw))
+	for _, item := range raw {
+		if f, ok := item.(float64); ok {
+			statuses = append(statuses, int(f))
+		}
+	}
+	return statuses
+}
+
 // simpleRules lists rules whose check function takes only (path, lines, offset).
 // Rules that require additional options are handled separately below.
 var simpleRules = []struct {
@@ -233,7 +245,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.urlCache)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkAllowedStatuses(), l.urlCache)
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
