@@ -128,11 +128,11 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 					err = result.err
 				} else {
 					// Cache contained unexpected type, re-check the URL
-					status, err = checkURL(client, url, retryDelayMs)
+					status, err = checkURL(client, url, retryDelayMs, allowedStatuses)
 					urlCache.Store(url, cacheResult{status: status, err: err})
 				}
 			} else {
-				status, err = checkURL(client, url, retryDelayMs)
+				status, err = checkURL(client, url, retryDelayMs, allowedStatuses)
 				urlCache.Store(url, cacheResult{status: status, err: err})
 			}
 
@@ -155,7 +155,7 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 }
 
 // checkURL performs the URL check with retry logic.
-func checkURL(client *http.Client, url string, retryDelayMs int) (int, error) {
+func checkURL(client *http.Client, url string, retryDelayMs int, allowedStatuses []int) (int, error) {
 	// maxRetries is the maximum number of retry attempts for failed requests
 	const maxRetries = 2
 	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
@@ -173,6 +173,11 @@ func checkURL(client *http.Client, url string, retryDelayMs int) (int, error) {
 
 		// Success: 2xx or 3xx
 		if err == nil && status < 400 {
+			return status, nil
+		}
+
+		// Allowed statuses (e.g. 429, user-configured): return immediately without retrying
+		if err == nil && isAllowedStatus(status, allowedStatuses) {
 			return status, nil
 		}
 
