@@ -17,3 +17,5 @@ still inside the second comment
 https://example.com
 ```
 -->
+
+https://example.com

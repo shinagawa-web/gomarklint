@@ -226,6 +226,13 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputNotContains(t, output, "Fenced code block must have a language identifier")
 	})
 
+	t.Run("NoBareURLsLinkCardValid", func(t *testing.T) {
+		// A standalone URL on its own line surrounded by blank lines is a link
+		// card and must not be flagged.
+		output := runTest(t, "fixtures/no_bare_urls_valid.md", "--config", "config-no-bare-urls.json")
+		assertOutputNotContains(t, output, "fixtures/no_bare_urls_valid.md:21:")
+	})
+
 	t.Run("NoBareURLsViolation", func(t *testing.T) {
 		output, err := runTestWithCmd(t, "fixtures/no_bare_urls_violation.md", "--config", "config-no-bare-urls.json")
 		if err == nil {
