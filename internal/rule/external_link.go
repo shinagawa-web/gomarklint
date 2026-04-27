@@ -187,11 +187,8 @@ func performCheck(client *http.Client, url string) (int, error) {
 		return resp.StatusCode, nil
 	}
 
-	// fallback to GET
-	req, err = http.NewRequest("GET", url, nil)
-	if err != nil {
-		return 0, err
-	}
+	// fallback to GET — cannot fail: same URL already parsed successfully above
+	req, _ = http.NewRequest("GET", url, nil)
 
 	resp, err = client.Do(req)
 	if err != nil {

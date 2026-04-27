@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 
 # Coverage threshold (percentage, integer)
-COVERAGE_THRESHOLD ?= 99
+COVERAGE_THRESHOLD ?= 100
 
 # Binary name
 BINARY_NAME=gomarklint
