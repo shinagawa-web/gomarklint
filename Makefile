@@ -62,7 +62,7 @@ check-coverage: ## Run tests with coverage and enforce minimum threshold
 	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage/coverage.out
 	@total=$$($(GOCMD) tool cover -func=coverage/coverage.out | grep '^total' | awk '{print $$3}' | tr -d '%'); \
 	echo "Total coverage: $${total}%"; \
-	if [ "$$(echo "$${total} < $(COVERAGE_THRESHOLD)" | bc)" = "1" ]; then \
+	if ! awk "BEGIN { exit !($$total >= $(COVERAGE_THRESHOLD)) }"; then \
 		echo "FAIL: coverage $${total}% is below threshold $(COVERAGE_THRESHOLD)%"; exit 1; \
 	fi
 	@echo "Coverage OK."
