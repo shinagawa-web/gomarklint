@@ -207,7 +207,8 @@ func isLinkCard(lines []string, i int, trimmed string) bool {
 	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
 		return false
 	}
-	if strings.ContainsAny(trimmed, " \t") {
+	urls := findBareURLs(trimmed)
+	if len(urls) != 1 || trimmed != urls[0] {
 		return false
 	}
 	prevBlank := i == 0 || strings.TrimSpace(lines[i-1]) == ""

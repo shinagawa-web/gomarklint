@@ -143,6 +143,13 @@ func TestCheckNoBareURLs(t *testing.T) {
 			},
 		},
 		{
+			name:    "invalid: URL with trailing paren surrounded by blank lines is not a link card",
+			content: "\nhttps://example.com)\n\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 2, Message: "no-bare-urls: bare URL found, use angle brackets or a Markdown link: https://example.com"},
+			},
+		},
+		{
 			name:    "offset shifts line numbers",
 			content: "Visit https://example.com today.\n",
 			offset:  4,
