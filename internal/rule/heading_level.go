@@ -2,15 +2,35 @@ package rule
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 )
 
+// LintError represents a single lint violation detected in a Markdown file.
 type LintError struct {
 	File     string `json:"file"`
 	Line     int    `json:"line"`
 	Rule     string `json:"rule,omitempty"`
 	Message  string `json:"message"`
 	Severity string `json:"severity"`
+}
+
+// atxHeadingLevel returns the ATX heading level (1–6) if line begins with a
+// valid ATX heading marker, or 0 otherwise. A valid marker is one to six '#'
+// characters followed by a space, a tab, or end-of-string.
+// This replaces a regex match and allocates nothing.
+func atxHeadingLevel(line string) int {
+	level := 0
+	for level < len(line) && line[level] == '#' {
+		level++
+	}
+	if level == 0 || level > 6 {
+		return 0
+	}
+	// The marker may stand alone (heading with no text) or be followed by a space/tab.
+	if level == len(line) || line[level] == ' ' || line[level] == '\t' {
+		return level
+	}
+	return 0
 }
 
 // CheckHeadingLevels analyzes the heading structure of the given Markdown content
@@ -29,35 +49,69 @@ func CheckHeadingLevels(filename string, lines []string, offset int, minLevel in
 	var errs []LintError
 
 	prevLevel := 0
-	headingRegex := regexp.MustCompile(`^(#{1,6})\s+`)
-
-	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
+	inCodeBlock := false
+	var fenceMarker string
 
 	for i, line := range lines {
-		if isInCodeBlock(i+1, codeBlockRanges) {
+		if len(line) == 0 {
 			continue
 		}
-		matches := headingRegex.FindStringSubmatch(line)
-		if matches != nil {
-			currentLevel := len(matches[1])
 
-			if prevLevel == 0 {
-				if currentLevel != minLevel {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    i + 1 + offset,
-						Message: fmt.Sprintf("First heading should be level %d (found level %d)", minLevel, currentLevel),
-					})
-				}
-			} else if currentLevel > prevLevel+1 {
+		// First-byte prefilter: skip lines that cannot start a fence or heading
+		// before calling strings.TrimSpace.
+		first := firstNonSpaceByte(line)
+
+		// Inline code-block tracking — avoids the O(n×k) isInCodeBlock lookup.
+		if inCodeBlock {
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			if IsClosingFence(trimmed, fenceMarker) {
+				inCodeBlock = false
+				fenceMarker = ""
+			}
+			continue
+		}
+
+		if first != '#' && first != '`' && first != '~' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+
+		if marker := openingFenceMarker(trimmed); marker != "" {
+			inCodeBlock = true
+			fenceMarker = marker
+			continue
+		}
+
+		if first != '#' {
+			continue
+		}
+
+		// Pass trimmed so that CRLF '\r' and leading spaces are already removed.
+		currentLevel := atxHeadingLevel(trimmed)
+		if currentLevel == 0 {
+			continue
+		}
+
+		if prevLevel == 0 {
+			if currentLevel != minLevel {
 				errs = append(errs, LintError{
 					File:    filename,
 					Line:    i + 1 + offset,
-					Message: fmt.Sprintf("Heading level jumped from %d to %d", prevLevel, currentLevel),
+					Message: fmt.Sprintf("First heading should be level %d (found level %d)", minLevel, currentLevel),
 				})
 			}
-			prevLevel = currentLevel
+		} else if currentLevel > prevLevel+1 {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    i + 1 + offset,
+				Message: fmt.Sprintf("Heading level jumped from %d to %d", prevLevel, currentLevel),
+			})
 		}
+		prevLevel = currentLevel
 	}
 
 	return errs

@@ -5,6 +5,30 @@ import (
 	"testing"
 )
 
+func TestAtxHeadingLevel(t *testing.T) {
+	tests := []struct {
+		line string
+		want int
+	}{
+		{"# Heading", 1},
+		{"## Heading", 2},
+		{"###### Heading", 6},
+		{"####### Too deep", 0}, // level > 6
+		{"#NoSpace", 0},         // missing space after '#'
+		{"#", 1},                // lone '#' with no text (level == len(line))
+		{"##\tTab", 2},          // tab after '#'
+		{"not a heading", 0},    // no '#'
+		{"#\r", 0},              // bare '#' + CRLF remnant: '\r' is not a valid terminator — caller must TrimSpace first
+		{"##\r", 0},             // bare '##' + CRLF remnant: same
+	}
+	for _, tt := range tests {
+		got := atxHeadingLevel(tt.line)
+		if got != tt.want {
+			t.Errorf("atxHeadingLevel(%q) = %d, want %d", tt.line, got, tt.want)
+		}
+	}
+}
+
 func TestCheckHeadingLevels(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -52,6 +76,51 @@ func TestCheckHeadingLevels(t *testing.T) {
 		{
 			name:     "ignore headings in code blocks",
 			content:  "## Introduction\n\n```\n# Skipped Level\n\n```\n\n### Normal Again",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "hash without space is not a heading",
+			content:  "## Section\n#NotAHeading\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "seven hashes is not a heading",
+			content:  "## Section\n####### Too deep\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "empty lines are skipped",
+			content:  "\n\n## Section\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "headings inside unclosed code block are ignored",
+			content:  "## Section\n```\n# Inside unclosed block\n### Also inside",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "non-heading lines outside code blocks are skipped",
+			content:  "## Section\nSome paragraph text.\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name:     "backtick-starting non-fence line is ignored",
+			content:  "## Section\n`inline code`\n### Subsection",
+			minLevel: 2,
+			wantErrs: nil,
+		},
+		{
+			name: "CRLF bare headings are recognized end-to-end",
+			// Simulates reading a CRLF file split on "\n": each line retains a
+			// trailing '\r'. CheckHeadingLevels calls strings.TrimSpace before
+			// atxHeadingLevel, so bare headings like "##\r" are handled correctly.
+			content:  "##\r\n###\r",
 			minLevel: 2,
 			wantErrs: nil,
 		},
