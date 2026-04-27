@@ -32,7 +32,7 @@ func CheckUnclosedCodeBlocks(filename string, lines []string, offset int) []Lint
 // GetCodeBlockLineRanges scans lines and returns the 1-based line ranges of all
 // closed fenced code blocks and the 0-based start lines of any unclosed ones.
 //
-// Optimisation: a byte-level prefilter (firstNonSpaceByte) avoids calling
+// Optimization: a byte-level prefilter (firstNonSpaceByte) avoids calling
 // strings.TrimSpace on the ~95% of lines that cannot be fence openers or
 // closers. Inside a block, only a line whose first non-space byte matches the
 // opening fence character can close the block.
