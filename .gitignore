@@ -20,5 +20,5 @@ npm/node_modules/
 
 # Claude Code
 .claude/worktrees/
-.claude/settings.json
 .claude/settings.local.json
+.claude/memory/

@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue:*)",
+      "Bash(git worktree:*)",
+      "Bash(git branch:*)",
+      "Bash(git pull:*)",
+      "Read(//Users/helpfeel2/Documents/gomarklint/internal/rule/**)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(make build:*)",
+      "Bash(make test:*)",
+      "Bash(make test-all:*)",
+      "Bash(make test-e2e:*)",
+      "Bash(make test-coverage:*)",
+      "Bash(make static-lint:*)",
+      "Bash(make bench:*)",
+      "Bash(make bench-compare:*)",
+      "Bash(make lint-self:*)",
+      "Bash(make install-hooks:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(go list:*)",
+      "Bash(go env:*)",
+      "Bash(go mod:*)",
+      "Bash(gofmt:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
+    ]
+  }
+}

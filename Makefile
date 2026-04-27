@@ -1,4 +1,4 @@
-.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench install-hooks
+.PHONY: build test test-e2e test-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench bench-compare lint-self install-hooks
 
 # Default target
 .DEFAULT_GOAL := help
@@ -57,6 +57,9 @@ bench: ## Run benchmark tests
 	@echo "Running benchmark tests..."
 	$(GOTEST) -bench=. -benchmem $(shell go list ./... | grep -v '/e2e') -run=^$$
 
+bench-compare: ## Compare benchmarks against origin/main; blocks on ⚠️ +10%+ regression
+	@bash scripts/bench-compare.sh
+
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	$(GOCLEAN)
@@ -75,9 +78,9 @@ lint-fix: ## Run golangci-lint and fix issues automatically
 	@echo "Running golangci-lint fix..."
 	$(GOLINT) run $(LINT_CONFIG) --fix
 
-lint-self: ## Run gomarklint on the repo's README
-	@echo "Running gomarklint on README.md"
-	$(GORUN) . README.md --config .gomarklint.ci.json
+lint-self: ## Run gomarklint on repo markdown files
+	@echo "Running gomarklint on repo markdown..."
+	$(GORUN) . README.md README.ja.md docs/content --config .gomarklint.ci.json
 
 static-lint: ## Run golangci-lint for static analysis
 	@echo "Running golangci-lint..."
