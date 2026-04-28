@@ -777,3 +777,33 @@ func TestRun_LinkCheckWithAllowedStatuses(t *testing.T) {
 		t.Errorf("expected 1 error (404 only), got %d", result.TotalErrors)
 	}
 }
+
+func TestRun_NoTrailingPunctuation_Violation(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-trailing-punctuation"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"punctuation": ".,;:!"},
+	}
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", "## Heading.\n")
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
+
+func TestRun_NoTrailingPunctuation_NoOptionFallsBackToDefault(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["no-trailing-punctuation"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{},
+	}
+
+	linter := New(cfg)
+	if linter.noTrailingPunctuation() != ".,;:!" {
+		t.Errorf("expected default punctuation %q, got %q", ".,;:!", linter.noTrailingPunctuation())
+	}
+}
