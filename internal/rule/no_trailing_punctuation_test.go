@@ -231,6 +231,20 @@ func TestCheckNoTrailingPunctuation(t *testing.T) {
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
+		// isOtherBlockLine: 4-space indented marker returns false (i > 3 branch)
+		{
+			name:        "valid: 4-space indented list item after paragraph is not a block marker",
+			content:     "Paragraph text\n    - indented\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
+		// isOtherBlockLine: multi-digit ordered list exercises digit-skip loop body
+		{
+			name:        "valid: multi-digit ordered list after paragraph is not a setext underline",
+			content:     "Paragraph text\n10. item\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
 	}
 
 	for _, tt := range tests {

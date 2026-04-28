@@ -133,7 +133,7 @@ func CheckNoTrailingPunctuation(filename string, lines []string, offset int, pun
 			continue
 		}
 
-		if isPossibleBlockMarker(first) && setextOtherBlockRegex.MatchString(line) {
+		if isPossibleBlockMarker(first) && isOtherBlockLine(line, first) {
 			prevLine = ""
 			prevIsBlock = true
 			continue
@@ -144,6 +144,29 @@ func CheckNoTrailingPunctuation(filename string, lines []string, offset int, pun
 	}
 
 	return errs
+}
+
+// isOtherBlockLine reports whether line is a CommonMark block-level element
+// (unordered/ordered list item or blockquote) per the pattern ^ {0,3}(?:[*+-]|\d+[.)]|>),
+// using byte scanning instead of a regex. first must equal firstNonSpaceByte(line).
+func isOtherBlockLine(line string, first byte) bool {
+	i := 0
+	for i < len(line) && line[i] == ' ' {
+		i++
+	}
+	if i > 3 || i >= len(line) || line[i] != first {
+		return false
+	}
+	switch first {
+	case '*', '+', '-', '>':
+		return true
+	default: // digit: requires digit+ followed by '.' or ')'
+		i++
+		for i < len(line) && line[i] >= '0' && line[i] <= '9' {
+			i++
+		}
+		return i < len(line) && (line[i] == '.' || line[i] == ')')
+	}
 }
 
 // lastRuneInSet reports whether the last Unicode rune of s is in set.
