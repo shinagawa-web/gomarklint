@@ -35,38 +35,38 @@ func CheckMaxLineLength(filename string, lines []string, offset int, lineLength 
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
-			inBlock = true
-			fenceMarker = marker
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
+		}
+
+		if len(line) <= lineLength {
 			continue
 		}
 
-		if isATXHeading(trimmed) {
+		trimmed := strings.TrimSpace(line)
+		if (first == '#' && isATXHeading(trimmed)) || isBareURLLine(trimmed) {
 			continue
 		}
 
-		if isBareURLLine(trimmed) {
-			continue
-		}
-
-		if len(line) > lineLength {
-			errs = append(errs, LintError{
-				File:    filename,
-				Line:    offset + i + 1,
-				Message: fmt.Sprintf("max-line-length: line exceeds %d bytes (%d)", lineLength, len(line)),
-			})
-		}
+		errs = append(errs, LintError{
+			File:    filename,
+			Line:    offset + i + 1,
+			Message: fmt.Sprintf("max-line-length: line exceeds %d bytes (%d)", lineLength, len(line)),
+		})
 	}
 
 	return errs

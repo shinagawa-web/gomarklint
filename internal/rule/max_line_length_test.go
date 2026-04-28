@@ -47,15 +47,23 @@ func TestCheckMaxLineLength(t *testing.T) {
 		},
 		{
 			name:       "valid: bare http URL line exempt",
-			content:    "http://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/length\n",
+			content:    "http://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/length/extra\n",
 			lineLength: 80,
 			wantErrs:   nil,
 		},
 		{
 			name:       "valid: angle-bracket URL line exempt",
-			content:    "<https://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/>\n",
+			content:    "<https://example.com/very/long/path/that/exceeds/eighty/bytes/in/total/length/xx>\n",
 			lineLength: 80,
 			wantErrs:   nil,
+		},
+		{
+			name:       "invalid: long line starting with backtick but not a fence opener",
+			content:    "`" + strings.Repeat("x", 81) + "\n",
+			lineLength: 80,
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: fmt.Sprintf("max-line-length: line exceeds 80 bytes (%d)", 82)},
+			},
 		},
 		{
 			name:       "valid: long line inside fenced code block",
