@@ -50,8 +50,8 @@ Set `slug-algorithm` to the name of the platform you are writing for. Each platf
 | `vitepress` | VitePress |
 | `docusaurus` | Docusaurus |
 | `gatsby` | Gatsby (`gatsby-remark-autolink-headers`) |
-| `astro` | Astro / Starlight |
-| `starlight` | Starlight (alias for `astro`) |
+| `astro` | Astro |
+| `starlight` | Starlight |
 | `nuxt-content` | Nuxt Content |
 | `pandoc` | Pandoc (`auto_identifiers`) |
 | `pandoc-gfm` | Pandoc (`gfm_auto_identifiers`) |
@@ -63,10 +63,41 @@ Set `slug-algorithm` to the name of the platform you are writing for. Each platf
 | `gitea` | Gitea |
 | `forgejo` | Forgejo |
 | `sphinx` | Sphinx |
-| `eleventy` | Eleventy (`@sindresorhus/slugify`, approximate) |
+| `eleventy` | Eleventy |
 | `azure-devops` | Azure DevOps Wiki |
 | `myst` | MyST Parser |
 | `custom` | Parameterized engine — see below |
+
+#### Preset reference
+
+Detailed slug behavior for each preset:
+
+| Value | lowercase | preserve-unicode | space-replacement | strip-chars | collapse-separators | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `github` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | `github-slugger`; consecutive spaces → consecutive hyphens |
+| `gitlab` | ✓ | ✓ | `-` | `[^\p{L}\p{N}_-]` | ✓ | goldmark slugify; collapses consecutive separators unlike GitHub |
+| `zenn` | ✓ | ✓ | `-` | preserves all non-space chars | — | `markdown-it-anchor` default; anchors are percent-encoded in HTML |
+| `qiita` | ✓ | ✓ | `-` | `[^\p{Word}\- ]` | — | `downcase.gsub(/[^\p{Word}\- ]/u, "").tr(" ", "-")`; consecutive hyphens preserved |
+| `hugo` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | `autoHeadingIDType: github` (default); equivalent to `github-slugger` |
+| `vitepress` | ✓ | partial | `-` | NFKD, strip combining chars, then punctuation→`-` | ✓ | Accented Latin normalized to ASCII (é→e); CJK preserved |
+| `docusaurus` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Uses `github-slugger` directly |
+| `gatsby` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | `gatsby-remark-autolink-headers` uses `github-slugger` |
+| `astro` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Documented as GitHub-compatible in Astro official docs |
+| `starlight` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Starlight (Astro-based); same algorithm as `astro` |
+| `nuxt-content` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Uses `rehype-slug` (github-slugger wrapper) |
+| `pandoc` | ✓ | — | `-` | `[^a-zA-Z0-9_-]` | ✓ | `auto_identifiers` extension; strips non-ASCII |
+| `pandoc-gfm` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | `gfm_auto_identifiers` extension; equivalent to GitHub |
+| `quarto` | ✓ | — | `-` | `[^a-zA-Z0-9_-]` | ✓ | Uses `auto_identifiers` extension by default; same as `pandoc` |
+| `kramdown` | ✓ | — | `-` | `[^a-zA-Z0-9 -]` | ✓ | `header_ids` extension default |
+| `mkdocs` | ✓ | — | `-` | NFKD then ASCII-encode | ✓ | Python-Markdown `toc.py` default; `uslugify` variant preserves Unicode |
+| `docfx` | — | — | `-` | `[^a-zA-Z0-9-_.]` | ✓ | Markdig AutoIdentifiers; does **not** lowercase |
+| `mdbook` | ✓ | ✓ | `-` | non-alphanumeric except `_` and `-` (Rust `is_alphanumeric()`) | — | CJK preserved via Unicode alphanumeric check |
+| `gitea` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | goldmark-based; `user-content-` prefix added in rendered HTML (not in fragment) |
+| `forgejo` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Fork of Gitea; identical algorithm |
+| `sphinx` | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Non-Latin-only headings fall back to `id1`, `id2`, etc. |
+| `eleventy` | ✓ | — | `-` | `@sindresorhus/slugify` (transliterate to approximate ASCII) | ✓ | Used via `IdAttributePlugin` |
+| `azure-devops` | ✓ | ✓ | `-` | non-RFC-3986-unreserved chars percent-encoded | — | Unicode Zs category → `-`; non-ASCII preserved as percent-encoded |
+| `myst` | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | MyST-Parser (Python/Sphinx); documented as GitHub-compatible |
 
 ### Custom algorithm
 
