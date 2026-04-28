@@ -409,6 +409,24 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "#setup")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("LinkFragmentsCustomValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/link_fragments_custom_valid.md", "--config", "config-link-fragments-custom.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "link-fragments")
+	})
+
+	t.Run("LinkFragmentsCustomViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/link_fragments_custom_violation.md", "--config", "config-link-fragments-custom.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/link_fragments_custom_violation.md:")
+		assertOutputContains(t, output, "fixtures/link_fragments_custom_violation.md:3:")
+		assertOutputContains(t, output, "link-fragments")
+		assertOutputContains(t, output, "#setup")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {

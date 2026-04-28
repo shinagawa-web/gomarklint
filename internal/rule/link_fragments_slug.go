@@ -461,40 +461,54 @@ func makeSlugger(algorithm string, options map[string]interface{}) func(string) 
 	}
 }
 
+// slugRegistry maps each supported platform name to its slug function.
+// Each platform is listed independently so configuration is self-evident and
+// individual entries can be updated if an algorithm diverges from its current mapping.
+var slugRegistry = map[string]func(string) string{
+	// GitHub-compatible
+	"github":       slugGitHub,
+	"hugo":         slugGitHub,
+	"pandoc-gfm":   slugGitHub,
+	"myst":         slugGitHub,
+	"docusaurus":   slugGitHub,
+	"gatsby":       slugGitHub,
+	"astro":        slugGitHub,
+	"starlight":    slugGitHub,
+	"nuxt-content": slugGitHub,
+	// GitLab
+	"gitlab": slugGitLab,
+	// Zenn
+	"zenn": slugZenn,
+	// Pandoc family
+	"pandoc": slugPandoc,
+	"quarto": slugPandoc,
+	// kramdown
+	"kramdown": slugKramdown,
+	// MkDocs
+	"mkdocs": slugMkDocs,
+	// DocFX
+	"docfx": slugDocFX,
+	// Qiita / mdBook (same character set)
+	"qiita":  slugQiita,
+	"mdbook": slugQiita,
+	// VitePress
+	"vitepress": slugVitePress,
+	// Gitea / Forgejo
+	"gitea":   slugGitea,
+	"forgejo": slugGitea,
+	// Sphinx
+	"sphinx": slugSphinx,
+	// Eleventy
+	"eleventy": slugEleventy,
+	// Azure DevOps
+	"azure-devops": slugAzureDevOps,
+}
+
 // ComputeSlug generates a URL fragment slug from heading plain text using the named algorithm.
-// Supported algorithms: github, gitlab, zenn, pandoc, pandoc-gfm, kramdown, mkdocs, docfx,
-// hugo, qiita, mdbook, vitepress, gitea, forgejo, sphinx, eleventy, azure-devops, myst,
-// docusaurus, gatsby, astro, starlight, nuxt-content, quarto.
 // Unknown algorithm names fall back to "github".
 func ComputeSlug(text, algorithm string) string {
-	switch algorithm {
-	case "github", "hugo", "pandoc-gfm", "myst", "docusaurus", "gatsby", "astro", "starlight", "nuxt-content":
-		return slugGitHub(text)
-	case "gitlab":
-		return slugGitLab(text)
-	case "zenn":
-		return slugZenn(text)
-	case "pandoc", "quarto":
-		return slugPandoc(text)
-	case "kramdown":
-		return slugKramdown(text)
-	case "mkdocs":
-		return slugMkDocs(text)
-	case "docfx":
-		return slugDocFX(text)
-	case "qiita", "mdbook":
-		return slugQiita(text)
-	case "vitepress":
-		return slugVitePress(text)
-	case "gitea", "forgejo":
-		return slugGitea(text)
-	case "sphinx":
-		return slugSphinx(text)
-	case "eleventy":
-		return slugEleventy(text)
-	case "azure-devops":
-		return slugAzureDevOps(text)
-	default:
-		return slugGitHub(text)
+	if fn, ok := slugRegistry[algorithm]; ok {
+		return fn(text)
 	}
+	return slugGitHub(text)
 }
