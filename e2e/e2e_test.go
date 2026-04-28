@@ -558,7 +558,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "hard tab character found")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 45 file(s)")
+		assertOutputContains(t, output, "Checked 47 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
