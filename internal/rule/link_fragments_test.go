@@ -213,6 +213,98 @@ func TestExtractHeadingText(t *testing.T) {
 	}
 }
 
+func TestCheckLinkFragments_NewPresets(t *testing.T) {
+	tests := []struct {
+		name      string
+		content   string
+		algorithm string
+		wantErrs  int
+	}{
+		{"qiita: valid CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "qiita", 0},
+		{"mdbook: valid CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "mdbook", 0},
+		{"vitepress: accented heading", "## Héllo\n\nSee [Héllo](#hello).\n", "vitepress", 0},
+		{"vitepress: CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "vitepress", 0},
+		{"gitea: user-content prefix required", "## Hello World\n\nSee [Hello](#user-content-hello-world).\n", "gitea", 0},
+		{"gitea: missing prefix is violation", "## Hello World\n\nSee [Hello](#hello-world).\n", "gitea", 1},
+		{"forgejo: same as gitea", "## Hello World\n\nSee [Hello](#user-content-hello-world).\n", "forgejo", 0},
+		{"sphinx: valid ASCII heading", "## Hello World\n\nSee [Hello](#hello-world).\n", "sphinx", 0},
+		{"sphinx: accented heading normalized", "## Héllo\n\nSee [Héllo](#hello).\n", "sphinx", 0},
+		{"eleventy: valid ASCII heading", "## Hello World\n\nSee [Hello](#hello-world).\n", "eleventy", 0},
+		{"myst: same as github", "## Hello World\n\nSee [Hello](#hello-world).\n", "myst", 0},
+		{"docusaurus: same as github", "## Hello World\n\nSee [Hello](#hello-world).\n", "docusaurus", 0},
+		{"quarto: same as pandoc", "## Hello World\n\nSee [Hello](#hello-world).\n", "quarto", 0},
+		{"quarto: strips non-ASCII", "## Hello World\n\nSee [Hello](#hello-world).\n", "quarto", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := strings.Split(tt.content, "\n")
+			opts := map[string]interface{}{"slug-algorithm": tt.algorithm}
+			got := CheckLinkFragments("test.md", lines, 0, opts)
+			if len(got) != tt.wantErrs {
+				t.Errorf("got %d errors, want %d: %v", len(got), tt.wantErrs, got)
+			}
+		})
+	}
+}
+
+func TestCheckLinkFragments_CustomEngine(t *testing.T) {
+	t.Run("custom engine: valid link with strip-chars", func(t *testing.T) {
+		content := "## Hello World\n\nSee [Hello](#hello-world).\n"
+		opts := map[string]interface{}{
+			"slug-algorithm": "custom",
+			"slug-params": map[string]interface{}{
+				"lowercase":           true,
+				"preserve-unicode":    true,
+				"space-replacement":   "-",
+				"strip-chars":         `[^\w\- ]`,
+				"collapse-separators": true,
+			},
+		}
+		lines := strings.Split(content, "\n")
+		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		if len(errs) != 0 {
+			t.Errorf("expected no errors, got %d: %v", len(errs), errs)
+		}
+	})
+
+	t.Run("custom engine: broken link detected", func(t *testing.T) {
+		content := "## Hello World\n\nSee [broken](#setup).\n"
+		opts := map[string]interface{}{
+			"slug-algorithm": "custom",
+			"slug-params": map[string]interface{}{
+				"lowercase":           true,
+				"preserve-unicode":    true,
+				"space-replacement":   "-",
+				"strip-chars":         `[^\w\- ]`,
+				"collapse-separators": true,
+			},
+		}
+		lines := strings.Split(content, "\n")
+		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		if len(errs) != 1 {
+			t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+		}
+	})
+
+	t.Run("custom engine: underscore separator", func(t *testing.T) {
+		content := "## Hello World\n\nSee [Hello](#hello_world).\n"
+		opts := map[string]interface{}{
+			"slug-algorithm": "custom",
+			"slug-params": map[string]interface{}{
+				"lowercase":         true,
+				"preserve-unicode":  true,
+				"space-replacement": "_",
+			},
+		}
+		lines := strings.Split(content, "\n")
+		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		if len(errs) != 0 {
+			t.Errorf("expected no errors, got %d: %v", len(errs), errs)
+		}
+	})
+}
+
 func TestCollectRefDefs(t *testing.T) {
 	t.Run("collects fragment refs", func(t *testing.T) {
 		lines := strings.Split("[ref1]: #section-1\n[ref2]: #section-2\n[ext]: https://example.com\n", "\n")

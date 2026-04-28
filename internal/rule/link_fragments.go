@@ -65,7 +65,7 @@ func collectRefDefs(lines []string) map[string]string {
 // collectHeadingSlugs returns the set of all valid fragment slugs computed from ATX headings
 // in lines. Headings inside fenced code blocks are excluded.
 // Duplicate headings produce suffixed slugs (-1, -2, …) following GitHub convention.
-func collectHeadingSlugs(lines []string, algorithm string) map[string]struct{} {
+func collectHeadingSlugs(lines []string, slugger func(string) string) map[string]struct{} {
 	var headings []string
 
 	inBlock := false
@@ -94,7 +94,7 @@ func collectHeadingSlugs(lines []string, algorithm string) map[string]struct{} {
 		headings = append(headings, text)
 	}
 
-	return buildSlugSet(headings, algorithm)
+	return buildSlugSet(headings, slugger)
 }
 
 // hasAnyFragmentLinks reports whether lines contain at least one potential
@@ -164,14 +164,20 @@ func checkRefFragments(filename string, lineNum int, scanned string, slugs map[s
 // code blocks and inline code spans is skipped.
 //
 // Supported options:
-//   - "slug-algorithm": string — one of github, gitlab, zenn, pandoc, pandoc-gfm,
-//     kramdown, mkdocs, docfx, hugo (default: "github")
+//   - "slug-algorithm": string — preset name (github, gitlab, zenn, pandoc, pandoc-gfm,
+//     kramdown, mkdocs, docfx, hugo, qiita, mdbook, vitepress, gitea, forgejo, sphinx,
+//     eleventy, azure-devops, myst, docusaurus, gatsby, astro, starlight, nuxt-content,
+//     quarto) or "custom" (default: "github")
+//   - "slug-params": map — used only when slug-algorithm is "custom"; keys: lowercase (bool),
+//     preserve-unicode (bool), space-replacement (string), strip-chars (regex string),
+//     collapse-separators (bool)
 func CheckLinkFragments(filename string, lines []string, offset int, options map[string]interface{}) []LintError {
 	refDefs := collectRefDefs(lines)
 	if !hasAnyFragmentLinks(lines, refDefs) {
 		return nil
 	}
-	slugs := collectHeadingSlugs(lines, parseSlugAlgorithm(options))
+	algorithm := parseSlugAlgorithm(options)
+	slugs := collectHeadingSlugs(lines, makeSlugger(algorithm, options))
 
 	var errs []LintError
 	inBlock := false

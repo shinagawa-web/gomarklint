@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // reSlugHTMLComment matches HTML comments for removal from heading text.
@@ -39,6 +41,9 @@ var reSlugItalicUnderscore = regexp.MustCompile(`_([^_]+)_`)
 
 // reSlugCode matches inline code spans (single or multi-backtick), keeping content.
 var reSlugCode = regexp.MustCompile("`+([^`]+)`+")
+
+// reSphinxNonAlnum replaces runs of non-alphanumeric ASCII chars with a single hyphen.
+var reSphinxNonAlnum = regexp.MustCompile(`[^a-z0-9]+`)
 
 // stripHeadingFormatting removes Markdown and HTML inline formatting from heading text,
 // returning plain text for slug generation.
@@ -196,6 +201,200 @@ func slugDocFX(text string) string {
 	return collapseDashes(sb.String())
 }
 
+// nfkdStripCombining applies NFKD normalization and removes Unicode combining characters (category Mn).
+// This converts precomposed accented characters to their base ASCII equivalents
+// (e.g. 'é' → 'e', 'ü' → 'u') while preserving CJK and other non-combining Unicode.
+func nfkdStripCombining(text string) string {
+	normalized := norm.NFKD.String(text)
+	var sb strings.Builder
+	sb.Grow(len(normalized))
+	for _, r := range normalized {
+		if !unicode.Is(unicode.Mn, r) {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
+// slugQiita computes the Qiita slug.
+// Equivalent to Ruby: downcase.gsub(/[^\p{Word}\- ]/u, "").tr(" ", "-")
+// Keeps Unicode letters, digits, underscores, and hyphens; collapses nothing.
+func slugQiita(text string) string {
+	var sb strings.Builder
+	sb.Grow(len(text))
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if unicode.IsSpace(r) {
+			sb.WriteByte('-')
+		} else if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-' {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
+// slugVitePress computes the VitePress (markdown-it-anchor) slug.
+// NFKD-normalizes to strip combining chars (accented Latin → ASCII base),
+// then lowercases and replaces non-alphanumeric chars with hyphens, collapsing runs.
+// CJK and other Unicode letters/digits are preserved.
+func slugVitePress(text string) string {
+	text = nfkdStripCombining(text)
+	var sb strings.Builder
+	sb.Grow(len(text))
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			sb.WriteRune(r)
+		} else {
+			sb.WriteByte('-')
+		}
+	}
+	return collapseDashes(sb.String())
+}
+
+// slugGitea computes the Gitea (goldmark) slug.
+// Same as GitHub algorithm but prefixed with "user-content-".
+func slugGitea(text string) string {
+	return "user-content-" + slugGitHub(text)
+}
+
+// slugSphinx computes the Sphinx (Python-Sphinx auto-section-label) slug.
+// NFKD-normalizes to strip combining chars, keeps only lowercase ASCII alphanumerics,
+// replaces runs of non-alphanumeric with a single hyphen, and trims leading/trailing hyphens.
+// Non-Latin-only headings that produce an empty result return "" (the id1/id2 fallback
+// is document-level state that cannot be reproduced outside the build context).
+func slugSphinx(text string) string {
+	text = nfkdStripCombining(text)
+	var ascii strings.Builder
+	ascii.Grow(len(text))
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if r < 128 {
+			ascii.WriteRune(r)
+		}
+	}
+	result := reSphinxNonAlnum.ReplaceAllString(ascii.String(), "-")
+	return strings.Trim(result, "-")
+}
+
+// slugEleventy computes an approximation of the Eleventy (@sindresorhus/slugify) slug.
+// NFKD-normalizes so accented Latin chars (é→e, ü→u) are reduced to their ASCII base,
+// then keeps only lowercase ASCII letters, digits, and hyphens, collapsing runs.
+// Characters without an ASCII equivalent (CJK, ø, ł, etc.) are stripped.
+func slugEleventy(text string) string {
+	text = nfkdStripCombining(text)
+	var sb strings.Builder
+	sb.Grow(len(text))
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if unicode.IsSpace(r) {
+			sb.WriteByte('-')
+		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			sb.WriteRune(r)
+		}
+	}
+	return collapseDashes(sb.String())
+}
+
+// slugAzureDevOps computes the Azure DevOps Wiki slug.
+// Lowercases, replaces Unicode space-separator chars (Zs) with hyphens, keeps RFC 3986
+// unreserved chars (letters, digits, -, ., _, ~) as-is, and percent-encodes everything else.
+func slugAzureDevOps(text string) string {
+	var sb strings.Builder
+	sb.Grow(len(text) * 2)
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if unicode.Is(unicode.Zs, r) {
+			sb.WriteByte('-')
+		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') ||
+			r == '-' || r == '.' || r == '_' || r == '~' {
+			sb.WriteRune(r)
+		} else {
+			// Percent-encode each UTF-8 byte (uppercase hex per RFC 3986).
+			for _, b := range []byte(string(r)) {
+				fmt.Fprintf(&sb, "%%%02X", b)
+			}
+		}
+	}
+	return sb.String()
+}
+
+// slugCustomParams holds the resolved parameters for the custom slug engine.
+type slugCustomParams struct {
+	lowercase          bool
+	preserveUnicode    bool
+	spaceReplacement   rune
+	stripChars         *regexp.Regexp
+	collapseSeparators bool
+}
+
+// parseSlugParams extracts custom slug parameters from an options map.
+func parseSlugParams(opts map[string]interface{}) slugCustomParams {
+	p := slugCustomParams{
+		lowercase:          true,
+		preserveUnicode:    true,
+		spaceReplacement:   '-',
+		collapseSeparators: false,
+	}
+	params, _ := opts["slug-params"].(map[string]interface{})
+	if params == nil {
+		return p
+	}
+	if v, ok := params["lowercase"].(bool); ok {
+		p.lowercase = v
+	}
+	if v, ok := params["preserve-unicode"].(bool); ok {
+		p.preserveUnicode = v
+	}
+	if v, ok := params["space-replacement"].(string); ok && v != "" {
+		runes := []rune(v)
+		p.spaceReplacement = runes[0]
+	}
+	if v, ok := params["strip-chars"].(string); ok && v != "" {
+		if re, err := regexp.Compile(v); err == nil {
+			p.stripChars = re
+		}
+	}
+	if v, ok := params["collapse-separators"].(bool); ok {
+		p.collapseSeparators = v
+	}
+	return p
+}
+
+// slugCustom applies the parameterized slug engine.
+// Processing order: lowercase → per-char (space→sep, strip non-Unicode) → strip-chars regex → collapse.
+func slugCustom(text string, p slugCustomParams) string {
+	if p.lowercase {
+		text = strings.ToLower(text)
+	}
+	sep := string(p.spaceReplacement)
+	var sb strings.Builder
+	sb.Grow(len(text))
+	for _, r := range text {
+		if unicode.IsSpace(r) {
+			if sep != "" {
+				sb.WriteRune(p.spaceReplacement)
+			}
+		} else if !p.preserveUnicode && r > 127 {
+			// strip non-ASCII
+		} else {
+			sb.WriteRune(r)
+		}
+	}
+	result := sb.String()
+	if p.stripChars != nil {
+		result = p.stripChars.ReplaceAllString(result, "")
+	}
+	if p.collapseSeparators && sep != "" {
+		pattern := regexp.QuoteMeta(sep) + "+"
+		if re, err := regexp.Compile(pattern); err == nil {
+			result = re.ReplaceAllString(result, sep)
+			result = strings.Trim(result, sep)
+		}
+	}
+	return result
+}
+
 // collapseDashes replaces runs of consecutive hyphens with a single hyphen
 // and strips leading and trailing hyphens.
 func collapseDashes(s string) string {
@@ -225,12 +424,12 @@ func collapseDashes(s string) string {
 // buildSlugSet builds the full set of valid fragment slugs from the given headings,
 // applying deduplication. The first occurrence of a slug is bare (e.g. "intro");
 // subsequent duplicates get a numeric suffix (e.g. "intro-1", "intro-2").
-func buildSlugSet(headings []string, algorithm string) map[string]struct{} {
+func buildSlugSet(headings []string, slugger func(string) string) map[string]struct{} {
 	slugs := make(map[string]struct{})
 	seen := make(map[string]int)
 	for _, text := range headings {
 		plain := stripHeadingFormatting(text)
-		base := ComputeSlug(plain, algorithm)
+		base := slugger(plain)
 		if base == "" {
 			continue
 		}
@@ -247,18 +446,35 @@ func buildSlugSet(headings []string, algorithm string) map[string]struct{} {
 	return slugs
 }
 
+// makeSlugger returns a slug function for the given algorithm and options.
+// For "custom", options["slug-params"] is parsed into slugCustomParams.
+// All other algorithm names are dispatched through ComputeSlug.
+func makeSlugger(algorithm string, options map[string]interface{}) func(string) string {
+	if algorithm == "custom" {
+		params := parseSlugParams(options)
+		return func(text string) string {
+			return slugCustom(text, params)
+		}
+	}
+	return func(text string) string {
+		return ComputeSlug(text, algorithm)
+	}
+}
+
 // ComputeSlug generates a URL fragment slug from heading plain text using the named algorithm.
-// Supported algorithms: github, gitlab, zenn, pandoc, pandoc-gfm, kramdown, mkdocs, docfx, hugo.
+// Supported algorithms: github, gitlab, zenn, pandoc, pandoc-gfm, kramdown, mkdocs, docfx,
+// hugo, qiita, mdbook, vitepress, gitea, forgejo, sphinx, eleventy, azure-devops, myst,
+// docusaurus, gatsby, astro, starlight, nuxt-content, quarto.
 // Unknown algorithm names fall back to "github".
 func ComputeSlug(text, algorithm string) string {
 	switch algorithm {
-	case "github", "hugo", "pandoc-gfm":
+	case "github", "hugo", "pandoc-gfm", "myst", "docusaurus", "gatsby", "astro", "starlight", "nuxt-content":
 		return slugGitHub(text)
 	case "gitlab":
 		return slugGitLab(text)
 	case "zenn":
 		return slugZenn(text)
-	case "pandoc":
+	case "pandoc", "quarto":
 		return slugPandoc(text)
 	case "kramdown":
 		return slugKramdown(text)
@@ -266,6 +482,18 @@ func ComputeSlug(text, algorithm string) string {
 		return slugMkDocs(text)
 	case "docfx":
 		return slugDocFX(text)
+	case "qiita", "mdbook":
+		return slugQiita(text)
+	case "vitepress":
+		return slugVitePress(text)
+	case "gitea", "forgejo":
+		return slugGitea(text)
+	case "sphinx":
+		return slugSphinx(text)
+	case "eleventy":
+		return slugEleventy(text)
+	case "azure-devops":
+		return slugAzureDevOps(text)
 	default:
 		return slugGitHub(text)
 	}
