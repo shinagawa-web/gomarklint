@@ -156,6 +156,16 @@ func (l *Linter) headingMinLevel() int {
 	return minLevel
 }
 
+// noTrailingPunctuation returns the configured punctuation string for the no-trailing-punctuation rule.
+func (l *Linter) noTrailingPunctuation() string {
+	if v, ok := l.config.RuleOptions("no-trailing-punctuation")["punctuation"]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return config.DefaultNoTrailingPunctuation
+}
+
 // maxLineLength returns the configured lineLength for the max-line-length rule.
 func (l *Linter) maxLineLength() int {
 	lineLength := 80
@@ -228,6 +238,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 	}
 	if l.config.IsEnabled("max-line-length") {
 		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)
+	}
+	if l.config.IsEnabled("no-trailing-punctuation") {
+		errs = append(errs, l.withSeverity(rule.CheckNoTrailingPunctuation(path, lines, offset, l.noTrailingPunctuation()), "no-trailing-punctuation")...)
 	}
 	return errs
 }

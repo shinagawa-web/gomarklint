@@ -370,6 +370,27 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "fixtures/no_hard_tabs_violation.md:7:")
 		assertOutputContains(t, output, "3 issues found")
 	})
+
+	t.Run("NoTrailingPunctuationValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/no_trailing_punctuation_valid.md", "--config", "config-no-trailing-punctuation.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "no-trailing-punctuation")
+	})
+
+	t.Run("NoTrailingPunctuationViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/no_trailing_punctuation_violation.md", "--config", "config-no-trailing-punctuation.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/no_trailing_punctuation_violation.md:")
+		assertOutputContains(t, output, "fixtures/no_trailing_punctuation_violation.md:1:")
+		assertOutputContains(t, output, `heading ends with "."`)
+		assertOutputContains(t, output, "fixtures/no_trailing_punctuation_violation.md:5:")
+		assertOutputContains(t, output, `heading ends with ","`)
+		assertOutputContains(t, output, "fixtures/no_trailing_punctuation_violation.md:9:")
+		assertOutputContains(t, output, `heading ends with "!"`)
+		assertOutputContains(t, output, "3 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -501,7 +522,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "hard tab character found")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 43 file(s)")
+		assertOutputContains(t, output, "Checked 45 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")

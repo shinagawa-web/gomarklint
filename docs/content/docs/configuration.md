@@ -86,11 +86,22 @@ In the object form, `enabled` can be omitted — it defaults to `true`. These ar
 | `final-blank-line` | `error` | — |
 | `unclosed-code-block` | `error` | — |
 | `empty-alt-text` | `error` | — |
+| `fenced-code-language` | `error` | — |
 | `heading-level` | `error` | `minLevel` (int, default `2`) |
 | `duplicate-heading` | `error` | — |
 | `no-multiple-blank-lines` | `error` | — |
 | `no-setext-headings` | `error` | — |
-| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `skipPatterns` (string[]) |
+| `single-h1` | `error` | — |
+| `blanks-around-headings` | `error` | — |
+| `no-bare-urls` | `error` | — |
+| `no-empty-links` | `error` | — |
+| `no-emphasis-as-heading` | `error` | — |
+| `blanks-around-lists` | `error` | — |
+| `blanks-around-fences` | `error` | — |
+| `no-hard-tabs` | `error` | — |
+| `no-trailing-punctuation` | `error` | `punctuation` (string, default `".,;:!"`) |
+| `max-line-length` | disabled | `lineLength` (int, default `80`) |
+| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
 
 ## Notes
 
