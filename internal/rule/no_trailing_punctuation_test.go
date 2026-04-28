@@ -196,6 +196,27 @@ func TestCheckNoTrailingPunctuation(t *testing.T) {
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
+		// Line starting with '-' after a paragraph but not a setext underline
+		{
+			name:        "valid: list item after paragraph is not a setext underline",
+			content:     "Paragraph text\n- list item\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
+		// ATX heading whose text is only the closing '#' sequence (j < 0 branch)
+		{
+			name:        "valid: heading whose content is only closing hashes",
+			content:     "## ##\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
+		// Line starting with '#' but no space after — not a valid ATX heading
+		{
+			name:        "valid: hash without space is not a heading",
+			content:     "##nospace\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
 	}
 
 	for _, tt := range tests {
