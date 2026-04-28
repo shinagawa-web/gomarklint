@@ -9,11 +9,11 @@ func TestCheckNoTrailingPunctuation(t *testing.T) {
 	const defaultPunct = ".,;:!"
 
 	tests := []struct {
-		name       string
-		content    string
+		name        string
+		content     string
 		punctuation string
-		offset     int
-		wantErrs   []LintError
+		offset      int
+		wantErrs    []LintError
 	}{
 		// Default punctuation — each character triggers a violation
 		{
@@ -119,27 +119,27 @@ func TestCheckNoTrailingPunctuation(t *testing.T) {
 		},
 		// Code block — headings inside must be ignored
 		{
-			name: "valid: heading with punctuation inside fenced code block (backtick)",
-			content: "```\n## Inside.\n```\n",
+			name:        "valid: heading with punctuation inside fenced code block (backtick)",
+			content:     "```\n## Inside.\n```\n",
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
 		{
-			name: "valid: heading with punctuation inside fenced code block (tilde)",
-			content: "~~~\n## Inside!\n~~~\n",
+			name:        "valid: heading with punctuation inside fenced code block (tilde)",
+			content:     "~~~\n## Inside!\n~~~\n",
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
 		{
-			name: "valid: setext text line inside fenced code block",
-			content: "```\nHeading.\n========\n```\n",
+			name:        "valid: setext text line inside fenced code block",
+			content:     "```\nHeading.\n========\n```\n",
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
 		// Heading immediately after code block close
 		{
-			name: "invalid: heading after code block close",
-			content: "```\ncode\n```\n## After.\n",
+			name:        "invalid: heading after code block close",
+			content:     "```\ncode\n```\n## After.\n",
 			punctuation: defaultPunct,
 			wantErrs:    []LintError{{File: "test.md", Line: 4, Message: `no-trailing-punctuation: heading ends with "."`}},
 		},

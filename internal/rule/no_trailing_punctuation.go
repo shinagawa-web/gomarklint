@@ -38,7 +38,7 @@ func CheckNoTrailingPunctuation(filename string, lines []string, offset int, pun
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
-	prevText := ""   // trimmed text of the previous candidate setext-heading line
+	prevText := ""       // trimmed text of the previous candidate setext-heading line
 	prevIsBlock := false // true when the previous line was a block-level element
 
 	for i, line := range lines {
