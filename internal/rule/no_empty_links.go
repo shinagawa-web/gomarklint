@@ -63,21 +63,25 @@ func CheckNoEmptyLinks(filename string, lines []string, offset int) []LintError 
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first != fenceMarker[0] {
+				continue
+			}
+			if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
 		}
 
 		if !strings.Contains(line, "](") {
