@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+// DefaultNoTrailingPunctuation is the default punctuation set for the no-trailing-punctuation rule.
+const DefaultNoTrailingPunctuation = ".,;:!"
+
 // DefaultConfigJSON is the canonical JSON written by `gomarklint init`.
 // It must stay in sync with Default() — update both together when adding rules.
 const DefaultConfigJSON = `{
@@ -227,7 +230,7 @@ func Default() Config {
 			"no-trailing-punctuation": {
 				Enabled:  true,
 				Severity: SeverityError,
-				Options:  map[string]interface{}{"punctuation": ".,;:!"},
+				Options:  map[string]interface{}{"punctuation": DefaultNoTrailingPunctuation},
 			},
 			"max-line-length": {
 				Enabled:  false,

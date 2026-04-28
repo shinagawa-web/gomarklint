@@ -217,6 +217,20 @@ func TestCheckNoTrailingPunctuation(t *testing.T) {
 			punctuation: defaultPunct,
 			wantErrs:    nil,
 		},
+		// Blockquote after paragraph — not a setext underline
+		{
+			name:        "valid: blockquote after paragraph is not a setext underline",
+			content:     "Paragraph text\n> quoted\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
+		// Ordered list after paragraph — not a setext underline
+		{
+			name:        "valid: ordered list after paragraph is not a setext underline",
+			content:     "Paragraph text\n1. item\n",
+			punctuation: defaultPunct,
+			wantErrs:    nil,
+		},
 	}
 
 	for _, tt := range tests {

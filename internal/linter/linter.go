@@ -163,7 +163,7 @@ func (l *Linter) noTrailingPunctuation() string {
 			return s
 		}
 	}
-	return ".,;:!"
+	return config.DefaultNoTrailingPunctuation
 }
 
 // maxLineLength returns the configured lineLength for the max-line-length rule.

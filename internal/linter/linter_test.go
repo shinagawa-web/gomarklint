@@ -783,7 +783,7 @@ func TestRun_NoTrailingPunctuation_Violation(t *testing.T) {
 	cfg.Rules["no-trailing-punctuation"] = &config.RuleConfig{
 		Enabled:  true,
 		Severity: config.SeverityError,
-		Options:  map[string]interface{}{"punctuation": ".,;:!"},
+		Options:  map[string]interface{}{"punctuation": config.DefaultNoTrailingPunctuation},
 	}
 
 	lint := New(cfg)
@@ -803,7 +803,7 @@ func TestRun_NoTrailingPunctuation_NoOptionFallsBackToDefault(t *testing.T) {
 	}
 
 	linter := New(cfg)
-	if linter.noTrailingPunctuation() != ".,;:!" {
-		t.Errorf("expected default punctuation %q, got %q", ".,;:!", linter.noTrailingPunctuation())
+	if linter.noTrailingPunctuation() != config.DefaultNoTrailingPunctuation {
+		t.Errorf("expected default punctuation %q, got %q", config.DefaultNoTrailingPunctuation, linter.noTrailingPunctuation())
 	}
 }
