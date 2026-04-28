@@ -243,10 +243,7 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if first != fenceMarker[0] {
-				continue
-			}
-			if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
