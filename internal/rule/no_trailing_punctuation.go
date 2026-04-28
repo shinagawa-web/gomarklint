@@ -38,69 +38,93 @@ func CheckNoTrailingPunctuation(filename string, lines []string, offset int, pun
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
-	prevText := ""       // trimmed text of the previous candidate setext-heading line
+	prevLine := ""       // raw previous non-blank non-block line (for setext detection)
 	prevIsBlock := false // true when the previous line was a block-level element
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
+
+		if first == 0 {
+			// blank or whitespace-only line
+			prevLine = ""
+			prevIsBlock = false
+			continue
+		}
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-				prevText = ""
+			if first == fenceMarker[0] {
+				trimmed := strings.TrimSpace(line)
+				if IsClosingFence(trimmed, fenceMarker) {
+					inBlock = false
+					fenceMarker = ""
+					prevLine = ""
+					prevIsBlock = true
+				}
+			}
+			continue
+		}
+
+		// Opening fence — only lines starting with '`' or '~' can open a fence.
+		if first == '`' || first == '~' {
+			trimmed := strings.TrimSpace(line)
+			if marker := openingFenceMarker(trimmed); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				prevLine = ""
 				prevIsBlock = true
+				continue
 			}
-			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			prevText = ""
-			prevIsBlock = true
-			continue
-		}
-
-		// ATX heading
-		if text, ok := atxHeadingText(trimmed); ok {
-			if r, ok := lastRuneInSet(text, punctuation); ok {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    i + 1 + offset,
-					Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
-				})
+		// ATX heading — only lines starting with '#'.
+		if first == '#' {
+			trimmed := strings.TrimSpace(line)
+			if text, ok := atxHeadingText(trimmed); ok {
+				if r, ok := lastRuneInSet(text, punctuation); ok {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    i + 1 + offset,
+						Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
+					})
+				}
+				prevLine = ""
+				prevIsBlock = true
+				continue
 			}
-			prevText = ""
-			prevIsBlock = true
-			continue
 		}
 
-		// Setext heading underline — the heading text is on the previous line.
-		// Use raw line (not trimmed) so 4-space-indented lines are not misidentified.
-		if prevText != "" && !prevIsBlock && setextUnderlineRegex.MatchString(line) {
-			if r, ok := lastRuneInSet(prevText, punctuation); ok {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    i + offset, // text line is lines[i-1]: 1-indexed i + offset
-					Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
-				})
+		// Setext heading underline — only '=' or '-' lines can be underlines.
+		// Use raw line (not trimmed) to honour the CommonMark 4-space indented-code rule.
+		if prevLine != "" && !prevIsBlock && (first == '=' || first == '-') {
+			if setextUnderlineRegex.MatchString(line) {
+				prevText := strings.TrimSpace(prevLine)
+				if r, ok := lastRuneInSet(prevText, punctuation); ok {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    i + offset, // text line is lines[i-1]: 1-indexed i + offset
+						Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
+					})
+				}
+				prevLine = ""
+				prevIsBlock = true
+				continue
 			}
-			prevText = ""
-			prevIsBlock = true
-			continue
 		}
 
-		if trimmed == "" {
-			prevText = ""
-			prevIsBlock = false
-		} else if setextOtherBlockRegex.MatchString(line) {
-			prevText = ""
-			prevIsBlock = true
-		} else {
-			prevText = trimmed
-			prevIsBlock = false
+		// Detect other block-level elements (lists, blockquotes) so that the line
+		// following them is not mistakenly treated as setext heading text.
+		// Gate behind a first-byte check to avoid regex calls on paragraph lines.
+		if first == '*' || first == '+' || first == '-' || first == '>' ||
+			(first >= '0' && first <= '9') {
+			if setextOtherBlockRegex.MatchString(line) {
+				prevLine = ""
+				prevIsBlock = true
+				continue
+			}
 		}
+
+		prevLine = line
+		prevIsBlock = false
 	}
 
 	return errs
