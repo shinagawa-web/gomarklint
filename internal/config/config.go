@@ -26,6 +26,7 @@ const DefaultConfigJSON = `{
     "blanks-around-lists": true,
     "blanks-around-fences": true,
     "no-hard-tabs": true,
+    "no-trailing-punctuation": { "punctuation": ".,;:!" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
   },
@@ -223,6 +224,11 @@ func Default() Config {
 			"blanks-around-lists":     enabledRule(),
 			"blanks-around-fences":    enabledRule(),
 			"no-hard-tabs":            enabledRule(),
+			"no-trailing-punctuation": {
+				Enabled:  true,
+				Severity: SeverityError,
+				Options:  map[string]interface{}{"punctuation": ".,;:!"},
+			},
 			"max-line-length": {
 				Enabled:  false,
 				Severity: SeverityOff,
