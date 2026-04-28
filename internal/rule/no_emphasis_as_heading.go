@@ -95,23 +95,29 @@ func CheckNoEmphasisAsHeading(filename string, lines []string, offset int) []Lin
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker != "" {
-			inBlock = true
-			fenceMarker = marker
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+			}
 			continue
 		}
 
+		if first != '*' && first != '_' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
 		inner, ok := emphasisContent(trimmed)
 		if !ok {
 			continue

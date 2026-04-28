@@ -59,6 +59,16 @@ func TestCheckNoEmphasisAsHeading(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
+			name:     "invalid: backtick-leading non-fence line does not bypass later violation",
+			content:  "`inline code`\n**Heading**\n",
+			wantErrs: []LintError{{File: "test.md", Line: 2, Message: "no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: **Heading**"}},
+		},
+		{
+			name:     "valid: delimiter-only line too short to be an emphasis span",
+			content:  "**\n",
+			wantErrs: nil,
+		},
+		{
 			name:     "valid: bold with surrounding text",
 			content:  "This is **important** text.\n",
 			wantErrs: nil,
