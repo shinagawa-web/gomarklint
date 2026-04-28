@@ -807,3 +807,51 @@ func TestRun_NoTrailingPunctuation_NoOptionFallsBackToDefault(t *testing.T) {
 		t.Errorf("expected default punctuation %q, got %q", config.DefaultNoTrailingPunctuation, linter.noTrailingPunctuation())
 	}
 }
+
+func TestRun_LinkFragments_DetectsViolation(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["link-fragments"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"slug-algorithm": "github"},
+	}
+
+	lint := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.md")
+	content := "## Introduction\n\nSee [Setup](#setup) for details.\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := lint.Run([]string{testFile})
+
+	if result.TotalErrors == 0 {
+		t.Error("expected error for broken fragment link")
+	}
+}
+
+func TestRun_LinkFragments_ValidLink(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["link-fragments"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"slug-algorithm": "github"},
+	}
+
+	lint := New(cfg)
+
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.md")
+	content := "## Introduction\n\nSee [Introduction](#introduction) for details.\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	result := lint.Run([]string{testFile})
+
+	if result.TotalErrors != 0 {
+		t.Errorf("expected no errors for valid fragment link, got %d", result.TotalErrors)
+	}
+}

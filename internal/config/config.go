@@ -31,7 +31,8 @@ const DefaultConfigJSON = `{
     "no-hard-tabs": true,
     "no-trailing-punctuation": { "punctuation": ".,;:!" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
-    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] }
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] },
+    "link-fragments": { "enabled": false, "slug-algorithm": "github" }
   },
   "include": ["README.md", "testdata"],
   "ignore": [],
@@ -246,6 +247,11 @@ func Default() Config {
 				Enabled:  false,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{"timeoutSeconds": float64(5), "skipPatterns": []interface{}{}},
+			},
+			"link-fragments": {
+				Enabled:  false,
+				Severity: SeverityOff,
+				Options:  map[string]interface{}{"slug-algorithm": "github"},
 			},
 		},
 		Include:      []string{"README.md", "testdata"},

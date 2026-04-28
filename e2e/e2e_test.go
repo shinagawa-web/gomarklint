@@ -391,6 +391,42 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, `heading ends with "!"`)
 		assertOutputContains(t, output, "3 issues found")
 	})
+
+	t.Run("LinkFragmentsValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/link_fragments_valid.md", "--config", "config-link-fragments.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "link-fragments")
+	})
+
+	t.Run("LinkFragmentsViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/link_fragments_violation.md", "--config", "config-link-fragments.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/link_fragments_violation.md:")
+		assertOutputContains(t, output, "fixtures/link_fragments_violation.md:3:")
+		assertOutputContains(t, output, "link-fragments")
+		assertOutputContains(t, output, "#setup")
+		assertOutputContains(t, output, "1 issues found")
+	})
+
+	t.Run("LinkFragmentsCustomValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/link_fragments_custom_valid.md", "--config", "config-link-fragments-custom.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "link-fragments")
+	})
+
+	t.Run("LinkFragmentsCustomViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/link_fragments_custom_violation.md", "--config", "config-link-fragments-custom.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/link_fragments_custom_violation.md:")
+		assertOutputContains(t, output, "fixtures/link_fragments_custom_violation.md:3:")
+		assertOutputContains(t, output, "link-fragments")
+		assertOutputContains(t, output, "#setup")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -522,7 +558,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "hard tab character found")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 45 file(s)")
+		assertOutputContains(t, output, "Checked 49 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")

@@ -26,6 +26,11 @@ func benchmarkConfig() config.Config {
 		Severity: config.SeverityError,
 		Options:  map[string]interface{}{"lineLength": float64(120)},
 	}
+	cfg.Rules["link-fragments"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"slug-algorithm": "github"},
+	}
 	return cfg
 }
 

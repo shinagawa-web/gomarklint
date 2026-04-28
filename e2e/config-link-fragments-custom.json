@@ -1,0 +1,20 @@
+{
+  "default": false,
+  "rules": {
+    "link-fragments": {
+      "enabled": true,
+      "severity": "error",
+      "slug-algorithm": "custom",
+      "slug-params": {
+        "lowercase": true,
+        "preserve-unicode": true,
+        "space-replacement": "-",
+        "strip-chars": "[^\\w\\- ]",
+        "collapse-separators": true
+      }
+    }
+  },
+  "include": ["fixtures"],
+  "ignore": [],
+  "output": "text"
+}

@@ -1,0 +1,9 @@
+{
+  "default": false,
+  "rules": {
+    "link-fragments": { "enabled": true, "severity": "error", "slug-algorithm": "github" }
+  },
+  "include": ["fixtures"],
+  "ignore": [],
+  "output": "text"
+}
