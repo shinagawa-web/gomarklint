@@ -240,20 +240,22 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			// Fall through to process the remainder of the line.
 		}
 
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
 		}
 
 		if !strings.Contains(line, "http") {
@@ -263,6 +265,7 @@ func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
 			continue
 		}
 
+		trimmed := strings.TrimSpace(line)
 		if isLinkCard(lines, i, trimmed) {
 			continue
 		}
