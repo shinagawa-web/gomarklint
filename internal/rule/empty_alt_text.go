@@ -7,6 +7,7 @@ import (
 
 var emptyAltTextRe = regexp.MustCompile(`!\[\s*\]\([^)]+\)`)
 
+// CheckEmptyAltText reports lint errors for images with empty alt text.
 func CheckEmptyAltText(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 
