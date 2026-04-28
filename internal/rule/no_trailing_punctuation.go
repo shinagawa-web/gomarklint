@@ -28,6 +28,52 @@ func atxHeadingText(line string) (string, bool) {
 	return text, true
 }
 
+// atxLineText returns the heading text if first == '#' and line is a valid ATX
+// heading. Returns ("", false) otherwise.
+func atxLineText(first byte, line string) (string, bool) {
+	if first != '#' {
+		return "", false
+	}
+	return atxHeadingText(strings.TrimSpace(line))
+}
+
+// openFenceMarkerIfPresent returns the fence marker when line opens a fenced
+// code block, or "" otherwise. The first-byte guard avoids TrimSpace on most lines.
+func openFenceMarkerIfPresent(first byte, line string) string {
+	if first != '`' && first != '~' {
+		return ""
+	}
+	return openingFenceMarker(strings.TrimSpace(line))
+}
+
+// setextHeadingText returns the trimmed heading text when line is a setext
+// underline following a valid heading candidate on the previous line.
+// Returns ("", false) when the conditions are not met.
+func setextHeadingText(first byte, line, prevLine string, prevIsBlock bool) (string, bool) {
+	if prevLine == "" || prevIsBlock || (first != '=' && first != '-') {
+		return "", false
+	}
+	if !setextUnderlineRegex.MatchString(line) {
+		return "", false
+	}
+	return strings.TrimSpace(prevLine), true
+}
+
+// isPossibleBlockMarker reports whether b can open a list item, ordered list,
+// or block-quote line per CommonMark, making the line ineligible as setext text.
+func isPossibleBlockMarker(b byte) bool {
+	return b == '*' || b == '+' || b == '-' || b == '>' || (b >= '0' && b <= '9')
+}
+
+// noTPViolation builds a LintError for a heading that ends with rune r.
+func noTPViolation(filename string, lineNum int, r rune) LintError {
+	return LintError{
+		File:    filename,
+		Line:    lineNum,
+		Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
+	}
+}
+
 // CheckNoTrailingPunctuation flags ATX and setext headings whose visible text
 // ends with a character contained in punctuation (MD026).
 func CheckNoTrailingPunctuation(filename string, lines []string, offset int, punctuation string) []LintError {
@@ -38,89 +84,59 @@ func CheckNoTrailingPunctuation(filename string, lines []string, offset int, pun
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
-	prevLine := ""       // raw previous non-blank non-block line (for setext detection)
+	prevLine := ""       // raw previous non-blank non-block line (setext candidate)
 	prevIsBlock := false // true when the previous line was a block-level element
 
 	for i, line := range lines {
 		first := firstNonSpaceByte(line)
 
 		if first == 0 {
-			// blank or whitespace-only line
 			prevLine = ""
 			prevIsBlock = false
 			continue
 		}
 
 		if inBlock {
-			if first == fenceMarker[0] {
-				trimmed := strings.TrimSpace(line)
-				if IsClosingFence(trimmed, fenceMarker) {
-					inBlock = false
-					fenceMarker = ""
-					prevLine = ""
-					prevIsBlock = true
-				}
+			// Short-circuit: only trim+check when first byte matches the fence marker.
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
+				inBlock = false
+				fenceMarker = ""
+				prevLine = ""
+				prevIsBlock = true
 			}
 			continue
 		}
 
-		// Opening fence — only lines starting with '`' or '~' can open a fence.
-		if first == '`' || first == '~' {
-			trimmed := strings.TrimSpace(line)
-			if marker := openingFenceMarker(trimmed); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-				prevLine = ""
-				prevIsBlock = true
-				continue
-			}
+		if marker := openFenceMarkerIfPresent(first, line); marker != "" {
+			inBlock = true
+			fenceMarker = marker
+			prevLine = ""
+			prevIsBlock = true
+			continue
 		}
 
-		// ATX heading — only lines starting with '#'.
-		if first == '#' {
-			trimmed := strings.TrimSpace(line)
-			if text, ok := atxHeadingText(trimmed); ok {
-				if r, ok := lastRuneInSet(text, punctuation); ok {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    i + 1 + offset,
-						Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
-					})
-				}
-				prevLine = ""
-				prevIsBlock = true
-				continue
+		if text, ok := atxLineText(first, line); ok {
+			if r, ok := lastRuneInSet(text, punctuation); ok {
+				errs = append(errs, noTPViolation(filename, i+1+offset, r))
 			}
+			prevLine = ""
+			prevIsBlock = true
+			continue
 		}
 
-		// Setext heading underline — only '=' or '-' lines can be underlines.
-		// Use raw line (not trimmed) to honour the CommonMark 4-space indented-code rule.
-		if prevLine != "" && !prevIsBlock && (first == '=' || first == '-') {
-			if setextUnderlineRegex.MatchString(line) {
-				prevText := strings.TrimSpace(prevLine)
-				if r, ok := lastRuneInSet(prevText, punctuation); ok {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    i + offset, // text line is lines[i-1]: 1-indexed i + offset
-						Message: fmt.Sprintf("no-trailing-punctuation: heading ends with %q", string(r)),
-					})
-				}
-				prevLine = ""
-				prevIsBlock = true
-				continue
+		if text, ok := setextHeadingText(first, line, prevLine, prevIsBlock); ok {
+			if r, ok := lastRuneInSet(text, punctuation); ok {
+				errs = append(errs, noTPViolation(filename, i+offset, r))
 			}
+			prevLine = ""
+			prevIsBlock = true
+			continue
 		}
 
-		// Detect other block-level elements (lists, blockquotes) so that the line
-		// following them is not mistakenly treated as setext heading text.
-		// Gate behind a first-byte check to avoid regex calls on paragraph lines.
-		if first == '*' || first == '+' || first == '-' || first == '>' ||
-			(first >= '0' && first <= '9') {
-			if setextOtherBlockRegex.MatchString(line) {
-				prevLine = ""
-				prevIsBlock = true
-				continue
-			}
+		if isPossibleBlockMarker(first) && setextOtherBlockRegex.MatchString(line) {
+			prevLine = ""
+			prevIsBlock = true
+			continue
 		}
 
 		prevLine = line
