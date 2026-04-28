@@ -21,23 +21,24 @@ import (
 //   - A slice of LintError entries for each detected duplicate heading (excluding the first occurrence).
 func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
-	seen := map[string]int{}
+	seen := make(map[string]struct{}, len(lines)/10)
 
 	for i, line := range lines {
+		if firstNonSpaceByte(line) != '#' {
+			continue
+		}
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "#") {
-			heading := strings.TrimSpace(strings.TrimLeft(line, "#"))
-			normalized := strings.ToLower(heading)
+		heading := strings.TrimSpace(strings.TrimLeft(line, "#"))
+		normalized := strings.ToLower(heading)
 
-			if _, ok := seen[normalized]; ok {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    i + 1 + offset,
-					Message: fmt.Sprintf("duplicate heading: %q", normalized),
-				})
-			} else {
-				seen[normalized] = i + 1 + offset
-			}
+		if _, ok := seen[normalized]; ok {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    i + 1 + offset,
+				Message: fmt.Sprintf("duplicate heading: %q", normalized),
+			})
+		} else {
+			seen[normalized] = struct{}{}
 		}
 	}
 
