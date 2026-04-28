@@ -148,12 +148,24 @@ func TestCheckLinkFragments(t *testing.T) {
 			},
 		},
 		{
-			name:    "valid: offset applied to line numbers",
+			name:    "invalid: offset applied to line numbers",
 			content: "## Introduction\n\nSee [broken](#broken).\n",
 			opts:    map[string]interface{}{"slug-algorithm": "github"},
 			wantErrs: []LintError{
 				{File: "test.md", Line: 8, Message: "link-fragments: fragment #broken not found in this document"},
 			},
+		},
+		{
+			name:     "valid: image with fragment url is not a link violation",
+			content:  "## Hello\n\nSee ![figure](#fig-1) above.\n",
+			opts:     map[string]interface{}{"slug-algorithm": "github"},
+			wantErrs: nil,
+		},
+		{
+			name:     "valid: ref def present but no usage as link",
+			content:  "## Section\n\n[ref]: #section\n\nSome text here.\n",
+			opts:     map[string]interface{}{"slug-algorithm": "github"},
+			wantErrs: nil,
 		},
 	}
 
@@ -162,7 +174,7 @@ func TestCheckLinkFragments(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
 			offset := 0
 			// The "offset applied" test uses offset=5
-			if tt.name == "valid: offset applied to line numbers" {
+			if tt.name == "invalid: offset applied to line numbers" {
 				offset = 5
 			}
 			got := CheckLinkFragments("test.md", lines, offset, tt.opts)
@@ -200,6 +212,7 @@ func TestExtractHeadingText(t *testing.T) {
 		{"heading with inline formatting kept", "## **Hello** World", "**Hello** World", 2},
 		{"empty string", "", "", 0},
 		{"bare hash no space or content", "##", "", 2},
+		{"tab after hash accepted", "##\tHeading", "Heading", 2},
 	}
 
 	for _, tt := range tests {
@@ -233,7 +246,7 @@ func TestCheckLinkFragments_NewPresets(t *testing.T) {
 		{"myst: same as github", "## Hello World\n\nSee [Hello](#hello-world).\n", "myst", 0},
 		{"docusaurus: same as github", "## Hello World\n\nSee [Hello](#hello-world).\n", "docusaurus", 0},
 		{"quarto: same as pandoc", "## Hello World\n\nSee [Hello](#hello-world).\n", "quarto", 0},
-		{"quarto: strips non-ASCII", "## Hello World\n\nSee [Hello](#hello-world).\n", "quarto", 0},
+		{"quarto: strips non-ASCII", "## Hello 日本語 World\n\nSee [Hello](#hello-world).\n", "quarto", 0},
 	}
 
 	for _, tt := range tests {
@@ -305,6 +318,18 @@ func TestCheckLinkFragments_CustomEngine(t *testing.T) {
 	})
 }
 
+func TestHasAnyFragmentSyntax(t *testing.T) {
+	if hasAnyFragmentSyntax([]string{"no links here", "just text"}) {
+		t.Error("expected false for plain text")
+	}
+	if !hasAnyFragmentSyntax([]string{"See [intro](#intro) here."}) {
+		t.Error("expected true for inline fragment link")
+	}
+	if !hasAnyFragmentSyntax([]string{"[ref]: #section"}) {
+		t.Error("expected true for fragment ref definition")
+	}
+}
+
 func TestCollectRefDefs(t *testing.T) {
 	t.Run("collects fragment refs", func(t *testing.T) {
 		lines := strings.Split("[ref1]: #section-1\n[ref2]: #section-2\n[ext]: https://example.com\n", "\n")
@@ -325,6 +350,17 @@ func TestCollectRefDefs(t *testing.T) {
 		defs := collectRefDefs(lines)
 		if defs["my label"] != "my-section" {
 			t.Errorf("expected 'my label' -> 'my-section', got %q", defs["my label"])
+		}
+	})
+
+	t.Run("ref def inside fenced code block is excluded", func(t *testing.T) {
+		lines := strings.Split("```\n[inside]: #fenced\n```\n[outside]: #real\n", "\n")
+		defs := collectRefDefs(lines)
+		if _, ok := defs["inside"]; ok {
+			t.Error("ref def inside fenced block should not be collected")
+		}
+		if defs["outside"] != "real" {
+			t.Errorf("expected 'outside' -> 'real', got %q", defs["outside"])
 		}
 	})
 }

@@ -156,6 +156,7 @@ func TestStripHeadingFormatting(t *testing.T) {
 		{"ref image alt kept", "![alt][img-ref]", "alt"},
 		{"HTML comment removed", "<!-- note --> Hello", " Hello"},
 		{"multi-backtick code", "``go test``", "go test"},
+		{"code span with underscores not split by italic", "`my_func_name`", "my_func_name"},
 	}
 
 	for _, tt := range tests {
@@ -287,6 +288,7 @@ func TestSlugCustom(t *testing.T) {
 				preserveUnicode:    true,
 				spaceReplacement:   '-',
 				collapseSeparators: true,
+				collapseRe:         mustCompileRegexp("-+"),
 			},
 			want: "hello-world",
 		},

@@ -24,7 +24,7 @@ func extractHeadingText(line string) (string, int) {
 	if rest == "" {
 		return "", level
 	}
-	if rest[0] != ' ' {
+	if rest[0] != ' ' && rest[0] != '\t' {
 		return "", 0
 	}
 	return strings.TrimSpace(rest[1:]), level
@@ -42,11 +42,32 @@ var reRefLinkUsage = regexp.MustCompile(`\[[^\]]*\]\[([^\]]+)\]`)
 // Capture group 1 is the label; group 2 is the fragment without the leading #.
 var reRefDef = regexp.MustCompile(`^\s*\[([^\]]+)\]:\s+#(\S+)`)
 
+// reStripInlineImages matches inline images: ![alt](url)
+// Used to remove image syntax before fragment link detection to avoid false positives
+// from image fragments like ![alt](#fig-1).
+var reStripInlineImages = regexp.MustCompile(`!\[[^\]]*\]\([^)]*\)`)
+
 // collectRefDefs returns a map from normalized reference label to fragment string (without #)
 // for all reference link definitions in lines that target a fragment destination.
+// Definitions inside fenced code blocks are excluded.
 func collectRefDefs(lines []string) map[string]string {
 	defs := make(map[string]string)
+	inBlock := false
+	fenceMarker := ""
 	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if inBlock {
+			if IsClosingFence(trimmed, fenceMarker) {
+				inBlock = false
+				fenceMarker = ""
+			}
+			continue
+		}
+		if marker := openingFenceMarker(trimmed); marker != "" {
+			inBlock = true
+			fenceMarker = marker
+			continue
+		}
 		// Reference definitions must start with optional whitespace then '['.
 		if !strings.HasPrefix(strings.TrimLeft(line, " \t"), "[") {
 			continue
@@ -95,6 +116,19 @@ func collectHeadingSlugs(lines []string, slugger func(string) string) map[string
 	}
 
 	return buildSlugSet(headings, slugger)
+}
+
+// hasAnyFragmentSyntax is a cheap pre-filter that reports whether lines contain
+// any text that could be a fragment link or fragment definition, without
+// allocating any state. Checks for "(#" (inline fragment links) and
+// "]: #" (reference definition pointing at a fragment).
+func hasAnyFragmentSyntax(lines []string) bool {
+	for _, line := range lines {
+		if strings.Contains(line, "(#") || strings.Contains(line, "]: #") {
+			return true
+		}
+	}
+	return false
 }
 
 // hasAnyFragmentLinks reports whether lines contain at least one potential
@@ -172,6 +206,9 @@ func checkRefFragments(filename string, lineNum int, scanned string, slugs map[s
 //     preserve-unicode (bool), space-replacement (string), strip-chars (regex string),
 //     collapse-separators (bool)
 func CheckLinkFragments(filename string, lines []string, offset int, options map[string]interface{}) []LintError {
+	if !hasAnyFragmentSyntax(lines) {
+		return nil
+	}
 	refDefs := collectRefDefs(lines)
 	if !hasAnyFragmentLinks(lines, refDefs) {
 		return nil
@@ -207,6 +244,9 @@ func CheckLinkFragments(filename string, lines []string, offset int, options map
 		}
 
 		scanned := line
+		if strings.ContainsRune(scanned, '!') {
+			scanned = reStripInlineImages.ReplaceAllString(scanned, "")
+		}
 		if strings.ContainsRune(scanned, '`') {
 			scanned = stripInlineCode(scanned)
 		}

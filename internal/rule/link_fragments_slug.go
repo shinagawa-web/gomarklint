@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/text/unicode/norm"
 )
@@ -47,10 +48,13 @@ var reSphinxNonAlnum = regexp.MustCompile(`[^a-z0-9]+`)
 
 // stripHeadingFormatting removes Markdown and HTML inline formatting from heading text,
 // returning plain text for slug generation.
-// Order: HTML comments → HTML tags → images → links → bold → italic → code spans.
+// Order: HTML comments → HTML tags → images → links → code spans (saved as placeholders) →
+// bold → italic → code span content restored.
+// Code spans are saved before bold/italic to prevent underscores/asterisks inside backticks
+// from being mis-parsed as emphasis markers.
 func stripHeadingFormatting(s string) string {
 	// Fast path: plain headings with no formatting markers need no processing.
-	if !strings.ContainsAny(s, "*_[<`") {
+	if !strings.ContainsAny(s, "*_[<`!") {
 		return s
 	}
 	s = reSlugHTMLComment.ReplaceAllString(s, "")
@@ -59,11 +63,21 @@ func stripHeadingFormatting(s string) string {
 	s = reSlugImage.ReplaceAllString(s, "$1")
 	s = reSlugRefLink.ReplaceAllString(s, "$1")
 	s = reSlugLink.ReplaceAllString(s, "$1")
+	// Save code span content before bold/italic so that underscores/asterisks
+	// inside backtick spans are not consumed by the emphasis regexes.
+	var saved []string
+	s = reSlugCode.ReplaceAllStringFunc(s, func(m string) string {
+		idx := len(saved)
+		saved = append(saved, strings.Trim(m, "`"))
+		return fmt.Sprintf("\x00%d\x00", idx)
+	})
 	s = reSlugBoldAsterisk.ReplaceAllString(s, "$1")
 	s = reSlugBoldUnderscore.ReplaceAllString(s, "$1")
 	s = reSlugItalicAsterisk.ReplaceAllString(s, "$1")
 	s = reSlugItalicUnderscore.ReplaceAllString(s, "$1")
-	s = reSlugCode.ReplaceAllString(s, "$1")
+	for i, content := range saved {
+		s = strings.ReplaceAll(s, fmt.Sprintf("\x00%d\x00", i), content)
+	}
 	return s
 }
 
@@ -300,6 +314,7 @@ func slugEleventy(text string) string {
 // Lowercases, replaces Unicode space-separator chars (Zs) with hyphens, keeps RFC 3986
 // unreserved chars (letters, digits, -, ., _, ~) as-is, and percent-encodes everything else.
 func slugAzureDevOps(text string) string {
+	const hexChars = "0123456789ABCDEF"
 	var sb strings.Builder
 	sb.Grow(len(text) * 2)
 	for _, r := range text {
@@ -311,8 +326,12 @@ func slugAzureDevOps(text string) string {
 			sb.WriteRune(r)
 		} else {
 			// Percent-encode each UTF-8 byte (uppercase hex per RFC 3986).
-			for _, b := range []byte(string(r)) {
-				fmt.Fprintf(&sb, "%%%02X", b)
+			var buf [utf8.UTFMax]byte
+			n := utf8.EncodeRune(buf[:], r)
+			for _, b := range buf[:n] {
+				sb.WriteByte('%')
+				sb.WriteByte(hexChars[b>>4])
+				sb.WriteByte(hexChars[b&0xf])
 			}
 		}
 	}
@@ -326,6 +345,7 @@ type slugCustomParams struct {
 	spaceReplacement   rune
 	stripChars         *regexp.Regexp
 	collapseSeparators bool
+	collapseRe         *regexp.Regexp // pre-compiled collapse pattern; nil when collapse is off
 }
 
 // parseSlugParams extracts custom slug parameters from an options map.
@@ -358,6 +378,14 @@ func parseSlugParams(opts map[string]interface{}) slugCustomParams {
 	if v, ok := params["collapse-separators"].(bool); ok {
 		p.collapseSeparators = v
 	}
+	if p.collapseSeparators {
+		sep := string(p.spaceReplacement)
+		if sep != "" {
+			if re, err := regexp.Compile(regexp.QuoteMeta(sep) + "+"); err == nil {
+				p.collapseRe = re
+			}
+		}
+	}
 	return p
 }
 
@@ -385,12 +413,9 @@ func slugCustom(text string, p slugCustomParams) string {
 	if p.stripChars != nil {
 		result = p.stripChars.ReplaceAllString(result, "")
 	}
-	if p.collapseSeparators && sep != "" {
-		pattern := regexp.QuoteMeta(sep) + "+"
-		if re, err := regexp.Compile(pattern); err == nil {
-			result = re.ReplaceAllString(result, sep)
-			result = strings.Trim(result, sep)
-		}
+	if p.collapseRe != nil {
+		result = p.collapseRe.ReplaceAllString(result, sep)
+		result = strings.Trim(result, sep)
 	}
 	return result
 }
