@@ -351,6 +351,27 @@ func TestMakeSlugger(t *testing.T) {
 	})
 }
 
+func TestParseSlugParams(t *testing.T) {
+	t.Run("invalid strip-chars regex is silently ignored", func(t *testing.T) {
+		opts := map[string]interface{}{
+			"slug-params": map[string]interface{}{
+				"strip-chars": "[invalid(regex",
+			},
+		}
+		p := parseSlugParams(opts)
+		if p.stripChars != nil {
+			t.Error("expected stripChars to be nil for invalid regex, got non-nil")
+		}
+	})
+
+	t.Run("nil opts returns defaults", func(t *testing.T) {
+		p := parseSlugParams(nil)
+		if !p.lowercase || !p.preserveUnicode || p.spaceReplacement != '-' || p.collapseSeparators {
+			t.Errorf("unexpected defaults: %+v", p)
+		}
+	})
+}
+
 func mustCompileRegexp(pattern string) *regexp.Regexp {
 	return regexp.MustCompile(pattern)
 }
