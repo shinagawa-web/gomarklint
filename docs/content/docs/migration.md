@@ -32,7 +32,7 @@ brew install shinagawa-web/tap/gomarklint
 npm install -g @shinagawa-web/gomarklint
 
 # go install
-go install github.com/shinagawa-web/gomarklint@latest
+go install github.com/shinagawa-web/gomarklint/v2@latest
 ```
 
 Remove the old linter from your project:
@@ -74,7 +74,7 @@ If you used `npm` only to run the linter, you may be able to remove `package.jso
 | MD034 `no-bare-urls` | `no-bare-urls` | — |
 | MD036 `no-emphasis-as-heading` | `no-emphasis-as-heading` | Punctuation-ending spans are excluded |
 | MD040 `fenced-code-language` | `fenced-code-language` | — |
-| MD041 `first-line-heading` | `heading-level` | Set `minLevel: 1` to require H1 |
+| MD041 `first-line-heading` | — | No direct equivalent — `heading-level` checks level progression but does not require a heading on the first line |
 | MD042 `no-empty-links` | `no-empty-links` | Also catches `[](#)` and `[](<>)` |
 | MD045 `no-alt-text` | `empty-alt-text` | — |
 | MD047 `single-trailing-newline` | `final-blank-line` | — |
@@ -133,7 +133,7 @@ Key differences:
 ```yaml
 - uses: actions/setup-go@v5
   with:
-    go-version: '1.23'
+    go-version-file: 'go.mod'
 
 - uses: shinagawa-web/gomarklint-action@v1
 ```
@@ -149,7 +149,7 @@ Key differences:
 | `final-newline` | `final-blank-line` | — |
 | `no-consecutive-blank-lines` | `no-multiple-blank-lines` | — |
 | `heading-increment` | `heading-level` | — |
-| `first-heading-level` | `heading-level` | Set `minLevel: 1` |
+| `first-heading-level` | — | No direct equivalent — `heading-level` checks level progression but does not enforce position |
 | `no-duplicate-headings` | `duplicate-heading` | — |
 | `heading-style` (atx) | `no-setext-headings` | — |
 | `no-missing-blank-lines` | `blanks-around-headings`, `blanks-around-lists`, `blanks-around-fences` | remark-lint combines these; gomarklint has separate rules |
@@ -215,7 +215,7 @@ export default {
 ```yaml
 - uses: actions/setup-go@v5
   with:
-    go-version: '1.23'
+    go-version-file: 'go.mod'
 
 - uses: shinagawa-web/gomarklint-action@v1
 ```
