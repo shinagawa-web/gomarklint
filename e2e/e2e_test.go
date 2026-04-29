@@ -664,6 +664,16 @@ func TestE2E_EdgeCases(t *testing.T) {
 		assertOutputContains(t, output, "failed to parse config file")
 	})
 
+	t.Run("InvalidRuleOptionValue", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/valid.md", "--config", "config-invalid-style-option.json")
+		if err == nil {
+			t.Errorf("expected error for invalid rule option value, but command succeeded")
+		}
+		assertOutputContains(t, output, "[gomarklint error]:")
+		assertOutputContains(t, output, `invalid value "hoge" for consistent-code-fence.style`)
+		assertOutputContains(t, output, "valid values: consistent, backtick, tilde")
+	})
+
 	t.Run("EmptyFile", func(t *testing.T) {
 		output := runTest(t, "fixtures/empty.md", "--config", ".gomarklint.json")
 		assertOutputContains(t, output, "Errors in fixtures/empty.md:")

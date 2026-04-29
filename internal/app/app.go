@@ -56,7 +56,10 @@ func Run(w io.Writer, opts Options) error {
 
 	files := file.ExpandPaths(args, cfg.Ignore)
 
-	lint := linter.New(cfg)
+	lint, err := linter.New(cfg)
+	if err != nil {
+		return err
+	}
 	result := lint.Run(files)
 
 	if err := formatOutput(w, cfg, result, len(files)-len(result.FailedFiles), time.Since(start)); err != nil {

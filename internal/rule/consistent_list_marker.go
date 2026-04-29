@@ -5,20 +5,13 @@ import (
 )
 
 // CheckConsistentListMarker flags unordered list items that use a different
-// marker than expected. style must be "consistent", "dash", "asterisk", or
-// "plus"; any other value falls back to "consistent".
+// marker than expected. style must be "consistent", "dash", "asterisk", or "plus".
 //
 // In "consistent" mode the first marker found in the document sets the
 // expected style; every subsequent item using a different marker is flagged.
 // In "dash"/"asterisk"/"plus" mode every item using the wrong marker is
 // flagged. Content inside fenced code blocks is ignored.
 func CheckConsistentListMarker(filename string, lines []string, offset int, style string) []LintError {
-	switch style {
-	case "consistent", "dash", "asterisk", "plus":
-	default:
-		style = "consistent"
-	}
-
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""

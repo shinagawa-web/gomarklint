@@ -115,7 +115,10 @@ func generateComplexMarkdown(sections int) string {
 func BenchmarkFullLinting(b *testing.B) {
 	content := generateComplexMarkdown(1000)
 	cfg := benchmarkConfig()
-	lint := linter.New(cfg)
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatalf("unexpected error: %v", err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -126,7 +129,10 @@ func BenchmarkFullLinting(b *testing.B) {
 func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
 	content := generateComplexMarkdown(5000)
 	cfg := benchmarkConfig()
-	lint := linter.New(cfg)
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatalf("unexpected error: %v", err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
