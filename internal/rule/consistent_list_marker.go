@@ -70,13 +70,7 @@ func listItemMarker(line string) (byte, bool) {
 	for i < len(line) && (line[i] == ' ' || line[i] == '\t') {
 		i++
 	}
-	if i >= len(line) {
-		return 0, false
-	}
 	ch := line[i]
-	if ch != '-' && ch != '*' && ch != '+' {
-		return 0, false
-	}
 	i++
 	if i >= len(line) || line[i] != ' ' {
 		return 0, false
