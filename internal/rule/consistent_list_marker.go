@@ -25,20 +25,20 @@ func CheckConsistentListMarker(filename string, lines []string, offset int, styl
 	var expectedCh byte // 0 until first list item seen (consistent mode)
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
+			if first == '`' || first == '~' {
+				if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
+					inBlock = false
+					fenceMarker = ""
+				}
 			}
 			continue
 		}
 
-		first := firstNonSpaceByte(line)
-
 		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(trimmed); marker != "" {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
 				inBlock = true
 				fenceMarker = marker
 				continue
@@ -63,20 +63,28 @@ func CheckConsistentListMarker(filename string, lines []string, offset int, styl
 }
 
 // listItemMarker returns the marker byte and true if line is an unordered list
-// item (optional leading spaces, one of - * +, then a space and non-space content).
-// Returns 0, false otherwise.
+// item (optional leading spaces, one of - * +, then one or more spaces/tabs,
+// then a non-whitespace byte). Returns 0, false otherwise.
 func listItemMarker(line string) (byte, bool) {
 	i := 0
 	for i < len(line) && (line[i] == ' ' || line[i] == '\t') {
 		i++
 	}
-	ch := line[i]
-	i++
-	if i >= len(line) || line[i] != ' ' {
+	if i >= len(line) {
 		return 0, false
 	}
+	ch := line[i]
 	i++
-	if i >= len(line) || line[i] == ' ' || line[i] == '\t' || line[i] == '\n' {
+	// must be followed by at least one space or tab
+	if i >= len(line) || (line[i] != ' ' && line[i] != '\t') {
+		return 0, false
+	}
+	// skip all whitespace after the marker
+	for i < len(line) && (line[i] == ' ' || line[i] == '\t') {
+		i++
+	}
+	// must have non-whitespace content (\r counts as whitespace here)
+	if i >= len(line) || line[i] == '\r' || line[i] == '\n' {
 		return 0, false
 	}
 	return ch, true

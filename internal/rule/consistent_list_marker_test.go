@@ -158,6 +158,36 @@ func TestCheckConsistentListMarker(t *testing.T) {
 			style:    "asterisk",
 			wantErrs: nil,
 		},
+		{
+			name:     "marker followed by tab then nothing is not a list item",
+			content:  "-\t\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "CRLF line with only CR after marker+space is not a list item",
+			content:  "- \r\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+
+		// valid list items with multiple spaces or tab after marker
+		{
+			name:    "marker followed by multiple spaces then text is a list item",
+			content: "-   item\n",
+			style:   "asterisk",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-list-marker: expected asterisk marker, got dash marker"},
+			},
+		},
+		{
+			name:    "marker followed by tab then text is a list item",
+			content: "-\titem\n",
+			style:   "asterisk",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-list-marker: expected asterisk marker, got dash marker"},
+			},
+		},
 
 		// indented list items
 		{
@@ -219,5 +249,12 @@ func TestCheckConsistentListMarker(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestListItemMarker(t *testing.T) {
+	// all-space line: exhausts the leading-whitespace loop, hits i >= len(line) guard
+	if ch, ok := listItemMarker("   "); ok {
+		t.Errorf("expected false for all-space line, got ch=%q ok=%v", ch, ok)
 	}
 }
