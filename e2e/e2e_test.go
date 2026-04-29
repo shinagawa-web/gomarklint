@@ -282,7 +282,7 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "fixtures/no_emphasis_as_heading_violation.md:3:")
 		assertOutputContains(t, output, "emphasis used as heading, use ATX heading instead: **Section Title**")
 		assertOutputContains(t, output, "fixtures/no_emphasis_as_heading_violation.md:5:")
-		assertOutputContains(t, output, "emphasis used as heading, use ATX heading instead: _Another Heading_")
+		assertOutputContains(t, output, "emphasis used as heading, use ATX heading instead: *Another Heading*")
 		assertOutputContains(t, output, "2 issues found")
 	})
 
@@ -444,6 +444,23 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("ConsistentEmphasisStyleValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/consistent_emphasis_style_valid.md", "--config", "config-consistent-emphasis-style.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "consistent-emphasis-style")
+	})
+
+	t.Run("ConsistentEmphasisStyleViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/consistent_emphasis_style_violation.md", "--config", "config-consistent-emphasis-style.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/consistent_emphasis_style_violation.md:")
+		assertOutputContains(t, output, "fixtures/consistent_emphasis_style_violation.md:5:")
+		assertOutputContains(t, output, "expected asterisk emphasis, got underscore emphasis")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -577,7 +594,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
 		assertOutputContains(t, output, "Errors in fixtures/consistent_code_fence_violation.md:")
 		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
-		assertOutputContains(t, output, "Checked 51 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/consistent_emphasis_style_violation.md:")
+		assertOutputContains(t, output, "expected asterisk emphasis, got underscore emphasis")
+		assertOutputContains(t, output, "Checked 53 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -592,6 +611,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/no_emphasis_as_heading_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_hard_tabs_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_fences_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/consistent_emphasis_style_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

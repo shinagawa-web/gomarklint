@@ -2,6 +2,6 @@
 
 **Section Title**
 
-_Another Heading_
+*Another Heading*
 
 Some valid text here.
