@@ -18,11 +18,11 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 	var expectedCh byte // 0 until first fence seen (consistent mode)
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		// Inside a code block: only look for the closing fence.
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
@@ -31,8 +31,16 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 
 		// Inside an HTML comment block: skip until "-->" is found.
 		if inHTMLComment {
-			if strings.Contains(trimmed, "-->") {
+			if strings.Contains(line, "-->") {
 				inHTMLComment = false
+			}
+			continue
+		}
+
+		// Lines that cannot open a fence are checked only for "<!--".
+		if first != '`' && first != '~' {
+			if strings.IndexByte(line, '<') >= 0 {
+				inHTMLComment = isHTMLCommentStart(line)
 			}
 			continue
 		}
@@ -40,6 +48,7 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 		// Check for an opening fence before inspecting the line for "<!--" so
 		// that fence openers whose info string contains "<!--" (e.g.
 		// "```go <!-- note -->") are treated as fences, not comment starts.
+		trimmed := strings.TrimSpace(line)
 		if marker := openingFenceMarker(trimmed); marker != "" {
 			ch := marker[0]
 			inBlock = true
@@ -50,9 +59,9 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 			continue
 		}
 
-		// Track HTML comment blocks so fences inside them are ignored.
-		if strings.Contains(trimmed, "<!--") && !strings.Contains(trimmed, "-->") {
-			inHTMLComment = true
+		// `` ` ``/`~` line that is not a fence opener: still check for "<!--".
+		if strings.IndexByte(line, '<') >= 0 {
+			inHTMLComment = isHTMLCommentStart(trimmed)
 		}
 	}
 
@@ -94,6 +103,12 @@ func checkFenceStyle(filename string, line int, ch byte, style string, expectedC
 		}
 	}
 	return nil
+}
+
+// isHTMLCommentStart reports whether line opens an HTML comment that does not
+// close on the same line (contains "<!--" but not "-->").
+func isHTMLCommentStart(line string) bool {
+	return strings.Contains(line, "<!--") && !strings.Contains(line, "-->")
 }
 
 func fenceCharName(ch byte) string {
