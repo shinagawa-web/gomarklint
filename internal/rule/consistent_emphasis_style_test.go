@@ -182,6 +182,14 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			wantErrs: nil,
 		},
 
+		// delimiter followed by whitespace is not an opener
+		{
+			name:     "asterisk followed by space is not an opener",
+			content:  "Use * as a bullet.\n",
+			style:    "underscore",
+			wantErrs: nil,
+		},
+
 		// escaped markers
 		{
 			name:     "escaped asterisk not treated as emphasis",
@@ -226,6 +234,14 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			content:  "This has *no closer.\n",
 			style:    "underscore",
 			wantErrs: nil,
+		},
+		{
+			name:    "wrong-length run skipped, correct closer found",
+			content: "Use *italic**more* text.\n",
+			style:   "underscore",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis"},
+			},
 		},
 
 		// offset
