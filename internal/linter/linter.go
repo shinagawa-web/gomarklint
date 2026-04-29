@@ -80,7 +80,7 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 	}
 	val, ok := raw.(string)
 	if !ok {
-		return fmt.Errorf("gomarklint: invalid value %v for %s.%s (valid values: %s)", raw, ruleName, optKey, strings.Join(valid, ", "))
+		return fmt.Errorf("gomarklint: invalid value for %s.%s: expected string, got %T (%#v) (valid values: %s)", ruleName, optKey, raw, raw, strings.Join(valid, ", "))
 	}
 	if val == "" {
 		return nil
