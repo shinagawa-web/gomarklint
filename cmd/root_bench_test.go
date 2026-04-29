@@ -44,8 +44,8 @@ func writeHeading(sb *strings.Builder, i int) {
 }
 
 func writeParagraph(sb *strings.Builder) {
-	sb.WriteString("This section contains important information. ")
-	sb.WriteString("Here are some details that you should know about.\n\n")
+	sb.WriteString("This section contains *important* information. ")
+	sb.WriteString("Here are some **key** details that you should know about.\n\n")
 }
 
 func writeList(sb *strings.Builder) {

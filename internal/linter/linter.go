@@ -177,6 +177,17 @@ func (l *Linter) consistentCodeFenceStyle() string {
 	}
 }
 
+// consistentEmphasisStyle returns the configured style for the consistent-emphasis-style rule.
+func (l *Linter) consistentEmphasisStyle() string {
+	style, _ := l.config.RuleOptions("consistent-emphasis-style")["style"].(string)
+	switch style {
+	case "consistent", "asterisk", "underscore":
+		return style
+	default:
+		return "consistent"
+	}
+}
+
 // maxLineLength returns the configured lineLength for the max-line-length rule.
 func (l *Linter) maxLineLength() int {
 	lineLength := 80
@@ -249,6 +260,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 	}
 	if l.config.IsEnabled("consistent-code-fence") {
 		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, lines, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
+	}
+	if l.config.IsEnabled("consistent-emphasis-style") {
+		errs = append(errs, l.withSeverity(rule.CheckConsistentEmphasisStyle(path, lines, offset, l.consistentEmphasisStyle()), "consistent-emphasis-style")...)
 	}
 	if l.config.IsEnabled("max-line-length") {
 		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)

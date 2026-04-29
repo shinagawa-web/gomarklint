@@ -27,6 +27,7 @@ weight: 2
 | `no-hard-tabs`                 | Hard tab characters (`\t`) outside fenced code blocks and inline code   | Default **on**                                                                                        |
 | `no-trailing-punctuation`      | Heading text ending with a punctuation character                        | Default **on**. Option: `punctuation` (default `".,;:!"`) — the full set of characters to flag; e.g. set `".,;:!?"` to also flag question headings |
 | `consistent-code-fence`        | Inconsistent fenced code block marker (`` ``` `` vs `~~~`)              | Default **on**. Option: `style` (`consistent` \| `backtick` \| `tilde`, default `consistent`)        |
+| `consistent-emphasis-style`    | Inconsistent emphasis marker (`*text*` vs `_text_`)                     | Default **on**. Option: `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`)   |
 | `max-line-length`              | Lines exceeding the configured maximum length                           | Default **off**. Option: `lineLength` (default `80`)                                                  |
 | `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
 | `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **off**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |

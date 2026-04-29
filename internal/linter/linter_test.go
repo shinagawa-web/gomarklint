@@ -885,3 +885,33 @@ func TestRun_ConsistentCodeFence_NoOptionFallsBackToConsistent(t *testing.T) {
 		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentCodeFenceStyle())
 	}
 }
+
+func TestRun_ConsistentEmphasisStyle_Violation(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-emphasis-style"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "asterisk"},
+	}
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", "This is _italic_ text.\n")
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
+
+func TestRun_ConsistentEmphasisStyle_NoOptionFallsBackToConsistent(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-emphasis-style"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{},
+	}
+
+	linter := New(cfg)
+	if linter.consistentEmphasisStyle() != "consistent" {
+		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentEmphasisStyle())
+	}
+}

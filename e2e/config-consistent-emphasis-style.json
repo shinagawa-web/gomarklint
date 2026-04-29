@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "consistent-emphasis-style": { "style": "consistent" }
+  }
+}
