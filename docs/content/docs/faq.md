@@ -75,6 +75,25 @@ The `--enable-*` flags were removed in v2. Use the `rules` map in your config fi
 
 ---
 
+### Apply different rules to different directories
+
+gomarklint does not automatically pick up config files in subdirectories. Use `ignore` in the root config to exclude the subdirectory, then run gomarklint again with an explicit `--config`:
+
+```json
+{
+  "ignore": ["docs/"]
+}
+```
+
+```sh
+gomarklint .                                     # root config for everything else
+gomarklint docs/ --config docs/.gomarklint.json  # docs-specific config
+```
+
+In CI, add both commands as separate steps.
+
+---
+
 ## Running the linter
 
 ### `unknown shorthand flag: 'v'`
