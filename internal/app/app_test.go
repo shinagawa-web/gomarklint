@@ -76,6 +76,19 @@ func TestRun_InvalidConfigFile_ReturnsError(t *testing.T) {
 	}
 }
 
+func TestRun_InvalidRuleOption_ReturnsError(t *testing.T) {
+	cfgFile := writeTempFile(t, "bad-option.json", `{"default":false,"rules":{"consistent-code-fence":{"style":"hoge"}}}`)
+
+	var buf bytes.Buffer
+	err := Run(&buf, Options{
+		ConfigPath: cfgFile,
+		Args:       []string{"somefile.md"},
+	})
+	if err == nil || !strings.Contains(err.Error(), `invalid value "hoge" for consistent-code-fence.style`) {
+		t.Errorf("expected invalid rule option error, got: %v", err)
+	}
+}
+
 func TestRun_InvalidOutputFormat_ReturnsError(t *testing.T) {
 	cfgFile := writeTempFile(t, "bad-output.json", `{"default":true,"rules":{},"output":"xlsx"}`)
 

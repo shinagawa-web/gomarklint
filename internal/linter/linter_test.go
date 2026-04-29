@@ -1024,6 +1024,20 @@ func TestNew_InvalidStyleOption_NonStringValue(t *testing.T) {
 	}
 }
 
+func TestNew_EmptyStringStyleOption_TreatedAsDefault(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": ""},
+	}
+
+	_, err := New(cfg)
+	if err != nil {
+		t.Fatalf("expected no error for empty style string, got: %v", err)
+	}
+}
+
 func TestNew_InvalidStyleOption_DisabledRuleStillValidated(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
