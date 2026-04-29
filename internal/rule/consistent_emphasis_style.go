@@ -57,8 +57,10 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 	return errs
 }
 
-// checkEmphasisLine scans s for emphasis openers and appends any style
-// violations to errs. It is allocation-free: no intermediate slice is created.
+// checkEmphasisLine scans s for emphasis spans and appends any style violations
+// to errs. Only valid spans (opener + matching closer) are counted, so closing
+// delimiters followed by punctuation are never double-counted. The function is
+// allocation-free: no intermediate slice is created.
 func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedCh *byte, errs *[]LintError) {
 	i := 0
 	for i < len(s) {
@@ -99,11 +101,41 @@ func checkEmphasisLine(s string, filename string, lineNum int, style string, exp
 			continue
 		}
 
+		// Require a matching closer so that closing delimiters (e.g. the `_`
+		// in `_italic_.`) are never counted as openers.
+		closerPos := findEmphCloser(s, afterRun, ch, runLen)
+		if closerPos == -1 {
+			i += runLen
+			continue
+		}
+
 		if err := checkEmphasisStyle(filename, lineNum, ch, style, expectedCh); err != nil {
 			*errs = append(*errs, *err)
 		}
-		i += runLen
+		i = closerPos + runLen // advance past the entire span
 	}
+}
+
+// findEmphCloser returns the start position of the first right-flanking run of
+// ch with exactly runLen characters at or after start. Returns -1 if not found.
+func findEmphCloser(s string, start int, ch byte, runLen int) int {
+	j := start
+	for j < len(s) {
+		if s[j] != ch {
+			j++
+			continue
+		}
+		closeLen := 1
+		for j+closeLen < len(s) && s[j+closeLen] == ch {
+			closeLen++
+		}
+		// Right-flanking: same length as opener and preceded by non-whitespace.
+		if closeLen == runLen && j > 0 && s[j-1] != ' ' && s[j-1] != '\t' {
+			return j
+		}
+		j += closeLen
+	}
+	return -1
 }
 
 // isEmphLeftFlanking reports whether afterRun is a valid left-flanking position

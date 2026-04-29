@@ -204,6 +204,30 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			wantErrs: nil,
 		},
 
+		// closing delimiter followed by punctuation must not be double-counted
+		{
+			name:    "closing underscore before period not counted as second opener",
+			content: "This is _italic_. More text.\n",
+			style:   "asterisk",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+			},
+		},
+		{
+			name:    "closing asterisk before comma not counted as second opener",
+			content: "Use *bold*, not plain.\n",
+			style:   "underscore",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis"},
+			},
+		},
+		{
+			name:     "unclosed emphasis not counted",
+			content:  "This has *no closer.\n",
+			style:    "underscore",
+			wantErrs: nil,
+		},
+
 		// offset
 		{
 			name:    "offset shifts line numbers",
