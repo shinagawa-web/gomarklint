@@ -27,13 +27,13 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 
 ### Priority 2
 
-- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
 - [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
 - [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
 
 ### Priority 3
 
+- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `link-fragments`: Internal anchor links must resolve to an existing heading (MD051)
 - [ ] `no-undefined-references`: Reference-style links/images must have a matching definition (MD052/MD053)
 - [ ] `table-formatting`: Table structure and cell-padding consistency (MD055/MD056/MD058)
