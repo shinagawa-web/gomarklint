@@ -301,6 +301,21 @@ Start with `default: false` and enable only the rules you want to enforce first.
 
 Yes. Use `<!-- gomarklint-disable -->` and `<!-- gomarklint-enable -->` to suppress violations for a block, or `<!-- gomarklint-disable rule-name -->` to disable a specific rule. See the [disable comments]({{< relref "disable-comments.md" >}}) page.
 
-**Does gomarklint support `.editorconfig` or shared configs?**
+**Does gomarklint support per-directory config files?**
 
-Not yet. Config is read from `.gomarklint.json` (or a path passed via `--config`). Shared/extended configs are not currently supported.
+Not automatically. markdownlint-cli2 traverses directories and applies the nearest `.markdownlint.json` it finds — gomarklint does not do this yet. The workaround is to exclude the subdirectory from the root config and run gomarklint a second time with an explicit `--config`:
+
+```json
+{
+  "ignore": ["docs/"]
+}
+```
+
+```sh
+gomarklint .                                   # root config
+gomarklint docs/ --config docs/.gomarklint.json  # docs-specific config
+```
+
+**Does gomarklint support shared configs across repositories?**
+
+Not yet. There is no `extends` mechanism to inherit from an npm package or a remote config file. Each repository maintains its own `.gomarklint.json`.
