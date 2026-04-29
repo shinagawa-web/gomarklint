@@ -175,6 +175,14 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			style:    "consistent",
 			wantErrs: nil,
 		},
+
+		// backtick/tilde non-fence line containing "<"
+		{
+			name:     "backtick non-fence line with < does not enter HTML comment mode",
+			content:  "`<br>` is inline code\n\n```go\nfmt.Println()\n```\n\nDone.\n",
+			style:    "consistent",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
