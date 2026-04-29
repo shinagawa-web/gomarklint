@@ -19,20 +19,22 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 	var expectedCh byte // 0 until first emphasis seen (consistent mode)
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
+			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
 			}
 			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
 		}
 
 		if !strings.ContainsAny(line, "*_") {
