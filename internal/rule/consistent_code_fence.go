@@ -51,34 +51,8 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 			ch := marker[0]
 			inBlock = true
 			fenceMarker = marker
-
-			switch style {
-			case "consistent":
-				if expectedCh == 0 {
-					expectedCh = ch
-				} else if ch != expectedCh {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "consistent-code-fence: expected " + fenceCharName(expectedCh) + " fence, got " + fenceCharName(ch) + " fence",
-					})
-				}
-			case "backtick":
-				if ch != '`' {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "consistent-code-fence: expected backtick fence, got tilde fence",
-					})
-				}
-			case "tilde":
-				if ch != '~' {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "consistent-code-fence: expected tilde fence, got backtick fence",
-					})
-				}
+			if err := checkFenceStyle(filename, offset+i+1, ch, style, &expectedCh); err != nil {
+				errs = append(errs, *err)
 			}
 			continue
 		}
@@ -90,6 +64,43 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 	}
 
 	return errs
+}
+
+// checkFenceStyle validates ch against the configured style and updates
+// expectedCh in consistent mode. Returns a LintError if the fence character
+// does not match, nil otherwise.
+func checkFenceStyle(filename string, line int, ch byte, style string, expectedCh *byte) *LintError {
+	switch style {
+	case "consistent":
+		if *expectedCh == 0 {
+			*expectedCh = ch
+			return nil
+		}
+		if ch != *expectedCh {
+			return &LintError{
+				File:    filename,
+				Line:    line,
+				Message: "consistent-code-fence: expected " + fenceCharName(*expectedCh) + " fence, got " + fenceCharName(ch) + " fence",
+			}
+		}
+	case "backtick":
+		if ch != '`' {
+			return &LintError{
+				File:    filename,
+				Line:    line,
+				Message: "consistent-code-fence: expected backtick fence, got tilde fence",
+			}
+		}
+	case "tilde":
+		if ch != '~' {
+			return &LintError{
+				File:    filename,
+				Line:    line,
+				Message: "consistent-code-fence: expected tilde fence, got backtick fence",
+			}
+		}
+	}
+	return nil
 }
 
 func fenceCharName(ch byte) string {
