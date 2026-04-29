@@ -32,6 +32,7 @@ const DefaultConfigJSON = `{
     "no-trailing-punctuation": { "punctuation": ".,;:!" },
     "consistent-code-fence": { "style": "consistent" },
     "consistent-emphasis-style": { "style": "consistent" },
+    "consistent-list-marker": { "style": "consistent" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] },
     "link-fragments": { "enabled": false, "slug-algorithm": "github" }
@@ -241,6 +242,11 @@ func Default() Config {
 				Options:  map[string]interface{}{"style": "consistent"},
 			},
 			"consistent-emphasis-style": {
+				Enabled:  true,
+				Severity: SeverityError,
+				Options:  map[string]interface{}{"style": "consistent"},
+			},
+			"consistent-list-marker": {
 				Enabled:  true,
 				Severity: SeverityError,
 				Options:  map[string]interface{}{"style": "consistent"},

@@ -188,6 +188,17 @@ func (l *Linter) consistentEmphasisStyle() string {
 	}
 }
 
+// consistentListMarkerStyle returns the configured style for the consistent-list-marker rule.
+func (l *Linter) consistentListMarkerStyle() string {
+	style, _ := l.config.RuleOptions("consistent-list-marker")["style"].(string)
+	switch style {
+	case "consistent", "dash", "asterisk", "plus":
+		return style
+	default:
+		return "consistent"
+	}
+}
+
 // maxLineLength returns the configured lineLength for the max-line-length rule.
 func (l *Linter) maxLineLength() int {
 	lineLength := 80
@@ -263,6 +274,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 	}
 	if l.config.IsEnabled("consistent-emphasis-style") {
 		errs = append(errs, l.withSeverity(rule.CheckConsistentEmphasisStyle(path, lines, offset, l.consistentEmphasisStyle()), "consistent-emphasis-style")...)
+	}
+	if l.config.IsEnabled("consistent-list-marker") {
+		errs = append(errs, l.withSeverity(rule.CheckConsistentListMarker(path, lines, offset, l.consistentListMarkerStyle()), "consistent-list-marker")...)
 	}
 	if l.config.IsEnabled("max-line-length") {
 		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)

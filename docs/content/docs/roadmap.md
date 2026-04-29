@@ -30,7 +30,7 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
 - [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
-- [ ] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
+- [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
 
 ### Priority 3
 
