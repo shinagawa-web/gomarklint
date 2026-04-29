@@ -13,50 +13,56 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 	prevBlank := true
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		isBlank := trimmed == ""
+		first := firstNonSpaceByte(line)
+		isBlank := first == 0
 
 		// HTML comment tracking only applies outside fenced code blocks;
 		// `<!--`-like content inside a fenced block is just code and must not
 		// interfere with detecting the closing fence.
 		if !inBlock {
-			if skip, stillInComment := stepHTMLComment(trimmed, inHTMLComment); skip {
-				inHTMLComment = stillInComment
-				prevBlank = false
-				continue
+			if inHTMLComment || strings.IndexByte(line, '<') >= 0 {
+				if skip, stillInComment := stepHTMLComment(strings.TrimSpace(line), inHTMLComment); skip {
+					inHTMLComment = stillInComment
+					prevBlank = false
+					continue
+				}
 			}
 		}
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-				// closing fence: check the next line
-				if i+1 < len(lines) && strings.TrimSpace(lines[i+1]) != "" {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "blanks-around-fences: fenced code block must be followed by a blank line",
-					})
+			if first == fenceMarker[0] {
+				if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
+					inBlock = false
+					fenceMarker = ""
+					// closing fence: check the next line
+					if i+1 < len(lines) && firstNonSpaceByte(lines[i+1]) != 0 {
+						errs = append(errs, LintError{
+							File:    filename,
+							Line:    offset + i + 1,
+							Message: "blanks-around-fences: fenced code block must be followed by a blank line",
+						})
+					}
 				}
 			}
 			prevBlank = false
 			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			// opening fence: check the previous line
-			if i > 0 && !prevBlank {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    offset + i + 1,
-					Message: "blanks-around-fences: fenced code block must be preceded by a blank line",
-				})
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				// opening fence: check the previous line
+				if i > 0 && !prevBlank {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    offset + i + 1,
+						Message: "blanks-around-fences: fenced code block must be preceded by a blank line",
+					})
+				}
+				prevBlank = false
+				continue
 			}
-			prevBlank = false
-			continue
 		}
 
 		prevBlank = isBlank
