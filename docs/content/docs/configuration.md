@@ -100,8 +100,22 @@ In the object form, `enabled` can be omitted — it defaults to `true`. These ar
 | `blanks-around-fences` | `error` | — |
 | `no-hard-tabs` | `error` | — |
 | `no-trailing-punctuation` | `error` | `punctuation` (string, default `".,;:!"`) |
+| `consistent-code-fence` | `error` | `style` (`consistent` \| `backtick` \| `tilde`, default `consistent`) |
+| `consistent-emphasis-style` | `error` | `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`) |
+| `consistent-list-marker` | `error` | `style` (`consistent` \| `dash` \| `asterisk` \| `plus`, default `consistent`) |
 | `max-line-length` | disabled | `lineLength` (int, default `80`) |
 | `external-link` | disabled | `timeoutSeconds` (int, default `5`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
+| `link-fragments` | disabled | `slug-algorithm` (string, default `github`), `slug-params` (object, for `custom` algorithm) |
+
+## Option validation
+
+Rule options are validated at startup. An invalid option value — such as an unrecognised `style` — causes gomarklint to exit with a descriptive error before any linting runs:
+
+```text
+gomarklint: invalid value "backticks" for consistent-code-fence.style (valid values: consistent, backtick, tilde)
+```
+
+This applies even when the rule is disabled, so misconfigured options are caught early.
 
 ## Notes
 

@@ -41,6 +41,24 @@ Rule severity must be one of: `true`, `false`, `"error"`, `"warning"`, or `"off"
 
 ---
 
+### `invalid value "x" for rule.style`
+
+A `style` option was set to an unrecognised value. gomarklint validates rule options at startup and exits immediately — it does not silently fall back to a default.
+
+Valid values per rule:
+
+| Rule | Valid `style` values |
+|---|---|
+| `consistent-code-fence` | `consistent`, `backtick`, `tilde` |
+| `consistent-emphasis-style` | `consistent`, `asterisk`, `underscore` |
+| `consistent-list-marker` | `consistent`, `dash`, `asterisk`, `plus` |
+
+A common mistake is using a plural form (`"backticks"`, `"tildes"`) or a synonym (`"bullet"`). Check the exact spelling shown above.
+
+→ [Rules](../rules/)
+
+---
+
 ### `failed to access config file`
 
 The file at the path passed to `--config` exists but cannot be accessed (for example, a permission error on the parent directory). If the file does not exist, `LoadOrDefault` falls back to the default configuration without an error. Check the file permissions and verify the file is committed if running in CI.
