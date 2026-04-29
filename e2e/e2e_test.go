@@ -461,6 +461,23 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "expected asterisk emphasis, got underscore emphasis")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("ConsistentListMarkerValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/consistent_list_marker_valid.md", "--config", "config-consistent-list-marker.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "consistent-list-marker")
+	})
+
+	t.Run("ConsistentListMarkerViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/consistent_list_marker_violation.md", "--config", "config-consistent-list-marker.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/consistent_list_marker_violation.md:")
+		assertOutputContains(t, output, "fixtures/consistent_list_marker_violation.md:4:")
+		assertOutputContains(t, output, "expected dash marker, got asterisk marker")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -596,7 +613,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
 		assertOutputContains(t, output, "Errors in fixtures/consistent_emphasis_style_violation.md:")
 		assertOutputContains(t, output, "expected asterisk emphasis, got underscore emphasis")
-		assertOutputContains(t, output, "Checked 53 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/consistent_list_marker_violation.md:")
+		assertOutputContains(t, output, "expected dash marker, got asterisk marker")
+		assertOutputContains(t, output, "Checked 55 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -612,6 +631,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/no_hard_tabs_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_fences_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/consistent_emphasis_style_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/consistent_list_marker_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {

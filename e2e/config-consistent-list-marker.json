@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "consistent-list-marker": { "style": "consistent" }
+  }
+}
