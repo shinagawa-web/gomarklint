@@ -5,19 +5,12 @@ import (
 )
 
 // CheckConsistentCodeFence flags fenced code blocks that use a different fence
-// character than expected. style must be "consistent", "backtick", or "tilde";
-// any other value falls back to "consistent".
+// character than expected. style must be "consistent", "backtick", or "tilde".
 //
 // In "consistent" mode the first fence character found in the document sets the
 // expected style; every subsequent opener that differs is flagged.
 // In "backtick"/"tilde" mode every opener using the wrong character is flagged.
 func CheckConsistentCodeFence(filename string, lines []string, offset int, style string) []LintError {
-	switch style {
-	case "consistent", "backtick", "tilde":
-	default:
-		style = "consistent"
-	}
-
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""

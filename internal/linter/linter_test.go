@@ -11,6 +11,16 @@ import (
 	"github.com/shinagawa-web/gomarklint/v2/internal/config"
 )
 
+// mustNew calls New and fails the test if it returns an error.
+func mustNew(t *testing.T, cfg config.Config) *Linter {
+	t.Helper()
+	l, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	return l
+}
+
 // off returns a disabled RuleConfig.
 func off() *config.RuleConfig {
 	return &config.RuleConfig{Enabled: false, Severity: config.SeverityOff, Options: map[string]interface{}{}}
@@ -41,7 +51,7 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if len(linter.compiledPatterns) != 1 {
 		t.Errorf("expected 1 compiled pattern, got %d", len(linter.compiledPatterns))
 	}
@@ -58,7 +68,7 @@ func TestNew_InvalidPattern(t *testing.T) {
 		},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if len(linter.compiledPatterns) != 0 {
 		t.Errorf("expected 0 compiled patterns (invalid pattern should be skipped), got %d", len(linter.compiledPatterns))
 	}
@@ -67,7 +77,7 @@ func TestNew_InvalidPattern(t *testing.T) {
 func TestRun_NoErrors(t *testing.T) {
 	cfg := allOff()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -96,7 +106,7 @@ func TestRun_WithErrors(t *testing.T) {
 		Options:  map[string]interface{}{"minLevel": float64(2)},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -117,7 +127,7 @@ func TestRun_WithErrors(t *testing.T) {
 func TestRun_MultipleFiles(t *testing.T) {
 	cfg := allOff()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	file1 := filepath.Join(tmpDir, "file1.md")
@@ -146,7 +156,7 @@ func TestRun_UnclosedCodeBlock(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["unclosed-code-block"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "unclosed.md")
@@ -165,7 +175,7 @@ func TestRun_FencedCodeLanguage(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["fenced-code-language"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "no-lang.md")
@@ -184,7 +194,7 @@ func TestRun_EmptyAltText(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["empty-alt-text"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "empty-alt.md")
@@ -201,7 +211,7 @@ func TestRun_EmptyAltText(t *testing.T) {
 
 func TestRun_FileReadError(t *testing.T) {
 	cfg := config.Default()
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	result := linter.Run([]string{"/non/existent/file.md"})
 
@@ -220,7 +230,7 @@ func TestRun_DuplicateHeadings(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["duplicate-heading"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "duplicate.md")
@@ -239,7 +249,7 @@ func TestRun_NoMultipleBlankLines(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-multiple-blank-lines"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "blank.md")
@@ -258,7 +268,7 @@ func TestRun_NoSetextHeadings(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-setext-headings"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "setext.md")
@@ -277,7 +287,7 @@ func TestRun_FinalBlankLine(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["final-blank-line"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "nofinal.md")
@@ -297,7 +307,7 @@ func TestRun_FinalBlankLine_FrontmatterOnly(t *testing.T) {
 	cfg.Rules["final-blank-line"] = on()
 	cfg.Rules["no-multiple-blank-lines"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "frontmatter_only.md")
@@ -323,7 +333,7 @@ func TestRun_LinkCheck(t *testing.T) {
 		},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "links.md")
@@ -350,7 +360,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 		},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "links.md")
@@ -369,7 +379,7 @@ func TestRun_LinkCheckWithSkipPattern(t *testing.T) {
 func TestRun_DuplicatePaths(t *testing.T) {
 	cfg := allOff()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -390,7 +400,7 @@ func TestRun_DuplicatePaths(t *testing.T) {
 func TestLintContent_NoErrors(t *testing.T) {
 	cfg := allOff()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	errors, lineCount, linksChecked := linter.LintContent("test.md", "# Hello\n\nThis is a test.\n")
 
@@ -413,7 +423,7 @@ func TestLintContent_WithErrors(t *testing.T) {
 		Options:  map[string]interface{}{"minLevel": float64(2)},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	errors, lineCount, _ := linter.LintContent("test.md", "# Title\n\nContent\n")
 
@@ -429,7 +439,7 @@ func TestRun_SingleH1(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["single-h1"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "multi-h1.md")
@@ -448,7 +458,7 @@ func TestRun_BlanksAroundHeadings(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["blanks-around-headings"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "no-blanks.md")
@@ -467,7 +477,7 @@ func TestRun_NoBareURLs(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-bare-urls"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "bare-url.md")
@@ -486,7 +496,7 @@ func TestRun_NoEmptyLinks(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-empty-links"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "empty-link.md")
@@ -505,7 +515,7 @@ func TestRun_NoEmphasisAsHeading(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["no-emphasis-as-heading"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "emphasis-heading.md")
@@ -524,7 +534,7 @@ func TestRun_BlanksAroundLists(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["blanks-around-lists"] = on()
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "lists.md")
@@ -547,7 +557,7 @@ func TestRun_WarningSeverity(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "setext.md")
@@ -581,7 +591,7 @@ func TestRun_DisableComment_BlockDisableAll(t *testing.T) {
 
 	content := "# Heading\n\n<!-- gomarklint-disable -->\nhttps://example.com\n<!-- gomarklint-enable -->\nhttps://example.com\n"
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", content)
 
 	if len(errors) != 1 {
@@ -599,7 +609,7 @@ func TestRun_DisableComment_BlockDisableNamedRule(t *testing.T) {
 
 	content := "<!-- gomarklint-disable no-bare-urls -->\nhttps://example.com\n[]()\n<!-- gomarklint-enable no-bare-urls -->\nhttps://example.com\n"
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", content)
 
 	// line 3 (empty link) should still be reported; line 2 (bare URL) should be suppressed
@@ -631,7 +641,7 @@ func TestRun_DisableComment_DisableLine(t *testing.T) {
 
 	content := "https://example.com <!-- gomarklint-disable-line no-bare-urls -->\nhttps://example.com\n"
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", content)
 
 	if len(errors) != 1 {
@@ -648,7 +658,7 @@ func TestRun_DisableComment_DisableNextLine(t *testing.T) {
 
 	content := "<!-- gomarklint-disable-next-line no-bare-urls -->\nhttps://example.com\nhttps://example.com\n"
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", content)
 
 	if len(errors) != 1 {
@@ -667,7 +677,7 @@ func TestRun_MaxLineLength_DefaultLimit(t *testing.T) {
 		Options:  map[string]interface{}{"lineLength": float64(80)},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "long.md")
@@ -691,7 +701,7 @@ func TestRun_MaxLineLength_CustomLimit(t *testing.T) {
 		Options:  map[string]interface{}{"lineLength": float64(120)},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "long.md")
@@ -720,7 +730,7 @@ func TestRun_MaxLineLength_NoOptionFallsBackToDefault(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if linter.maxLineLength() != 80 {
 		t.Errorf("expected default maxLineLength 80, got %d", linter.maxLineLength())
 	}
@@ -732,7 +742,7 @@ func TestRun_DisableComment_NoDisableKeyword_NoOverhead(t *testing.T) {
 
 	content := "<!-- some comment -->\nhttps://example.com\n"
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", content)
 
 	if len(errors) != 1 {
@@ -762,7 +772,7 @@ func TestRun_LinkCheckWithAllowedStatuses(t *testing.T) {
 		},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "links.md")
@@ -786,7 +796,7 @@ func TestRun_NoTrailingPunctuation_Violation(t *testing.T) {
 		Options:  map[string]interface{}{"punctuation": config.DefaultNoTrailingPunctuation},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", "## Heading.\n")
 
 	if len(errors) != 1 {
@@ -802,7 +812,7 @@ func TestRun_NoTrailingPunctuation_NoOptionFallsBackToDefault(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if linter.noTrailingPunctuation() != config.DefaultNoTrailingPunctuation {
 		t.Errorf("expected default punctuation %q, got %q", config.DefaultNoTrailingPunctuation, linter.noTrailingPunctuation())
 	}
@@ -816,7 +826,7 @@ func TestRun_LinkFragments_DetectsViolation(t *testing.T) {
 		Options:  map[string]interface{}{"slug-algorithm": "github"},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -840,7 +850,7 @@ func TestRun_LinkFragments_ValidLink(t *testing.T) {
 		Options:  map[string]interface{}{"slug-algorithm": "github"},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.md")
@@ -864,7 +874,7 @@ func TestRun_ConsistentCodeFence_Violation(t *testing.T) {
 		Options:  map[string]interface{}{"style": "consistent"},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", "```go\ncode\n```\n\n~~~python\ncode\n~~~\n")
 
 	if len(errors) != 1 {
@@ -880,7 +890,7 @@ func TestRun_ConsistentCodeFence_NoOptionFallsBackToConsistent(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if linter.consistentCodeFenceStyle() != "consistent" {
 		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentCodeFenceStyle())
 	}
@@ -894,7 +904,7 @@ func TestRun_ConsistentEmphasisStyle_Violation(t *testing.T) {
 		Options:  map[string]interface{}{"style": "asterisk"},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", "This is _italic_ text.\n")
 
 	if len(errors) != 1 {
@@ -910,7 +920,7 @@ func TestRun_ConsistentListMarker_Violation(t *testing.T) {
 		Options:  map[string]interface{}{"style": "dash"},
 	}
 
-	lint := New(cfg)
+	lint := mustNew(t, cfg)
 	errors, _, _ := lint.LintContent("test.md", "* item\n")
 
 	if len(errors) != 1 {
@@ -926,7 +936,7 @@ func TestRun_ConsistentEmphasisStyle_NoOptionFallsBackToConsistent(t *testing.T)
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if linter.consistentEmphasisStyle() != "consistent" {
 		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentEmphasisStyle())
 	}
@@ -940,8 +950,104 @@ func TestRun_ConsistentListMarker_NoOptionFallsBackToConsistent(t *testing.T) {
 		Options:  map[string]interface{}{},
 	}
 
-	linter := New(cfg)
+	linter := mustNew(t, cfg)
 	if linter.consistentListMarkerStyle() != "consistent" {
 		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentListMarkerStyle())
+	}
+}
+
+func TestNew_InvalidStyleOption_ConsistentCodeFence(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "hoge"},
+	}
+
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for invalid style, got nil")
+	}
+	want := `gomarklint: invalid value "hoge" for consistent-code-fence.style (valid values: consistent, backtick, tilde)`
+	if err.Error() != want {
+		t.Errorf("unexpected error message:\ngot:  %s\nwant: %s", err.Error(), want)
+	}
+}
+
+func TestNew_InvalidStyleOption_ConsistentEmphasisStyle(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-emphasis-style"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "bold"},
+	}
+
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for invalid style, got nil")
+	}
+	want := `gomarklint: invalid value "bold" for consistent-emphasis-style.style (valid values: consistent, asterisk, underscore)`
+	if err.Error() != want {
+		t.Errorf("unexpected error message:\ngot:  %s\nwant: %s", err.Error(), want)
+	}
+}
+
+func TestNew_InvalidStyleOption_ConsistentListMarker(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-list-marker"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "bullet"},
+	}
+
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for invalid style, got nil")
+	}
+	want := `gomarklint: invalid value "bullet" for consistent-list-marker.style (valid values: consistent, dash, asterisk, plus)`
+	if err.Error() != want {
+		t.Errorf("unexpected error message:\ngot:  %s\nwant: %s", err.Error(), want)
+	}
+}
+
+func TestNew_InvalidStyleOption_NonStringValue(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": 123},
+	}
+
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for non-string style value, got nil")
+	}
+}
+
+func TestNew_EmptyStringStyleOption_TreatedAsDefault(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": ""},
+	}
+
+	_, err := New(cfg)
+	if err != nil {
+		t.Fatalf("expected no error for empty style string, got: %v", err)
+	}
+}
+
+func TestNew_InvalidStyleOption_DisabledRuleStillValidated(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  false,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "hoge"},
+	}
+
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for invalid style even when rule is disabled, got nil")
 	}
 }

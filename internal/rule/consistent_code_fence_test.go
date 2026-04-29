@@ -168,16 +168,6 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			},
 		},
 
-		// invalid style falls back to consistent
-		{
-			name:    "unknown style falls back to consistent",
-			content: "```go\ncode\n```\n\n~~~python\ncode\n~~~\n",
-			style:   "unknown",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
-			},
-		},
-
 		// longer fence markers
 		{
 			name:     "longer backtick fence consistent no violation",

@@ -5,8 +5,7 @@ import (
 )
 
 // CheckConsistentEmphasisStyle flags emphasis spans that use a different marker
-// than expected. style must be "consistent", "asterisk", or "underscore";
-// any other value falls back to "consistent".
+// than expected. style must be "consistent", "asterisk", or "underscore".
 //
 // In "consistent" mode the first emphasis character found in the document sets
 // the expected style; every subsequent span using a different character is
@@ -14,12 +13,6 @@ import (
 // is flagged. Underscores inside words (e.g. snake_case) are not treated as
 // emphasis. Content inside fenced code blocks and inline code spans is ignored.
 func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, style string) []LintError {
-	switch style {
-	case "consistent", "asterisk", "underscore":
-	default:
-		style = "consistent"
-	}
-
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""

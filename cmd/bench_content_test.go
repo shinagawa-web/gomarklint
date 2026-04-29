@@ -12,7 +12,10 @@ import (
 func TestBenchmarkContentIsViolationFree(t *testing.T) {
 	content := generateComplexMarkdown(1000)
 	cfg := benchmarkConfig()
-	lint := linter.New(cfg)
+	lint, err := linter.New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	errs, _, _ := lint.LintContent("benchmark.md", content)
 	if len(errs) != 0 {

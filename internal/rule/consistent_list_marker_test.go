@@ -223,16 +223,6 @@ func TestCheckConsistentListMarker(t *testing.T) {
 				{File: "test.md", Line: 12, Message: "consistent-list-marker: expected dash marker, got asterisk marker"},
 			},
 		},
-
-		// invalid style falls back to consistent
-		{
-			name:    "unknown style falls back to consistent",
-			content: "- one\n* two\n",
-			style:   "unknown",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 2, Message: "consistent-list-marker: expected dash marker, got asterisk marker"},
-			},
-		},
 	}
 
 	for _, tt := range tests {

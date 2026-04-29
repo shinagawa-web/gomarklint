@@ -32,7 +32,18 @@ type Result struct {
 }
 
 // New creates a new Linter with the given configuration.
-func New(cfg config.Config) *Linter {
+// Returns an error if any rule option value is invalid.
+func New(cfg config.Config) (*Linter, error) {
+	if err := validateStyleOption(cfg, "consistent-code-fence", "style", []string{"consistent", "backtick", "tilde"}); err != nil {
+		return nil, err
+	}
+	if err := validateStyleOption(cfg, "consistent-emphasis-style", "style", []string{"consistent", "asterisk", "underscore"}); err != nil {
+		return nil, err
+	}
+	if err := validateStyleOption(cfg, "consistent-list-marker", "style", []string{"consistent", "dash", "asterisk", "plus"}); err != nil {
+		return nil, err
+	}
+
 	compiledPatterns := []*regexp.Regexp{}
 	if cfg.IsEnabled("external-link") {
 		opts := cfg.RuleOptions("external-link")
@@ -56,7 +67,30 @@ func New(cfg config.Config) *Linter {
 		config:           cfg,
 		compiledPatterns: compiledPatterns,
 		urlCache:         &sync.Map{},
+	}, nil
+}
+
+// validateStyleOption checks that the named option for a rule, if present and non-empty,
+// is one of the valid values. Returns a descriptive error if not.
+func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []string) error {
+	opts := cfg.RuleOptions(ruleName)
+	raw, exists := opts[optKey]
+	if !exists {
+		return nil
 	}
+	val, ok := raw.(string)
+	if !ok {
+		return fmt.Errorf("gomarklint: invalid value for %s.%s: expected string, got %T (%#v) (valid values: %s)", ruleName, optKey, raw, raw, strings.Join(valid, ", "))
+	}
+	if val == "" {
+		return nil
+	}
+	for _, v := range valid {
+		if val == v {
+			return nil
+		}
+	}
+	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
 }
 
 // Run performs linting on the given file paths concurrently.
@@ -169,34 +203,28 @@ func (l *Linter) noTrailingPunctuation() string {
 // consistentCodeFenceStyle returns the configured style for the consistent-code-fence rule.
 func (l *Linter) consistentCodeFenceStyle() string {
 	style, _ := l.config.RuleOptions("consistent-code-fence")["style"].(string)
-	switch style {
-	case "consistent", "backtick", "tilde":
-		return style
-	default:
+	if style == "" {
 		return "consistent"
 	}
+	return style
 }
 
 // consistentEmphasisStyle returns the configured style for the consistent-emphasis-style rule.
 func (l *Linter) consistentEmphasisStyle() string {
 	style, _ := l.config.RuleOptions("consistent-emphasis-style")["style"].(string)
-	switch style {
-	case "consistent", "asterisk", "underscore":
-		return style
-	default:
+	if style == "" {
 		return "consistent"
 	}
+	return style
 }
 
 // consistentListMarkerStyle returns the configured style for the consistent-list-marker rule.
 func (l *Linter) consistentListMarkerStyle() string {
 	style, _ := l.config.RuleOptions("consistent-list-marker")["style"].(string)
-	switch style {
-	case "consistent", "dash", "asterisk", "plus":
-		return style
-	default:
+	if style == "" {
 		return "consistent"
 	}
+	return style
 }
 
 // maxLineLength returns the configured lineLength for the max-line-length rule.

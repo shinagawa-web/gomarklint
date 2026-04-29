@@ -254,16 +254,6 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 				{File: "test.md", Line: 13, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
 			},
 		},
-
-		// invalid style falls back to consistent
-		{
-			name:    "unknown style falls back to consistent",
-			content: "This is *italic* text.\n\nThis is _also italic_ text.\n",
-			style:   "unknown",
-			wantErrs: []LintError{
-				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
-			},
-		},
 	}
 
 	for _, tt := range tests {
