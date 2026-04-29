@@ -6,11 +6,11 @@ A code block closed by a longer fence:
 package main
 `````
 
-A tilde block closed by a longer fence:
+A code block closed by an even longer fence:
 
-~~~python
+```python
 print("hello")
-~~~~~
+``````
 
 ## After Fenced Blocks
 

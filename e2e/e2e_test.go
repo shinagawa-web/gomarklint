@@ -427,6 +427,23 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		assertOutputContains(t, output, "#setup")
 		assertOutputContains(t, output, "1 issues found")
 	})
+
+	t.Run("ConsistentCodeFenceValid", func(t *testing.T) {
+		output := runTest(t, "fixtures/consistent_code_fence_valid.md", "--config", "config-consistent-code-fence.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "consistent-code-fence")
+	})
+
+	t.Run("ConsistentCodeFenceViolation", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/consistent_code_fence_violation.md", "--config", "config-consistent-code-fence.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for lint violations")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/consistent_code_fence_violation.md:")
+		assertOutputContains(t, output, "fixtures/consistent_code_fence_violation.md:7:")
+		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
+		assertOutputContains(t, output, "1 issues found")
+	})
 }
 
 func TestE2E_Configuration(t *testing.T) {
@@ -558,7 +575,9 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "hard tab character found")
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
-		assertOutputContains(t, output, "Checked 49 file(s)")
+		assertOutputContains(t, output, "Errors in fixtures/consistent_code_fence_violation.md:")
+		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
+		assertOutputContains(t, output, "Checked 51 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -568,6 +587,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_headings_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_bare_urls_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_lists_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/consistent_code_fence_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_empty_links_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_emphasis_as_heading_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/no_hard_tabs_valid.md:")

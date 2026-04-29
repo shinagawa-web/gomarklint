@@ -855,3 +855,33 @@ func TestRun_LinkFragments_ValidLink(t *testing.T) {
 		t.Errorf("expected no errors for valid fragment link, got %d", result.TotalErrors)
 	}
 }
+
+func TestRun_ConsistentCodeFence_Violation(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"style": "consistent"},
+	}
+
+	lint := New(cfg)
+	errors, _, _ := lint.LintContent("test.md", "```go\ncode\n```\n\n~~~python\ncode\n~~~\n")
+
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
+
+func TestRun_ConsistentCodeFence_NoOptionFallsBackToConsistent(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["consistent-code-fence"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{},
+	}
+
+	linter := New(cfg)
+	if linter.consistentCodeFenceStyle() != "consistent" {
+		t.Errorf("expected fallback style %q, got %q", "consistent", linter.consistentCodeFenceStyle())
+	}
+}
