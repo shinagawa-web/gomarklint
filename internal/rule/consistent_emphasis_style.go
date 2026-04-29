@@ -51,20 +51,15 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 			scanned = stripInlineCode(scanned)
 		}
 
-		for _, ch := range scanEmphasisOpeners(scanned) {
-			if err := checkEmphasisStyle(filename, offset+i+1, ch, style, &expectedCh); err != nil {
-				errs = append(errs, *err)
-			}
-		}
+		checkEmphasisLine(scanned, filename, offset+i+1, style, &expectedCh, &errs)
 	}
 
 	return errs
 }
 
-// scanEmphasisOpeners returns the emphasis opener characters ('*' or '_') found
-// in s. Escaped characters and mid-word underscores are skipped.
-func scanEmphasisOpeners(s string) []byte {
-	var result []byte
+// checkEmphasisLine scans s for emphasis openers and appends any style
+// violations to errs. It is allocation-free: no intermediate slice is created.
+func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedCh *byte, errs *[]LintError) {
 	i := 0
 	for i < len(s) {
 		ch := s[i]
@@ -93,25 +88,34 @@ func scanEmphasisOpeners(s string) []byte {
 		afterRun := i + runLen
 
 		// Left-flanking: must be followed by a non-whitespace character.
-		if afterRun >= len(s) || s[afterRun] == ' ' || s[afterRun] == '\t' {
+		if !isEmphLeftFlanking(s, afterRun) {
 			i += runLen
 			continue
 		}
 
 		// Underscores flanked by word characters on both sides are mid-word.
-		if ch == '_' {
-			prevIsWord := i > 0 && isEmphWordChar(s[i-1])
-			nextIsWord := isEmphWordChar(s[afterRun])
-			if prevIsWord && nextIsWord {
-				i += runLen
-				continue
-			}
+		if ch == '_' && isEmphMidWord(s, i, afterRun) {
+			i += runLen
+			continue
 		}
 
-		result = append(result, ch)
+		if err := checkEmphasisStyle(filename, lineNum, ch, style, expectedCh); err != nil {
+			*errs = append(*errs, *err)
+		}
 		i += runLen
 	}
-	return result
+}
+
+// isEmphLeftFlanking reports whether afterRun is a valid left-flanking position
+// (followed by a non-whitespace character).
+func isEmphLeftFlanking(s string, afterRun int) bool {
+	return afterRun < len(s) && s[afterRun] != ' ' && s[afterRun] != '\t'
+}
+
+// isEmphMidWord reports whether the delimiter run starting at i is a mid-word
+// underscore (flanked by word characters on both sides).
+func isEmphMidWord(s string, i, afterRun int) bool {
+	return i > 0 && isEmphWordChar(s[i-1]) && isEmphWordChar(s[afterRun])
 }
 
 // isEmphWordChar reports whether b is a word character for emphasis purposes.
