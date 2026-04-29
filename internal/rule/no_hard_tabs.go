@@ -13,28 +13,32 @@ func CheckNoHardTabs(filename string, lines []string, offset int) []LintError {
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
+			if first == '`' || first == '~' {
+				if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
+					inBlock = false
+					fenceMarker = ""
+				}
 			}
 			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
+		if first == '`' || first == '~' {
+			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
+				inBlock = true
+				fenceMarker = marker
+				continue
+			}
 		}
 
-		if !strings.ContainsRune(line, '\t') {
+		if strings.IndexByte(line, '\t') < 0 {
 			continue
 		}
 
 		scanned := line
-		if strings.ContainsRune(line, '`') {
+		if strings.IndexByte(line, '`') >= 0 {
 			scanned = stripInlineCode(line)
 		}
 

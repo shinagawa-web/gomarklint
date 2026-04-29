@@ -79,6 +79,20 @@ func writeSubsection(sb *strings.Builder, i int) {
 	sb.WriteString("More detailed information goes here.\n\n")
 }
 
+// writeHardTabContent exercises no-hard-tabs: a fenced code block with
+// tab-indented lines (excluded from the rule) forces the code-block tracking
+// path, and a line with a tab inside inline code forces the stripInlineCode
+// path — both without producing any violation.
+func writeHardTabContent(sb *strings.Builder) {
+	sb.WriteString("Example Makefile recipe:\n\n")
+	sb.WriteString("```makefile\n")
+	sb.WriteString("build:\n")
+	sb.WriteString("\tgo build ./...\n")
+	sb.WriteString("\tgo test ./...\n")
+	sb.WriteString("```\n\n")
+	sb.WriteString("Use the `\t` character for Makefile recipes.\n\n")
+}
+
 // generateComplexMarkdown generates a realistic markdown file with mixed content.
 func generateComplexMarkdown(sections int) string {
 	var sb strings.Builder
@@ -100,6 +114,10 @@ func generateComplexMarkdown(sections int) string {
 
 		if i%4 == 0 {
 			writeImage(&sb, i)
+		}
+
+		if i%8 == 0 {
+			writeHardTabContent(&sb)
 		}
 
 		writeSubsection(&sb, i)
