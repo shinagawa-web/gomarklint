@@ -20,15 +20,15 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] `blanks-around-lists`: Lists must be surrounded by blank lines
 - [x] `max-line-length`: Enforce a maximum line length (MD013)
 - [x] `no-hard-tabs`: No hard tab characters in body text (MD010)
+- [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
+- [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
 
 ## Rules — Planned
 
 ### Priority 2
 
-- [ ] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
 - [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
-- [ ] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
 - [ ] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
 - [ ] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
 

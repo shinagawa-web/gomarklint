@@ -166,6 +166,17 @@ func (l *Linter) noTrailingPunctuation() string {
 	return config.DefaultNoTrailingPunctuation
 }
 
+// consistentCodeFenceStyle returns the configured style for the consistent-code-fence rule.
+func (l *Linter) consistentCodeFenceStyle() string {
+	style, _ := l.config.RuleOptions("consistent-code-fence")["style"].(string)
+	switch style {
+	case "consistent", "backtick", "tilde":
+		return style
+	default:
+		return "consistent"
+	}
+}
+
 // maxLineLength returns the configured lineLength for the max-line-length rule.
 func (l *Linter) maxLineLength() int {
 	lineLength := 80
@@ -235,6 +246,9 @@ func (l *Linter) collectLineErrors(path string, lines []string, offset int) []ru
 
 	if l.config.IsEnabled("heading-level") {
 		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
+	}
+	if l.config.IsEnabled("consistent-code-fence") {
+		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, lines, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
 	}
 	if l.config.IsEnabled("max-line-length") {
 		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)

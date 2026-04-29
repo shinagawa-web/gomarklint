@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "consistent-code-fence": { "style": "consistent" }
+  }
+}

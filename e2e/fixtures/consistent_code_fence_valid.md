@@ -1,4 +1,4 @@
-## Valid Fenced Code Blocks
+## Valid Consistent Code Fence
 
 Some text before the fence.
 
@@ -8,10 +8,10 @@ func hello() {
 }
 ```
 
-Some text after the fence.
+Some text in between.
 
 ```python
-print("hello")
+print("world")
 ```
 
 Final text.
