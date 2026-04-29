@@ -1,7 +1,6 @@
 package rule
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -28,13 +27,7 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		if !inBlock {
-			if skip, stillInComment := stepHTMLComment(trimmed, inHTMLComment); skip {
-				inHTMLComment = stillInComment
-				continue
-			}
-		}
-
+		// Inside a code block: only look for the closing fence.
 		if inBlock {
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
@@ -43,51 +36,65 @@ func CheckConsistentCodeFence(filename string, lines []string, offset int, style
 			continue
 		}
 
-		marker := openingFenceMarker(trimmed)
-		if marker == "" {
+		// Inside an HTML comment block: skip until "-->" is found.
+		if inHTMLComment {
+			if strings.Contains(trimmed, "-->") {
+				inHTMLComment = false
+			}
 			continue
 		}
 
-		ch := marker[0]
-		inBlock = true
-		fenceMarker = marker
+		// Check for an opening fence before inspecting the line for "<!--" so
+		// that fence openers whose info string contains "<!--" (e.g.
+		// "```go <!-- note -->") are treated as fences, not comment starts.
+		if marker := openingFenceMarker(trimmed); marker != "" {
+			ch := marker[0]
+			inBlock = true
+			fenceMarker = marker
 
-		switch style {
-		case "consistent":
-			if expectedCh == 0 {
-				expectedCh = ch
-			} else if ch != expectedCh {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    offset + i + 1,
-					Message: fmt.Sprintf("consistent-code-fence: expected '%s' fence, got '%s' fence", fenceCharStr(expectedCh), fenceCharStr(ch)),
-				})
+			switch style {
+			case "consistent":
+				if expectedCh == 0 {
+					expectedCh = ch
+				} else if ch != expectedCh {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    offset + i + 1,
+						Message: "consistent-code-fence: expected " + fenceCharName(expectedCh) + " fence, got " + fenceCharName(ch) + " fence",
+					})
+				}
+			case "backtick":
+				if ch != '`' {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    offset + i + 1,
+						Message: "consistent-code-fence: expected backtick fence, got tilde fence",
+					})
+				}
+			case "tilde":
+				if ch != '~' {
+					errs = append(errs, LintError{
+						File:    filename,
+						Line:    offset + i + 1,
+						Message: "consistent-code-fence: expected tilde fence, got backtick fence",
+					})
+				}
 			}
-		case "backtick":
-			if ch != '`' {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    offset + i + 1,
-					Message: "consistent-code-fence: expected '```' fence, got '~~~' fence",
-				})
-			}
-		case "tilde":
-			if ch != '~' {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    offset + i + 1,
-					Message: "consistent-code-fence: expected '~~~' fence, got '```' fence",
-				})
-			}
+			continue
+		}
+
+		// Track HTML comment blocks so fences inside them are ignored.
+		if strings.Contains(trimmed, "<!--") && !strings.Contains(trimmed, "-->") {
+			inHTMLComment = true
 		}
 	}
 
 	return errs
 }
 
-func fenceCharStr(ch byte) string {
+func fenceCharName(ch byte) string {
 	if ch == '`' {
-		return "```"
+		return "backtick"
 	}
-	return "~~~"
+	return "tilde"
 }

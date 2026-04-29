@@ -44,13 +44,13 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			name:     "single tilde fence backtick-style violation",
 			content:  "~~~go\ncode\n~~~\n",
 			style:    "backtick",
-			wantErrs: []LintError{{File: "test.md", Line: 1, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"}},
+			wantErrs: []LintError{{File: "test.md", Line: 1, Message: "consistent-code-fence: expected backtick fence, got tilde fence"}},
 		},
 		{
 			name:     "single backtick fence tilde-style violation",
 			content:  "```go\ncode\n```\n",
 			style:    "tilde",
-			wantErrs: []LintError{{File: "test.md", Line: 1, Message: "consistent-code-fence: expected '~~~' fence, got '```' fence"}},
+			wantErrs: []LintError{{File: "test.md", Line: 1, Message: "consistent-code-fence: expected tilde fence, got backtick fence"}},
 		},
 
 		// all-backtick documents
@@ -71,8 +71,8 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "```go\ncode\n```\n\n```python\ncode\n```\n",
 			style:   "tilde",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "consistent-code-fence: expected '~~~' fence, got '```' fence"},
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '~~~' fence, got '```' fence"},
+				{File: "test.md", Line: 1, Message: "consistent-code-fence: expected tilde fence, got backtick fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected tilde fence, got backtick fence"},
 			},
 		},
 
@@ -94,8 +94,8 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "~~~go\ncode\n~~~\n\n~~~python\ncode\n~~~\n",
 			style:   "backtick",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
+				{File: "test.md", Line: 1, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
 			},
 		},
 
@@ -105,7 +105,7 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "```go\ncode\n```\n\n~~~python\ncode\n~~~\n",
 			style:   "consistent",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
 			},
 		},
 		{
@@ -113,7 +113,7 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "~~~go\ncode\n~~~\n\n```python\ncode\n```\n",
 			style:   "consistent",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '~~~' fence, got '```' fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected tilde fence, got backtick fence"},
 			},
 		},
 		{
@@ -121,8 +121,8 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "```go\ncode\n```\n\n~~~python\ncode\n~~~\n\n~~~bash\ncode\n~~~\n",
 			style:   "consistent",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
-				{File: "test.md", Line: 9, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
+				{File: "test.md", Line: 9, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
 			},
 		},
 
@@ -147,6 +147,15 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			style:    "consistent",
 			wantErrs: nil,
 		},
+		// fence opener whose info string contains "<!--" must not be skipped
+		{
+			name:    "fence opener with <!-- in info string not skipped",
+			content: "```go <!-- comment -->\ncode\n```\n\n~~~python\ncode\n~~~\n",
+			style:   "consistent",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
+			},
+		},
 
 		// offset
 		{
@@ -155,7 +164,7 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			offset:  10,
 			style:   "consistent",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 15, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
+				{File: "test.md", Line: 15, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
 			},
 		},
 
@@ -165,7 +174,7 @@ func TestCheckConsistentCodeFence(t *testing.T) {
 			content: "```go\ncode\n```\n\n~~~python\ncode\n~~~\n",
 			style:   "unknown",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected '```' fence, got '~~~' fence"},
+				{File: "test.md", Line: 5, Message: "consistent-code-fence: expected backtick fence, got tilde fence"},
 			},
 		},
 

@@ -441,7 +441,7 @@ func TestE2E_BasicFunctionality(t *testing.T) {
 		}
 		assertOutputContains(t, output, "Errors in fixtures/consistent_code_fence_violation.md:")
 		assertOutputContains(t, output, "fixtures/consistent_code_fence_violation.md:7:")
-		assertOutputContains(t, output, "expected '```' fence, got '~~~' fence")
+		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
 		assertOutputContains(t, output, "1 issues found")
 	})
 }
@@ -576,7 +576,7 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "Errors in fixtures/blanks_around_fences_violation.md:")
 		assertOutputContains(t, output, "fenced code block must be preceded by a blank line")
 		assertOutputContains(t, output, "Errors in fixtures/consistent_code_fence_violation.md:")
-		assertOutputContains(t, output, "expected '```' fence, got '~~~' fence")
+		assertOutputContains(t, output, "expected backtick fence, got tilde fence")
 		assertOutputContains(t, output, "Checked 51 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
