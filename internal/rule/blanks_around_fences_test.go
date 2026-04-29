@@ -116,6 +116,11 @@ func TestCheckBlanksAroundFences(t *testing.T) {
 			content:  "text\n\n```\n<!--\n-->\n```\n\ntext\n",
 			wantErrs: nil,
 		},
+		{
+			name:     "valid: line with < but no <!-- does not trigger HTML comment mode",
+			content:  "Use <br> for line breaks.\n\n```go\nfmt.Println()\n```\n\nDone.\n",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
