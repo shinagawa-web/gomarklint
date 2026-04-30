@@ -302,7 +302,9 @@ var umlautReplacer = strings.NewReplacer(
 
 // slugEleventy computes an approximation of the Eleventy (@sindresorhus/slugify) slug.
 // Expands German umlauts, NFKD-normalizes, then converts any non-ASCII-alphanumeric char
-// to a hyphen (collapsing consecutive ones). Non-ASCII chars without a mapping (CJK, etc.) are dropped.
+// to a hyphen (collapsing consecutive ones). Non-ASCII chars without a mapping (CJK, etc.)
+// also become hyphens, matching @sindresorhus/slugify which replaces unknown chars with the
+// separator; leading/trailing hyphens are trimmed, so purely non-ASCII input yields "".
 func slugEleventy(text string) string {
 	text = umlautReplacer.Replace(text)
 	text = nfkdStripCombining(text)
