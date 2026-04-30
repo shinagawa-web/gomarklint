@@ -95,7 +95,7 @@ func TestComputeSlug(t *testing.T) {
 		{"sphinx: collapses non-alphanumeric", "A  B", "sphinx", "a-b"},
 		{"sphinx: punctuation collapsed", "Go 1.21", "sphinx", "go-1-21"},
 		{"sphinx: strips leading digits", "123abc", "sphinx", "abc"},
-		{"sphinx: strips leading digit single char", "1test", "sphinx", "test"},
+		{"sphinx: strips single leading digit", "1test", "sphinx", "test"},
 		{"sphinx: preserves interior digits", "abc123def", "sphinx", "abc123def"},
 		{"sphinx: all digits produces empty", "123", "sphinx", ""},
 

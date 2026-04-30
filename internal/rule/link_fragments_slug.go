@@ -274,7 +274,8 @@ func slugGitea(text string) string {
 
 // slugSphinx computes the Sphinx (Python-Sphinx auto-section-label) slug.
 // NFKD-normalizes to strip combining chars, keeps only lowercase ASCII alphanumerics,
-// replaces runs of non-alphanumeric with a single hyphen, and trims leading/trailing hyphens.
+// replaces runs of non-alphanumeric with a single hyphen, then strips leading hyphens and
+// leading digits (matching docutils _non_id_at_ends: ^[-0-9]+|-+$) and trailing hyphens.
 // Non-Latin-only headings that produce an empty result return "" (the id1/id2 fallback
 // is document-level state that cannot be reproduced outside the build context).
 func slugSphinx(text string) string {
