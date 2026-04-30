@@ -82,27 +82,16 @@ func stripHeadingFormatting(s string) string {
 }
 
 // githubStripRune reports whether r should be removed by the GitHub slug algorithm.
-// Matches github-slugger v2: strips U+2000–U+206F, U+2E00–U+2E7F, and specific ASCII punctuation.
-// Preserves hyphens, underscores, Unicode letters, and digits.
+// Matches github-slugger v2: keeps \p{L}, \p{Nd}, \p{Nl}, hyphens, and underscores.
 func githubStripRune(r rune) bool {
-	if r >= 0x2000 && r <= 0x206F {
-		return true // General Punctuation
+	if r == '-' || r == '_' {
+		return false
 	}
-	if r >= 0x2E00 && r <= 0x2E7F {
-		return true // Supplemental Punctuation
-	}
-	switch r {
-	case '\\', '\'', '!', '"', '#', '$', '%', '&',
-		'(', ')', '*', '+', ',', '.', '/', ':',
-		';', '<', '=', '>', '?', '@', '[', ']',
-		'^', '`', '{', '|', '}', '~':
-		return true
-	}
-	return false
+	return !unicode.IsLetter(r) && !unicode.Is(unicode.Nd, r) && !unicode.Is(unicode.Nl, r)
 }
 
 // slugGitHub computes the GitHub-compatible slug (github-slugger v2).
-// Lowercases, strips specific punctuation ranges, replaces whitespace with hyphens.
+// Lowercases, strips all runes outside \p{L}/\p{Nd}/\p{Nl}/-/_, replaces whitespace with hyphens.
 // Consecutive whitespace produces consecutive hyphens (no collapsing).
 func slugGitHub(text string) string {
 	var sb strings.Builder
