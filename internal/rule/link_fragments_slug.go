@@ -292,23 +292,34 @@ func slugSphinx(text string) string {
 	return strings.TrimRight(result, "-")
 }
 
+// umlautReplacer expands German umlauts before NFKD, matching @sindresorhus/slugify's char map.
+var umlautReplacer = strings.NewReplacer(
+	"ä", "ae", "Ä", "ae",
+	"ö", "oe", "Ö", "oe",
+	"ü", "ue", "Ü", "ue",
+	"ß", "ss",
+)
+
 // slugEleventy computes an approximation of the Eleventy (@sindresorhus/slugify) slug.
-// NFKD-normalizes so accented Latin chars (é→e, ü→u) are reduced to their ASCII base,
-// then keeps only lowercase ASCII letters, digits, and hyphens, collapsing runs.
-// Characters without an ASCII equivalent (CJK, ø, ł, etc.) are stripped.
+// Expands German umlauts, NFKD-normalizes, then converts any non-ASCII-alphanumeric char
+// to a hyphen (collapsing consecutive ones). Non-ASCII chars without a mapping (CJK, etc.) are dropped.
 func slugEleventy(text string) string {
+	text = umlautReplacer.Replace(text)
 	text = nfkdStripCombining(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
+	prevWasHyphen := true // start true to suppress leading hyphens
 	for _, r := range text {
 		r = unicode.ToLower(r)
-		if unicode.IsSpace(r) {
-			sb.WriteByte('-')
-		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
 			sb.WriteRune(r)
+			prevWasHyphen = false
+		} else if !prevWasHyphen {
+			sb.WriteByte('-')
+			prevWasHyphen = true
 		}
 	}
-	return collapseDashes(sb.String())
+	return strings.TrimRight(sb.String(), "-")
 }
 
 // slugAzureDevOps computes the Azure DevOps Wiki slug.
