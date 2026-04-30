@@ -70,6 +70,9 @@ func TestComputeSlug(t *testing.T) {
 		{"mkdocs: accented Latin normalized", "café", "mkdocs", "cafe"},
 		{"mkdocs: umlaut normalized", "über", "mkdocs", "uber"},
 		{"mkdocs: tilde normalized", "señor", "mkdocs", "senor"},
+		// NFKD maps Ⅳ→IV and ²→2 before the letter/number filter runs.
+		{"mkdocs: letter number Nl via NFKD", "chapter Ⅳ", "mkdocs", "chapter-iv"},
+		{"mkdocs: other number No via NFKD", "note ²", "mkdocs", "note-2"},
 
 		// DocFX (case-preserving)
 		{"docfx: preserves case", "Hello World", "docfx", "Hello-World"},
