@@ -122,6 +122,11 @@ func TestComputeSlug(t *testing.T) {
 		{"eleventy: strips CJK", "日本語", "eleventy", ""},
 		{"eleventy: collapses hyphens", "A  B", "eleventy", "a-b"},
 		{"eleventy: preserves hyphen", "go-lang", "eleventy", "go-lang"},
+		{"eleventy: period becomes hyphen", "Section 1.1", "eleventy", "section-1-1"},
+		{"eleventy: underscore becomes hyphen", "foo_bar", "eleventy", "foo-bar"},
+		{"eleventy: umlaut ü expanded", "über", "eleventy", "ueber"},
+		{"eleventy: umlaut Ö expanded", "Österreich", "eleventy", "oesterreich"},
+		{"eleventy: CJK between ASCII becomes separator", "A日本B", "eleventy", "a-b"},
 
 		// Azure DevOps
 		{"azure-devops: simple text", "Hello World", "azure-devops", "hello-world"},
