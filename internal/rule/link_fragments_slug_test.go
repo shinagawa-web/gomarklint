@@ -46,8 +46,11 @@ func TestComputeSlug(t *testing.T) {
 		// Pandoc (auto_identifiers)
 		{"pandoc: simple text", "Hello World", "pandoc", "hello-world"},
 		{"pandoc: strips non-ASCII", "日本語", "pandoc", ""},
-		{"pandoc: period stripped", "Go 1.21", "pandoc", "go-121"},
+		{"pandoc: period kept", "Go 1.21", "pandoc", "go-1.21"},
 		{"pandoc: collapses hyphens from double space", "A  B", "pandoc", "a-b"},
+		{"pandoc: leading digits stripped", "123abc", "pandoc", "abc"},
+		{"pandoc: numbered list item strips prefix", "1. Introduction", "pandoc", "introduction"},
+		{"pandoc: section with period", "Section 1.1", "pandoc", "section-1.1"},
 
 		// Kramdown
 		{"kramdown: simple text", "Hello World", "kramdown", "hello-world"},

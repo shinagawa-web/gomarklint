@@ -140,7 +140,8 @@ func slugZenn(text string) string {
 }
 
 // slugPandoc computes the Pandoc auto_identifiers slug.
-// Lowercases, keeps only ASCII letters/digits/hyphens/underscores, collapses consecutive hyphens.
+// Lowercases, keeps only ASCII letters/digits/hyphens/underscores/periods, collapses consecutive
+// hyphens, then strips everything up to the first letter (Pandoc auto_identifiers step 5).
 func slugPandoc(text string) string {
 	var sb strings.Builder
 	sb.Grow(len(text))
@@ -148,11 +149,17 @@ func slugPandoc(text string) string {
 		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
-		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
+		} else if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-' || r == '.' {
 			sb.WriteRune(r)
 		}
 	}
-	return collapseDashes(sb.String())
+	s := collapseDashes(sb.String())
+	for i, r := range s {
+		if r >= 'a' && r <= 'z' {
+			return s[i:]
+		}
+	}
+	return ""
 }
 
 // slugKramdown computes the kramdown header_ids slug.
