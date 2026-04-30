@@ -288,7 +288,9 @@ func slugSphinx(text string) string {
 		}
 	}
 	result := reSphinxNonAlnum.ReplaceAllString(ascii.String(), "-")
-	return strings.Trim(result, "-")
+	// docutils _non_id_at_ends strips leading hyphens AND leading digits, trailing hyphens only.
+	result = strings.TrimLeft(result, "-0123456789")
+	return strings.TrimRight(result, "-")
 }
 
 // slugEleventy computes an approximation of the Eleventy (@sindresorhus/slugify) slug.
