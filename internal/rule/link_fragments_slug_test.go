@@ -54,6 +54,8 @@ func TestComputeSlug(t *testing.T) {
 		{"kramdown: strips non-ASCII", "日本語", "kramdown", ""},
 		{"kramdown: period stripped", "Go 1.21", "kramdown", "go-121"},
 		{"kramdown: underscore stripped (not in keep set)", "go_lang", "kramdown", "golang"},
+		{"kramdown: leading digits stripped", "123abc", "kramdown", "abc"},
+		{"kramdown: single leading digit stripped", "1test", "kramdown", "test"},
 
 		// Hugo (= GitHub)
 		{"hugo: same as github", "Hello World", "hugo", "hello-world"},

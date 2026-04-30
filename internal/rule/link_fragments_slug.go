@@ -156,7 +156,8 @@ func slugPandoc(text string) string {
 }
 
 // slugKramdown computes the kramdown header_ids slug.
-// Lowercases, keeps only ASCII letters/digits/hyphens, replaces spaces with hyphens, collapses.
+// Lowercases, keeps only ASCII letters/digits/hyphens, replaces spaces with hyphens, collapses,
+// then strips leading digits and hyphens (kramdown skips chars until the first letter).
 func slugKramdown(text string) string {
 	var sb strings.Builder
 	sb.Grow(len(text))
@@ -169,7 +170,8 @@ func slugKramdown(text string) string {
 			sb.WriteByte('-')
 		}
 	}
-	return collapseDashes(sb.String())
+	result := collapseDashes(sb.String())
+	return strings.TrimLeft(result, "0123456789-")
 }
 
 // slugMkDocs computes the MkDocs (Python-Markdown toc.py) slug.
