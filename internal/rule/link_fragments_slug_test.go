@@ -61,9 +61,15 @@ func TestComputeSlug(t *testing.T) {
 
 		// MkDocs
 		{"mkdocs: simple text", "Hello World", "mkdocs", "hello-world"},
-		{"mkdocs: strips non-ASCII", "日本語", "mkdocs", ""},
+		{"mkdocs: preserves CJK", "日本語", "mkdocs", "日本語"},
+		// NFKD decomposes Hangul syllables into conjoining jamo (matches Python-Markdown).
+		{"mkdocs: Korean NFKD to jamo", "한국어", "mkdocs", "한국어"},
+		{"mkdocs: mixed ASCII and CJK", "API の抽象化", "mkdocs", "api-の抽象化"},
 		{"mkdocs: collapses hyphens", "A  B", "mkdocs", "a-b"},
 		{"mkdocs: period stripped", "Go 1.21", "mkdocs", "go-121"},
+		{"mkdocs: accented Latin normalized", "café", "mkdocs", "cafe"},
+		{"mkdocs: umlaut normalized", "über", "mkdocs", "uber"},
+		{"mkdocs: tilde normalized", "señor", "mkdocs", "senor"},
 
 		// DocFX (case-preserving)
 		{"docfx: preserves case", "Hello World", "docfx", "Hello-World"},

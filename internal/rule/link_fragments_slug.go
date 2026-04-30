@@ -173,15 +173,18 @@ func slugKramdown(text string) string {
 }
 
 // slugMkDocs computes the MkDocs (Python-Markdown toc.py) slug.
-// Lowercases, strips non-ASCII characters, replaces spaces with hyphens, collapses.
+// NFKD-normalizes to decompose accented chars (é→e), lowercases, keeps Unicode letters,
+// decimal digits, hyphens, and underscores (matching Python's \w + [-]), replaces spaces
+// with hyphens, and collapses consecutive hyphens.
 func slugMkDocs(text string) string {
+	text = nfkdStripCombining(text)
 	var sb strings.Builder
 	sb.Grow(len(text))
 	for _, r := range text {
 		r = unicode.ToLower(r)
 		if unicode.IsSpace(r) {
 			sb.WriteByte('-')
-		} else if r < 128 && ((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+		} else if unicode.IsLetter(r) || unicode.Is(unicode.Nd, r) || r == '-' || r == '_' {
 			sb.WriteRune(r)
 		}
 	}
