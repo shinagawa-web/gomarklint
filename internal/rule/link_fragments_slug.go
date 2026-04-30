@@ -91,7 +91,7 @@ func githubStripRune(r rune) bool {
 }
 
 // slugGitHub computes the GitHub-compatible slug (github-slugger v2).
-// Lowercases, strips specific punctuation ranges, replaces whitespace with hyphens.
+// Lowercases, strips all runes outside \p{L}/\p{Nd}/\p{Nl}/-/_, replaces whitespace with hyphens.
 // Consecutive whitespace produces consecutive hyphens (no collapsing).
 func slugGitHub(text string) string {
 	var sb strings.Builder
