@@ -56,17 +56,17 @@ Set `slug-algorithm` to the name of the platform you are writing for. Each platf
 | `astro` | Astro | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Documented as GitHub-compatible in Astro official docs |
 | `starlight` | Starlight | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Starlight (Astro-based); same algorithm as `astro` |
 | `nuxt-content` | Nuxt Content | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Uses `rehype-slug` (github-slugger wrapper) |
-| `pandoc` | Pandoc (`auto_identifiers`) | ✓ | — | `-` | `[^a-zA-Z0-9_-]` | ✓ | `auto_identifiers` extension; strips non-ASCII |
+| `pandoc` | Pandoc (`auto_identifiers`) | ✓ | — | `-` | `[^a-zA-Z0-9_-]` | ✓ | `auto_identifiers` extension; strips non-ASCII. Non-ASCII-only headings produce an empty slug — links to them cannot be verified statically; see [FAQ](../faq/#unverifiable-fragment) |
 | `pandoc-gfm` | Pandoc (`gfm_auto_identifiers`) | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | `gfm_auto_identifiers` extension; equivalent to GitHub |
 | `quarto` | Quarto | ✓ | — | `-` | `[^a-zA-Z0-9_-]` | ✓ | Uses `auto_identifiers` extension by default; same as `pandoc` |
-| `kramdown` | kramdown | ✓ | — | `-` | `[^a-zA-Z0-9 -]` | ✓ | `header_ids` extension default |
-| `mkdocs` | MkDocs | ✓ | — | `-` | NFKD then ASCII-encode | ✓ | Python-Markdown `toc.py` default; `uslugify` variant preserves Unicode |
+| `kramdown` | kramdown | ✓ | — | `-` | `[^a-zA-Z0-9 -]` | ✓ | `header_ids` extension default. Non-ASCII-only headings produce an empty slug — links to them cannot be verified statically; see [FAQ](../faq/#unverifiable-fragment) |
+| `mkdocs` | MkDocs | ✓ | — | `-` | NFKD then ASCII-encode | ✓ | Python-Markdown `toc.py` default; `uslugify` variant preserves Unicode. Non-ASCII-only headings produce an empty slug — links to them cannot be verified statically; see [FAQ](../faq/#unverifiable-fragment) |
 | `docfx` | DocFX | — | — | `-` | `[^a-zA-Z0-9-_.]` | ✓ | Markdig AutoIdentifiers; does **not** lowercase |
 | `mdbook` | mdBook | ✓ | ✓ | `-` | non-alphanumeric except `_` and `-` (Rust `is_alphanumeric()`) | — | CJK preserved via Unicode alphanumeric check |
 | `gitea` | Gitea | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | goldmark-based; identical to GitHub algorithm. Gitea adds `user-content-` to the DOM id for CSP isolation, but users write fragments **without** that prefix (e.g. `#hello-world`) |
 | `forgejo` | Forgejo | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Fork of Gitea; identical algorithm |
-| `sphinx` | Sphinx | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Non-Latin-only headings fall back to `id1`, `id2`, etc. |
-| `eleventy` | Eleventy | ✓ | — | `-` | `@sindresorhus/slugify` (transliterate to approximate ASCII) | ✓ | Used via `IdAttributePlugin` |
+| `sphinx` | Sphinx | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Digits-only or non-Latin-only headings produce an empty slug; Sphinx falls back to `id1`, `id2`, … at build time — gomarklint cannot verify links to these headings statically; see [FAQ](../faq/#unverifiable-fragment) |
+| `eleventy` | Eleventy | ✓ | — | `-` | `@sindresorhus/slugify` (transliterate to approximate ASCII) | ✓ | Used via `IdAttributePlugin`. Characters with no ASCII equivalent (CJK, etc.) are stripped — non-ASCII-only headings produce an empty slug; see [FAQ](../faq/#unverifiable-fragment) |
 | `azure-devops` | Azure DevOps Wiki | ✓ | ✓ | `-` | non-RFC-3986-unreserved chars percent-encoded | — | Unicode Zs category → `-`; non-ASCII preserved as percent-encoded |
 | `myst` | MyST Parser | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | MyST-Parser (Python/Sphinx); documented as GitHub-compatible |
 | `custom` | — | — | — | — | — | — | Parameterized engine — see below |

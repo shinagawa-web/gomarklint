@@ -164,6 +164,35 @@ External link checking has inherent limits — the tool flags candidates, but fi
 
 ---
 
+## Fragment link checking
+
+### `link-fragments`: fragment reported as "not found" for a heading that exists {#unverifiable-fragment}
+
+Some slug algorithms strip characters aggressively, causing certain headings to produce an empty slug. When this happens, gomarklint cannot statically determine the fragment ID and excludes the heading from the valid set — so any link pointing to it is reported as broken even when it is valid at render time.
+
+Common triggers by preset:
+
+| Preset | Heading that produces an empty slug |
+|---|---|
+| `sphinx` | Digits-only (`# 123`) or non-Latin-only (`# 日本語`) — Sphinx falls back to `id1`, `id2`, … at build time |
+| `mkdocs` | Non-ASCII-only (`# 日本語`) — all non-ASCII characters are stripped |
+| `pandoc`, `kramdown`, `eleventy` | Non-ASCII-only headings with no transliterable characters |
+
+**Workarounds:**
+
+1. **Rename the heading** to include at least one ASCII letter — gomarklint can then verify it normally.
+2. **Suppress the false positive** with a disable comment around the affected link:
+
+```markdown
+<!-- gomarklint-disable link-fragments -->
+[See section](#id1)
+<!-- gomarklint-enable link-fragments -->
+```
+
+→ [Disable comments](../disable-comments/)
+
+---
+
 ### Not sure if a link is truly broken
 
 Before opening an issue, verify the link using the same User-Agent gomarklint uses:
