@@ -235,6 +235,8 @@ func TestCheckLinkFragments_NewPresets(t *testing.T) {
 	}{
 		{"qiita: valid CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "qiita", 0},
 		{"mdbook: valid CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "mdbook", 0},
+		{"mdbook: underscore in heading becomes hyphen", "## foo_bar\n\nSee [foo_bar](#foo-bar).\n", "mdbook", 0},
+		{"mdbook: underscore link not matching", "## foo_bar\n\nSee [foo_bar](#foo_bar).\n", "mdbook", 1},
 		{"vitepress: accented heading", "## Héllo\n\nSee [Héllo](#hello).\n", "vitepress", 0},
 		{"vitepress: CJK heading", "## 日本語\n\nSee [日本語](#日本語).\n", "vitepress", 0},
 		{"gitea: valid link without user-content prefix", "## Hello World\n\nSee [Hello](#hello-world).\n", "gitea", 0},
