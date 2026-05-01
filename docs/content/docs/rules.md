@@ -63,7 +63,7 @@ Set `slug-algorithm` to the name of the platform you are writing for. Each platf
 | `mkdocs` | MkDocs | ✓ | — | `-` | NFKD then ASCII-encode | ✓ | Python-Markdown `toc.py` default; `uslugify` variant preserves Unicode |
 | `docfx` | DocFX | — | — | `-` | `[^a-zA-Z0-9-_.]` | ✓ | Markdig AutoIdentifiers; does **not** lowercase |
 | `mdbook` | mdBook | ✓ | ✓ | `-` | non-alphanumeric except `_` and `-` (Rust `is_alphanumeric()`) | — | CJK preserved via Unicode alphanumeric check |
-| `gitea` | Gitea | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | goldmark-based; `user-content-` prefix is part of the fragment (e.g. `#user-content-hello`) |
+| `gitea` | Gitea | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | goldmark-based; identical to GitHub algorithm. Gitea adds `user-content-` to the DOM id for CSP isolation, but users write fragments **without** that prefix (e.g. `#hello-world`) |
 | `forgejo` | Forgejo | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Fork of Gitea; identical algorithm |
 | `sphinx` | Sphinx | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Non-Latin-only headings fall back to `id1`, `id2`, etc. |
 | `eleventy` | Eleventy | ✓ | — | `-` | `@sindresorhus/slugify` (transliterate to approximate ASCII) | ✓ | Used via `IdAttributePlugin` |

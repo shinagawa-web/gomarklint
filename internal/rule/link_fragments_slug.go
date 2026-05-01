@@ -268,9 +268,11 @@ func slugVitePress(text string) string {
 }
 
 // slugGitea computes the Gitea (goldmark) slug.
-// Same as GitHub algorithm but prefixed with "user-content-".
+// Algorithm is identical to GitHub (github-slugger v2).
+// Note: Gitea adds "user-content-" to the DOM id attribute for CSP isolation,
+// but users write fragment links without that prefix — the anchor href omits it.
 func slugGitea(text string) string {
-	return "user-content-" + slugGitHub(text)
+	return slugGitHub(text)
 }
 
 // slugSphinx computes the Sphinx (Python-Sphinx auto-section-label) slug.

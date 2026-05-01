@@ -101,9 +101,10 @@ func TestComputeSlug(t *testing.T) {
 		{"vitepress: collapses non-alphanumeric", "A  B", "vitepress", "a-b"},
 
 		// Gitea / Forgejo
-		{"gitea: prefixes user-content-", "Hello World", "gitea", "user-content-hello-world"},
-		{"gitea: preserves Unicode", "日本語", "gitea", "user-content-日本語"},
-		{"forgejo: same as gitea", "Hello World", "forgejo", "user-content-hello-world"},
+		// "user-content-" is a DOM id prefix for CSP isolation; users write fragments without it.
+		{"gitea: no user-content- prefix", "Hello World", "gitea", "hello-world"},
+		{"gitea: preserves Unicode", "日本語", "gitea", "日本語"},
+		{"forgejo: same as gitea", "Hello World", "forgejo", "hello-world"},
 
 		// Sphinx
 		{"sphinx: simple text", "Hello World", "sphinx", "hello-world"},
