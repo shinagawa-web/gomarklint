@@ -248,6 +248,29 @@ func slugQiita(text string) string {
 	return sb.String()
 }
 
+// slugMdBook computes the mdBook (normalize_id) slug.
+// Rust's is_alphanumeric() keeps Unicode letters and numbers; underscores,
+// spaces, and hyphens collapse to a single hyphen; trailing hyphens are stripped.
+func slugMdBook(text string) string {
+	var sb strings.Builder
+	sb.Grow(len(text))
+	prevWasHyphen := true // start true to suppress any leading hyphen
+	for _, r := range text {
+		r = unicode.ToLower(r)
+		if unicode.IsLetter(r) || unicode.IsNumber(r) {
+			sb.WriteRune(r)
+			prevWasHyphen = false
+		} else if unicode.IsSpace(r) || r == '-' || r == '_' {
+			if !prevWasHyphen {
+				sb.WriteByte('-')
+				prevWasHyphen = true
+			}
+		}
+		// else: strip
+	}
+	return strings.TrimRight(sb.String(), "-")
+}
+
 // slugVitePress computes the VitePress (markdown-it-anchor) slug.
 // NFKD-normalizes to strip combining chars (accented Latin → ASCII base),
 // then lowercases and replaces non-alphanumeric chars with hyphens, collapsing runs.
@@ -534,7 +557,7 @@ var slugRegistry = map[string]func(string) string{
 	"docfx": slugDocFX,
 	// Qiita / mdBook (same character set)
 	"qiita":  slugQiita,
-	"mdbook": slugQiita,
+	"mdbook": slugMdBook,
 	// VitePress
 	"vitepress": slugVitePress,
 	// Gitea / Forgejo

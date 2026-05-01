@@ -85,14 +85,20 @@ func TestComputeSlug(t *testing.T) {
 		{"docfx: strips non-ASCII", "日本語", "docfx", ""},
 		{"docfx: strips punctuation except hyphen underscore dot", "Hello, World!", "docfx", "Hello-World"},
 
-		// Qiita / mdbook (same character set)
+		// Qiita
 		{"qiita: simple text", "Hello World", "qiita", "hello-world"},
 		{"qiita: preserves Unicode letters", "日本語", "qiita", "日本語"},
 		{"qiita: preserves underscore", "go_lang", "qiita", "go_lang"},
 		{"qiita: strips punctuation", "Hello, World!", "qiita", "hello-world"},
 		{"qiita: no collapse", "A  B", "qiita", "a--b"},
-		{"mdbook: same as qiita", "Hello World", "mdbook", "hello-world"},
-		{"mdbook: preserves Unicode", "日本語", "mdbook", "日本語"},
+
+		// mdBook (Rust is_alphanumeric — differs from Qiita)
+		{"mdbook: simple text", "Hello World", "mdbook", "hello-world"},
+		{"mdbook: preserves Unicode letters", "日本語", "mdbook", "日本語"},
+		{"mdbook: underscore becomes hyphen", "foo_bar", "mdbook", "foo-bar"},
+		{"mdbook: trailing hyphen stripped", "Hello 🌍", "mdbook", "hello"},
+		{"mdbook: accented letters preserved", "café", "mdbook", "café"},
+		{"mdbook: dots stripped", "Section 1.1", "mdbook", "section-11"},
 
 		// VitePress
 		{"vitepress: simple text", "Hello World", "vitepress", "hello-world"},
