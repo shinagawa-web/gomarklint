@@ -555,8 +555,9 @@ var slugRegistry = map[string]func(string) string{
 	"mkdocs": slugMkDocs,
 	// DocFX
 	"docfx": slugDocFX,
-	// Qiita / mdBook (same character set)
-	"qiita":  slugQiita,
+	// Qiita
+	"qiita": slugQiita,
+	// mdBook (Rust is_alphanumeric — underscore → hyphen, trailing hyphen stripped)
 	"mdbook": slugMdBook,
 	// VitePress
 	"vitepress": slugVitePress,
