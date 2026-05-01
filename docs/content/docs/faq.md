@@ -166,18 +166,21 @@ External link checking has inherent limits — the tool flags candidates, but fi
 
 ## Fragment link checking
 
-### `link-fragments`: false "not found" for `#id1` or `#id2` under `sphinx` {#sphinx-id1}
+### `link-fragments`: fragment reported as "not found" for a heading that exists {#unverifiable-fragment}
 
-Sphinx (docutils) assigns dynamic IDs (`id1`, `id2`, …) to headings whose normal slug would be empty:
+Some slug algorithms strip characters aggressively, causing certain headings to produce an empty slug. When this happens, gomarklint cannot statically determine the fragment ID and excludes the heading from the valid set — so any link pointing to it is reported as broken even when it is valid at render time.
 
-- **Digits-only headings** — `# 123` produces no ASCII slug
-- **Non-Latin-only headings** — `# 日本語` contains no ASCII characters
+Common triggers by preset:
 
-Because these IDs are assigned at Sphinx build time, gomarklint cannot reproduce them statically. The heading is excluded from the valid fragment set, so any link pointing to it is reported as broken even when it is valid at render time.
+| Preset | Heading that produces an empty slug |
+|---|---|
+| `sphinx` | Digits-only (`# 123`) or non-Latin-only (`# 日本語`) — Sphinx falls back to `id1`, `id2`, … at build time |
+| `mkdocs` | Non-ASCII-only (`# 日本語`) — all non-ASCII characters are stripped |
+| `pandoc`, `kramdown`, `eleventy` | Non-ASCII-only headings with no transliterable characters |
 
 **Workarounds:**
 
-1. **Rename the heading** to start with an ASCII letter — gomarklint can then verify it normally.
+1. **Rename the heading** to include at least one ASCII letter — gomarklint can then verify it normally.
 2. **Suppress the false positive** with a disable comment around the affected link:
 
 ```markdown
