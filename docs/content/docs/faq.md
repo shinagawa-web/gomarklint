@@ -164,6 +164,32 @@ External link checking has inherent limits — the tool flags candidates, but fi
 
 ---
 
+## Fragment link checking
+
+### `link-fragments`: false "not found" for `#id1` or `#id2` under `sphinx` {#sphinx-id1}
+
+Sphinx (docutils) assigns dynamic IDs (`id1`, `id2`, …) to headings whose normal slug would be empty:
+
+- **Digits-only headings** — `# 123` produces no ASCII slug
+- **Non-Latin-only headings** — `# 日本語` contains no ASCII characters
+
+Because these IDs are assigned at Sphinx build time, gomarklint cannot reproduce them statically. The heading is excluded from the valid fragment set, so any link pointing to it is reported as broken even when it is valid at render time.
+
+**Workarounds:**
+
+1. **Rename the heading** to start with an ASCII letter — gomarklint can then verify it normally.
+2. **Suppress the false positive** with a disable comment around the affected link:
+
+```markdown
+<!-- gomarklint-disable link-fragments -->
+[See section](#id1)
+<!-- gomarklint-enable link-fragments -->
+```
+
+→ [Disable comments](../disable-comments/)
+
+---
+
 ### Not sure if a link is truly broken
 
 Before opening an issue, verify the link using the same User-Agent gomarklint uses:

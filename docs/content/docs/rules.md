@@ -65,7 +65,7 @@ Set `slug-algorithm` to the name of the platform you are writing for. Each platf
 | `mdbook` | mdBook | ✓ | ✓ | `-` | non-alphanumeric except `_` and `-` (Rust `is_alphanumeric()`) | — | CJK preserved via Unicode alphanumeric check |
 | `gitea` | Gitea | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | goldmark-based; identical to GitHub algorithm. Gitea adds `user-content-` to the DOM id for CSP isolation, but users write fragments **without** that prefix (e.g. `#hello-world`) |
 | `forgejo` | Forgejo | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | Fork of Gitea; identical algorithm |
-| `sphinx` | Sphinx | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Non-Latin-only headings fall back to `id1`, `id2`, etc. |
+| `sphinx` | Sphinx | ✓ | — | `-` | NFKD then ASCII then `[^a-z0-9]+`→`-` | ✓ | Non-Latin-only headings and digits-only headings (e.g. `# 123`, `# 日本語`) produce an empty slug and fall back to `id1`, `id2`, … assigned at build time — gomarklint cannot verify links to these headings statically; see [FAQ](../faq/#sphinx-id1) |
 | `eleventy` | Eleventy | ✓ | — | `-` | `@sindresorhus/slugify` (transliterate to approximate ASCII) | ✓ | Used via `IdAttributePlugin` |
 | `azure-devops` | Azure DevOps Wiki | ✓ | ✓ | `-` | non-RFC-3986-unreserved chars percent-encoded | — | Unicode Zs category → `-`; non-ASCII preserved as percent-encoded |
 | `myst` | MyST Parser | ✓ | ✓ | `-` | Unicode punctuation/symbols | — | MyST-Parser (Python/Sphinx); documented as GitHub-compatible |
