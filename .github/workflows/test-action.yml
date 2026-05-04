@@ -9,6 +9,7 @@ on:
       - 'testdata/action/**'
       - '**/*.go'
       - 'go.mod'
+      - 'go.sum'
 
 permissions:
   contents: read
