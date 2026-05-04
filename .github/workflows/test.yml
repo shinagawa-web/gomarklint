@@ -41,4 +41,6 @@ jobs:
           fail_ci_if_error: true
 
       - name: Lint Markdown files
-        run: ./gomarklint README.md README.ja.md docs/content --config .gomarklint.ci.json
+        uses: shinagawa-web/gomarklint@v2
+        with:
+          args: README.md README.ja.md docs/content --config .gomarklint.ci.json
