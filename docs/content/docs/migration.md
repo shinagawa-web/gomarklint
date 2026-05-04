@@ -32,7 +32,7 @@ brew install shinagawa-web/tap/gomarklint
 npm install -g @shinagawa-web/gomarklint
 
 # go install
-go install github.com/shinagawa-web/gomarklint/v2@latest
+go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
 Remove the old linter from your project:

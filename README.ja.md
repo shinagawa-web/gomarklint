@@ -52,7 +52,7 @@ npm install -g @shinagawa-web/gomarklint
 **`go install` を使う場合:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint/v2@latest
+go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
 - **100,000 行以上を約 170ms** で処理 — JIT ウォームアップなし、ランタイムオーバーヘッドなし。
@@ -90,7 +90,7 @@ jobs:
 ```yaml
 repos:
   - repo: https://github.com/shinagawa-web/gomarklint
-    rev: v2.8.0
+    rev: v3.0.0
     hooks:
       - id: gomarklint
 ```
