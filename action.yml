@@ -1,4 +1,4 @@
-name: 'gomarklint Markdown Linter'
+name: 'gomarklint'
 description: 'Catch broken links before your readers do.'
 author: 'shinagawa-web'
 inputs:
