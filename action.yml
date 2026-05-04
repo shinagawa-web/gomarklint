@@ -1,0 +1,27 @@
+name: 'gomarklint Markdown Linter'
+description: 'Catch broken links before your readers do.'
+author: 'shinagawa-web'
+inputs:
+  args:
+    description: 'Arguments to pass to gomarklint'
+    required: false
+    default: ''
+  comment-on-pr:
+    description: 'Post lint results as a PR comment (requires pull_request context)'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.args }}
+  env:
+    INPUT_COMMENT_ON_PR: ${{ inputs.comment-on-pr }}
+    INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+branding:
+  icon: 'book'
+  color: 'blue'

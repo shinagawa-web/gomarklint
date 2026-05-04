@@ -18,6 +18,7 @@ Use `make` targets — do not run raw `go build` / `go test` commands.
 - **Commits**: no `Co-Authored-By` trailer
 - **Updating a feature branch**: `git fetch origin main && git rebase origin/main` — never merge main into a feature branch
 - **Pre-push hook**: run `make install-hooks` once after cloning to automatically run lint and unit tests before each push
+- **Worktrees**: always create under `.claude/worktrees/<name>` with `git worktree add .claude/worktrees/<name> -b <branch>` — never use the Agent tool's `isolation: "worktree"` parameter (it places worktrees in `/tmp` / `/private/tmp`), and never create worktrees outside this project directory
 
 ## GitHub (issues, PRs, comments, commit messages)
 
@@ -43,6 +44,10 @@ When adding a new lint rule:
 2. If the rule is disabled by default, explicitly enable it in `benchmarkConfig()` with violation-free option values.
 3. Do **not** add a rule-level `_bench_test.go` under `internal/rule/` — the CI benchmark comparison runs only on `cmd/root_bench_test.go`.
 4. Verify `TestBenchmarkContentIsViolationFree` still passes after your changes.
+
+## GitHub Action
+
+The GitHub Action lives in this repository (`action.yml`, `Dockerfile`, `entrypoint.sh` at the root). Do **not** suggest creating a GitHub Action — it already exists and is published to the [GitHub Marketplace](https://github.com/marketplace/actions/gomarklint-markdown-linter). The former separate repository `shinagawa-web/gomarklint-action` is archived.
 
 ## Project context
 
