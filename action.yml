@@ -3,7 +3,7 @@ description: 'Catch broken links before your readers do.'
 author: 'shinagawa-web'
 inputs:
   args:
-    description: 'Arguments to pass to gomarklint'
+    description: 'Files or directories to lint. Omit to use the include field in .gomarklint.json.'
     required: false
     default: ''
   comment-on-pr:

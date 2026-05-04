@@ -2,12 +2,16 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-RUN go install github.com/shinagawa-web/gomarklint/v2@latest
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o gomarklint .
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates curl jq
 
-COPY --from=builder /go/bin/gomarklint /usr/local/bin/gomarklint
+COPY --from=builder /app/gomarklint /usr/local/bin/gomarklint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

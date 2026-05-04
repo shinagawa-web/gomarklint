@@ -1,5 +1,5 @@
 #!/bin/sh
-set -uo pipefail
+set -u
 
 CONFIG_FILE=".gomarklint.json"
 
@@ -10,13 +10,20 @@ else
   exit 1
 fi
 
-# Run gomarklint and capture output + exit code
-OUTPUT=$(gomarklint "$@" 2>&1) || true
-EXIT_CODE=${PIPESTATUS:-$?}
+# Filter empty args so gomarklint falls back to config's include when no path is given
+FILTERED_ARGS=""
+for arg in "$@"; do
+  if [ -n "$arg" ]; then
+    FILTERED_ARGS="$FILTERED_ARGS $arg"
+  fi
+done
 
-# Re-run to get the real exit code since capturing swallows it
-gomarklint "$@" > /dev/null 2>&1
+# Capture output and exit code in a single run
+set +e
+# shellcheck disable=SC2086
+OUTPUT=$(gomarklint $FILTERED_ARGS 2>&1)
 EXIT_CODE=$?
+set -e
 
 echo "$OUTPUT"
 
@@ -30,20 +37,17 @@ if [ "${INPUT_COMMENT_ON_PR:-false}" = "true" ]; then
     MARKER="<!-- gomarklint-result -->"
     REPO="${GITHUB_REPOSITORY}"
 
-    # Extract PR number from the event payload
     PR_NUMBER=$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")
 
     if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
       echo "Could not determine PR number. Skipping comment."
     else
-      # Build comment body
       if [ $EXIT_CODE -eq 0 ]; then
         BODY=$(printf '%s\n### gomarklint result\n\nNo issues found.\n' "$MARKER")
       else
         BODY=$(printf '%s\n### gomarklint result\n\n```\n%s\n```\n' "$MARKER" "$OUTPUT")
       fi
 
-      # Search for existing comment with marker
       EXISTING_COMMENT_ID=$(curl -s \
         -H "Authorization: token ${INPUT_GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github.v3+json" \
@@ -52,7 +56,6 @@ if [ "${INPUT_COMMENT_ON_PR:-false}" = "true" ]; then
         | head -1)
 
       if [ -n "$EXISTING_COMMENT_ID" ] && [ "$EXISTING_COMMENT_ID" != "null" ]; then
-        # Update existing comment
         curl -s -X PATCH \
           -H "Authorization: token ${INPUT_GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github.v3+json" \
@@ -60,7 +63,6 @@ if [ "${INPUT_COMMENT_ON_PR:-false}" = "true" ]; then
           -d "$(jq -n --arg body "$BODY" '{body: $body}')" > /dev/null
         echo "Updated existing PR comment."
       else
-        # Create new comment
         curl -s -X POST \
           -H "Authorization: token ${INPUT_GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github.v3+json" \

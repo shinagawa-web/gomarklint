@@ -83,6 +83,8 @@ jobs:
       - uses: shinagawa-web/gomarklint@v2
 ```
 
+Without `args`, the action lints the files listed in the `include` field of `.gomarklint.json`. Pass `args` to override, e.g. `args: docs/`.
+
 Full options including PR comments: see [Marketplace listing](https://github.com/marketplace/actions/gomarklint-markdown-linter)
 
 ### pre-commit
