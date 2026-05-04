@@ -14,6 +14,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Validate semver tag
+        run: |
+          if ! echo "${GITHUB_REF_NAME}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Tag '${GITHUB_REF_NAME}' is not a strict semver tag (e.g. v1.2.3). Skipping release."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v6
         with:
