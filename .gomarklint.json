@@ -1,0 +1,7 @@
+{
+  "default": true,
+  "rules": {
+    "external-link": false
+  },
+  "output": "text"
+}
