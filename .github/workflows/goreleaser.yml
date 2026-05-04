@@ -57,6 +57,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract major version
+        id: major
+        run: echo "tag=$(echo '${{ github.ref_name }}' | cut -d. -f1)" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -64,7 +68,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/shinagawa-web/gomarklint:${{ github.ref_name }}
-            ghcr.io/shinagawa-web/gomarklint:v3
+            ghcr.io/shinagawa-web/gomarklint:${{ steps.major.outputs.tag }}
 
   npm-publish:
     needs: release

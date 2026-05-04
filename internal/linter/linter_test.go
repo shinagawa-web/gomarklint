@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 )
 
 // mustNew calls New and fails the test if it returns an error.

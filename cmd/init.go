@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 )
 
 var initCmd = &cobra.Command{

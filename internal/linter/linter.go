@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
-	"github.com/shinagawa-web/gomarklint/v2/internal/file"
-	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/file"
+	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
 // Linter performs linting on markdown files.

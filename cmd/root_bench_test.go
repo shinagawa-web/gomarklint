@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
-	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
 )
 
 // benchmarkConfig returns the linter configuration used for all CI benchmarks.
