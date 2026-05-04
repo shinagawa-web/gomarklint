@@ -16,7 +16,7 @@ inputs:
     default: ${{ github.token }}
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'docker://ghcr.io/shinagawa-web/gomarklint:v3'
   args:
     - ${{ inputs.args }}
   env:
