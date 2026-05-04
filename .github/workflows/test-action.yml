@@ -1,19 +1,14 @@
 name: Test Action
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'action.yml'
-      - 'Dockerfile'
-      - 'entrypoint.sh'
-      - 'testdata/action/**'
   pull_request:
     paths:
       - 'action.yml'
       - 'Dockerfile'
       - 'entrypoint.sh'
       - 'testdata/action/**'
+      - '**/*.go'
+      - 'go.mod'
 
 permissions:
   contents: read
