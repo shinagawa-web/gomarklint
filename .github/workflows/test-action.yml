@@ -1,19 +1,15 @@
 name: Test Action
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'action.yml'
-      - 'Dockerfile'
-      - 'entrypoint.sh'
-      - 'testdata/action/**'
   pull_request:
     paths:
       - 'action.yml'
       - 'Dockerfile'
       - 'entrypoint.sh'
       - 'testdata/action/**'
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
 
 permissions:
   contents: read
@@ -21,24 +17,13 @@ permissions:
 jobs:
   test-action:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run gomarklint Action
-        uses: ./
-        with:
-          args: testdata/action
-
-  test-comment:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run gomarklint Action with PR comment
+      - name: Run gomarklint Action
         uses: ./
         with:
           args: testdata/action

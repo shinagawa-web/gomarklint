@@ -27,7 +27,8 @@ jobs:
             if (title.startsWith('docs:') || title.startsWith('docs(')) {
               labels.push('documentation');
             }
-            if (title.startsWith('chore:') || title.startsWith('chore(')) {
+            if (title.startsWith('chore:') || title.startsWith('chore(') ||
+                title.startsWith('ci:') || title.startsWith('ci(')) {
               labels.push('chore');
             }
             if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
