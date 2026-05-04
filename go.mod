@@ -1,4 +1,4 @@
-module github.com/shinagawa-web/gomarklint/v2
+module github.com/shinagawa-web/gomarklint/v3
 
 go 1.25.0
 

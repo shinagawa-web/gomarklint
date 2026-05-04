@@ -53,7 +53,7 @@ npm install -g @shinagawa-web/gomarklint
 **Via `go install`:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint/v2@latest
+go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
 - **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: shinagawa-web/gomarklint@v2
+      - uses: shinagawa-web/gomarklint@v3
 ```
 
 Without `args`, the action lints the files listed in the `include` field of `.gomarklint.json`. Pass `args` to override, e.g. `args: docs/`.
@@ -94,7 +94,7 @@ Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/shinagawa-web/gomarklint
-    rev: v2.8.0
+    rev: v3.0.0
     hooks:
       - id: gomarklint
 ```

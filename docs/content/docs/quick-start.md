@@ -28,7 +28,7 @@ npm install -g @shinagawa-web/gomarklint
 **Via `go install`:**
 
 ```sh
-go install github.com/shinagawa-web/gomarklint/v2@latest
+go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
 **Download binary** (no Go required):

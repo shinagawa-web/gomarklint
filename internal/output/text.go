@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 )
 
 const (

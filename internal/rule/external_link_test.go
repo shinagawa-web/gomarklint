@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
 func setupTestServer() *httptest.Server {
