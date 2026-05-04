@@ -65,24 +65,27 @@ go install github.com/shinagawa-web/gomarklint/v2@latest
 
 ### GitHub Actions
 
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-gomarklint-blue?logo=github)](https://github.com/marketplace/actions/gomarklint-markdown-linter)
+
 ```yaml
-name: gomarklint
+name: Lint Markdown
 
 on:
-  push:
   pull_request:
+    paths:
+      - '**/*.md'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: shinagawa-web/gomarklint-action@v1
-        with:
-          args: '.'
+      - uses: shinagawa-web/gomarklint@v2
 ```
 
-Full options and examples: [gomarklint-action](https://github.com/shinagawa-web/gomarklint-action)
+Without `args`, the action lints the files listed in the `include` field of `.gomarklint.json`. Pass `args` to override, e.g. `args: docs/`.
+
+Full options including PR comments: see [Marketplace listing](https://github.com/marketplace/actions/gomarklint-markdown-linter)
 
 ### pre-commit
 
