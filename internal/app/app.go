@@ -6,11 +6,11 @@ import (
 	"io"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
-	"github.com/shinagawa-web/gomarklint/v2/internal/file"
-	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
-	"github.com/shinagawa-web/gomarklint/v2/internal/output"
-	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/file"
+	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v3/internal/output"
+	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
 // ErrLintViolations is returned when error-severity violations are found.

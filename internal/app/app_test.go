@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/config"
-	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
-	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v3/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
 func writeTempFile(t *testing.T, name, content string) string {

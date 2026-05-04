@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/rule"
+	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
 func TestJSONFormatter_NoErrors(t *testing.T) {

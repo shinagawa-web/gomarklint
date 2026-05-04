@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shinagawa-web/gomarklint/v2/cmd"
-	"github.com/shinagawa-web/gomarklint/v2/internal/app"
+	"github.com/shinagawa-web/gomarklint/v3/cmd"
+	"github.com/shinagawa-web/gomarklint/v3/internal/app"
 )
 
 var osExit = os.Exit

@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/shinagawa-web/gomarklint/v2/internal/linter"
+	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
 )
 
 // TestBenchmarkContentIsViolationFree verifies that generateComplexMarkdown
