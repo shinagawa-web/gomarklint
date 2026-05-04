@@ -30,7 +30,7 @@ const (
 	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
 	DefaultRetryDelayMs = 1000
 
-	userAgent = "gomarklint/v2 (+https://github.com/shinagawa-web/gomarklint)"
+	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )
 
 // defaultAllowedStatuses contains status codes never treated as link failures.
