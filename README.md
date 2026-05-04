@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: shinagawa-web/gomarklint@v2
+      - uses: shinagawa-web/gomarklint@v3
 ```
 
 Without `args`, the action lints the files listed in the `include` field of `.gomarklint.json`. Pass `args` to override, e.g. `args: docs/`.
