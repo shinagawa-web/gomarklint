@@ -70,18 +70,35 @@ This creates `.gomarklint.json` with sensible defaults:
 
 ```json
 {
-  "minHeadingLevel": 2,
-  "enableLinkCheck": false,
-  "linkCheckTimeoutSeconds": 5,
-  "skipLinkPatterns": [],
+  "default": true,
+  "rules": {
+    "final-blank-line": true,
+    "unclosed-code-block": true,
+    "empty-alt-text": true,
+    "fenced-code-language": true,
+    "heading-level": { "severity": "error", "minLevel": 2 },
+    "duplicate-heading": true,
+    "no-multiple-blank-lines": true,
+    "no-setext-headings": true,
+    "single-h1": true,
+    "blanks-around-headings": true,
+    "no-bare-urls": true,
+    "no-empty-links": true,
+    "no-emphasis-as-heading": true,
+    "blanks-around-lists": true,
+    "blanks-around-fences": true,
+    "no-hard-tabs": true,
+    "no-trailing-punctuation": { "punctuation": ".,;:!" },
+    "consistent-code-fence": { "style": "consistent" },
+    "consistent-emphasis-style": { "style": "consistent" },
+    "consistent-list-marker": { "style": "consistent" },
+    "max-line-length": { "enabled": false, "lineLength": 80 },
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] },
+    "link-fragments": { "enabled": false, "slug-algorithm": "github" }
+  },
   "include": ["README.md", "testdata"],
   "ignore": [],
-  "output": "text",
-  "enableDuplicateHeadingCheck": true,
-  "enableHeadingLevelCheck": true,
-  "enableNoMultipleBlankLinesCheck": true,
-  "enableNoSetextHeadingsCheck": true,
-  "enableFinalBlankLineCheck": true
+  "output": "text"
 }
 ```
 
