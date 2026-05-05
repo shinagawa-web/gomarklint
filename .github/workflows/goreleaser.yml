@@ -44,7 +44,7 @@ jobs:
       - name: Generate artifact hashes
         id: hash
         run: |
-          hashes=$(base64 -w0 < dist/checksums.txt)
+          hashes=$(base64 -w0 < dist/*_checksums.txt)
           echo "hashes=$hashes" >> "$GITHUB_OUTPUT"
 
   provenance:
