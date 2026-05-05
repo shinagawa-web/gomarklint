@@ -11,7 +11,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Auto label based on PR title
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const title = context.payload.pull_request.title.toLowerCase();
@@ -61,7 +61,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Check for labels
-        uses: docker://agilepathway/pull-request-label-checker:latest
+        uses: docker://agilepathway/pull-request-label-checker@sha256:65e57fd98ba3ab6ca4fcbc5a0aef288dd984ee4ab988f124d83424d19b55b801
         with:
           one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore,refactor
           repo_token: ${{ secrets.GITHUB_TOKEN }}
