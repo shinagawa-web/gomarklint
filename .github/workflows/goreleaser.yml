@@ -62,6 +62,7 @@ jobs:
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true
+      # v2.1.0 privacy-check fails on public repos unless this is set; see goreleaser/example-slsa-provenance for the same workaround
       private-repository: true
 
   update-major-tag:
