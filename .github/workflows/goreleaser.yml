@@ -44,7 +44,12 @@ jobs:
       - name: Generate artifact hashes
         id: hash
         run: |
-          hashes=$(base64 -w0 < dist/checksums.txt)
+          files=(dist/*_checksums.txt)
+          if [[ ${#files[@]} -ne 1 ]]; then
+            echo "Expected exactly one checksums file, found: ${files[*]}" >&2
+            exit 1
+          fi
+          hashes=$(base64 -w0 < "${files[0]}")
           echo "hashes=$hashes" >> "$GITHUB_OUTPUT"
 
   provenance:
