@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      base64_subjects:
+        description: 'Base64-encoded subjects for SLSA provenance smoke test'
+        required: false
+        default: 'dGVzdC10ZXN0CQ=='
 
 permissions: read-all
 
@@ -63,6 +69,19 @@ jobs:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true
       # v2.1.0 privacy-check fails on public repos unless this is set; see goreleaser/example-slsa-provenance for the same workaround
+      private-repository: true
+
+  provenance-test:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+    with:
+      base64-subjects: "${{ inputs.base64_subjects }}"
+      upload-assets: false
+      # v2.1.0 privacy-check fails on public repos unless this is set
       private-repository: true
 
   update-major-tag:
