@@ -620,6 +620,31 @@ See (https://example.com/page) for details.
 				{URL: "https://example.com/page", Line: 2},
 			},
 		},
+		{
+			name: "inline link with IPv6 host",
+			input: `
+[local](https://[::1]/path)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://[::1]/path", Line: 2},
+			},
+		},
+		{
+			name: "image link with IPv6 host",
+			input: `
+![img](https://[::1]/image.png)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://[::1]/image.png", Line: 2},
+			},
+		},
+		{
+			name: "scheme-only URL is not extracted",
+			input: `
+[broken](https://)
+`,
+			expected: nil,
+		},
 	}
 
 	for _, tt := range tests {
