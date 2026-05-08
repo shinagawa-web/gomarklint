@@ -25,10 +25,21 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] `no-emphasis-as-heading`: Bold/italic must not substitute for headings
 - [x] `no-setext-headings`: Setext-style headings must use ATX style instead
 - [x] `blanks-around-lists`: Lists must be surrounded by blank lines
-- [x] `max-line-length`: Enforce a maximum line length- [x] `no-hard-tabs`: No hard tab characters in body text- [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines- [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`)- [x] `no-trailing-punctuation`: No trailing punctuation in headings- [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`)- [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`)
+- [x] `max-line-length`: Enforce a maximum line length
+- [x] `no-hard-tabs`: No hard tab characters in body text
+- [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines
+- [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`)
+- [x] `no-trailing-punctuation`: No trailing punctuation in headings
+- [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`)
+- [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`)
+
 ## Rules — Planned
 
-- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines- [ ] `no-undefined-references`: Reference-style links/images must have a matching definition- [ ] `table-formatting`: Table structure and cell-padding consistency- [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here")- [ ] `consistent-line-endings`: Enforce consistent line endings (LF vs CRLF)
+- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines
+- [ ] `no-undefined-references`: Reference-style links/images must have a matching definition
+- [ ] `table-formatting`: Table structure and cell-padding consistency
+- [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here")
+- [ ] `consistent-line-endings`: Enforce consistent line endings (LF vs CRLF)
 
 ## Extensibility
 
