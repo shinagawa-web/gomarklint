@@ -41,7 +41,7 @@ func init() {
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	rootCmd.Flags().StringVar(&configFilePath, "config", ".gomarklint.json", "path to config file (default: .gomarklint.json)")
-	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text or json")
+	rootCmd.Flags().StringVar(&outputFormat, "output", "text", "output format: text, json, or junit")
 	rootCmd.Flags().StringVar(&minSeverity, "severity", "warning", "minimum severity to report: warning or error")
 
 	rootCmd.AddCommand(initCmd)

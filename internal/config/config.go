@@ -170,7 +170,7 @@ type Config struct {
 	// Ignore lists glob patterns to exclude from linting.
 	Ignore []string `json:"ignore"`
 
-	// OutputFormat controls output: "text" or "json".
+	// OutputFormat controls output: "text", "json", or "junit".
 	OutputFormat string `json:"output"`
 
 	// MinSeverity filters output: only report rules at or above this severity ("warning" or "error").

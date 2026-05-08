@@ -37,8 +37,8 @@ func MergeFlags(cfg Config, cmd *cobra.Command, flags FlagValues) Config {
 
 // Validate checks if the configuration values are valid.
 func Validate(cfg Config) error {
-	if cfg.OutputFormat != "text" && cfg.OutputFormat != "json" {
-		return fmt.Errorf("invalid output format: %q (must be 'text' or 'json')", cfg.OutputFormat)
+	if cfg.OutputFormat != "text" && cfg.OutputFormat != "json" && cfg.OutputFormat != "junit" {
+		return fmt.Errorf("invalid output format: %q (must be 'text', 'json', or 'junit')", cfg.OutputFormat)
 	}
 	switch cfg.MinSeverity {
 	case SeverityWarning, SeverityError:

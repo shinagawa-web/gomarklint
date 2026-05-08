@@ -74,9 +74,12 @@ func Run(w io.Writer, opts Options) error {
 
 func formatOutput(w io.Writer, cfg config.Config, result *linter.Result, fileCount int, duration time.Duration) error {
 	var formatter output.Formatter
-	if cfg.OutputFormat == "json" {
+	switch cfg.OutputFormat {
+	case "json":
 		formatter = output.NewJSONFormatter()
-	} else {
+	case "junit":
+		formatter = output.NewJUnitFormatter()
+	default:
 		formatter = output.NewTextFormatter()
 	}
 
