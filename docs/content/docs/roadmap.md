@@ -7,6 +7,13 @@ weight: 9
 
 ## Rules — Completed
 
+### Link checks
+
+- [x] `external-link`: Validate external HTTP/HTTPS URLs
+- [x] `link-fragments`: Internal anchor links must resolve to an existing heading (MD051)
+
+### Structure and formatting
+
 All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shinagawa-web/gomarklint/issues/76) have landed.
 
 - [x] `no-multiple-blank-lines`: Disallow multiple consecutive blank lines
@@ -22,19 +29,13 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] `no-hard-tabs`: No hard tab characters in body text (MD010)
 - [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
 - [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
-
-## Rules — Planned
-
-### Priority 2
-
-- [ ] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
+- [x] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
 - [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
 - [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
 
-### Priority 3
+## Rules — Planned
 
 - [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
-- [ ] `link-fragments`: Internal anchor links must resolve to an existing heading (MD051)
 - [ ] `no-undefined-references`: Reference-style links/images must have a matching definition (MD052/MD053)
 - [ ] `table-formatting`: Table structure and cell-padding consistency (MD055/MD056/MD058)
 - [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here") (MD059)

@@ -12,7 +12,7 @@ English | [日本語](README.ja.md)
 <!-- gomarklint-disable-next-line no-bare-urls -->
 <a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
 
-> Blazing-fast Markdown linter built in Go — **100,000+ lines in ~170ms**. Single binary, no Node.js required, and built-in HTTP link validation.
+> Catch broken links before your readers do — and keep your Markdown clean while you're at it. **100,000+ lines in ~170ms**, single binary, no Node.js required.
 
 **Quick install** (macOS / Linux):
 
@@ -57,8 +57,8 @@ npm install -g @shinagawa-web/gomarklint
 go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
+- Catch broken links before your readers do — validates external URLs and internal anchors.
 - **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.
-- Catch broken links and headings before your docs ship.
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).
 
@@ -69,7 +69,7 @@ go install github.com/shinagawa-web/gomarklint/v3@latest
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-gomarklint-blue?logo=github)](https://github.com/marketplace/actions/gomarklint-markdown-linter)
 
 ```yaml
-name: Lint Markdown
+name: gomarklint
 
 on:
   pull_request:

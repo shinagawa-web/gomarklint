@@ -5,7 +5,16 @@ weight: 2
 
 # Rules
 
-`gomarklint` currently runs the following checks (ordered as executed):
+`gomarklint` currently runs the following checks:
+
+## Link checks
+
+| Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
+| ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
+| `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **off**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
+
+## Structure and formatting checks
 
 | Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -30,8 +39,6 @@ weight: 2
 | `consistent-emphasis-style`    | Inconsistent emphasis marker (`*text*` vs `_text_`)                     | Default **on**. Option: `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`)   |
 | `consistent-list-marker`       | Inconsistent unordered list marker (`-` vs `*` vs `+`)                 | Default **on**. Option: `style` (`consistent` \| `dash` \| `asterisk` \| `plus`, default `consistent`) |
 | `max-line-length`              | Lines exceeding the configured maximum length                           | Default **off**. Option: `lineLength` (default `80`)                                                  |
-| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
-| `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **off**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
 
 ## link-fragments
 

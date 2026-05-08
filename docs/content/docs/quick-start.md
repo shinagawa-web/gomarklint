@@ -107,7 +107,7 @@ You can edit it anytime — CLI flags override config values.
 ## 2) Run it
 
 ```sh
-# lint current directory recursively
+# check current directory recursively
 gomarklint .
 
 # lint specific targets
