@@ -119,6 +119,23 @@ func TestRun_OutputFormatOverride(t *testing.T) {
 	}
 }
 
+func TestRun_JUnitOutputFormat(t *testing.T) {
+	f := writeTempFile(t, "valid.md", "## Hello\n\nWorld.\n")
+
+	var buf bytes.Buffer
+	err := Run(&buf, Options{
+		ConfigPath:   "/nonexistent/.gomarklint.json",
+		Args:         []string{f},
+		OutputFormat: "junit",
+	})
+	if err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
+	if !strings.Contains(buf.String(), `<testsuites`) {
+		t.Errorf("expected JUnit XML output, got: %s", buf.String())
+	}
+}
+
 func TestRun_MinSeverityOverride(t *testing.T) {
 	cfgFile := writeTempFile(t, "warning-rule.json", `{
 		"default": false,

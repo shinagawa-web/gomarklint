@@ -195,9 +195,20 @@ func TestJUnitFormatter_WriteError(t *testing.T) {
 		OrderedPaths: []string{},
 	}
 
-	ew := &errorWriter{}
-	err := formatter.Format(ew, result)
-	if err == nil {
-		t.Error("expected error when writing to errorWriter")
-	}
+	t.Run("HeaderWriteError", func(t *testing.T) {
+		ew := &errorWriter{}
+		err := formatter.Format(ew, result)
+		if err == nil {
+			t.Error("expected error when writing to errorWriter")
+		}
+	})
+
+	t.Run("EncodeError", func(t *testing.T) {
+		// Allow xml.Header (39 bytes) through, then fail on enc.Encode's internal flush.
+		lw := &limitedErrorWriter{limit: 39}
+		err := formatter.Format(lw, result)
+		if err == nil {
+			t.Error("expected error when encode flush fails")
+		}
+	})
 }
