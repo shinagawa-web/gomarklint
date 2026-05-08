@@ -6,8 +6,14 @@ permissions:
 on:
   push:
     branches: [ main ]
+    paths:
+      - '**.go'
+      - '**.sh'
   pull_request:
     branches: [ main ]
+    paths:
+      - '**.go'
+      - '**.sh'
 
 jobs:
   check:
@@ -19,10 +25,16 @@ jobs:
 
       - name: Scan for invisible Unicode characters
         run: |
-          if grep -rPn '[\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}\x{E0100}-\x{E01EF}]' \
+          grep -rPn '[\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}\x{E0100}-\x{E01EF}]' \
             --include="*.go" \
             --include="*.sh" \
-            .; then
+            . || status=$?
+          if [ "${status:-0}" -eq 2 ]; then
+            echo "grep encountered an error. Scan could not complete."
+            exit 2
+          elif [ "${status:-0}" -eq 1 ]; then
+            exit 0
+          else
             echo "Invisible Unicode characters detected. Review the matches above."
             exit 1
           fi
