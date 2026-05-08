@@ -689,9 +689,12 @@ func TestCheckExternalLinks_GETFallback_On403(t *testing.T) {
 }
 
 func TestCheckExternalLinks_NoGETFallback_On404(t *testing.T) {
+	var mu sync.Mutex
 	var methods []string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
 		methods = append(methods, r.Method)
+		mu.Unlock()
 		w.WriteHeader(http.StatusNotFound)
 	}))
 	defer ts.Close()
@@ -700,6 +703,8 @@ func TestCheckExternalLinks_NoGETFallback_On404(t *testing.T) {
 	lines, offset := toLines(markdown)
 	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, nil, &sync.Map{})
 
+	mu.Lock()
+	defer mu.Unlock()
 	if len(results) != 1 {
 		t.Errorf("expected 1 error for 404, got: %v", results)
 	}
