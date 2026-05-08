@@ -644,6 +644,70 @@ func TestCheckExternalLinks_GETFallback(t *testing.T) {
 	}
 }
 
+func TestCheckExternalLinks_GETFallback_On405(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
+	lines, offset := toLines(markdown)
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, nil, &sync.Map{})
+
+	if len(results) != 0 {
+		t.Errorf("expected no errors (GET fallback on 405 should succeed), got: %v", results)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 link checked, got %d", count)
+	}
+}
+
+func TestCheckExternalLinks_GETFallback_On403(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
+	lines, offset := toLines(markdown)
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, nil, &sync.Map{})
+
+	if len(results) != 0 {
+		t.Errorf("expected no errors (GET fallback on 403 should succeed), got: %v", results)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 link checked, got %d", count)
+	}
+}
+
+func TestCheckExternalLinks_NoGETFallback_On404(t *testing.T) {
+	var methods []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methods = append(methods, r.Method)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
+	lines, offset := toLines(markdown)
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, nil, &sync.Map{})
+
+	if len(results) != 1 {
+		t.Errorf("expected 1 error for 404, got: %v", results)
+	}
+	if len(methods) != 1 || methods[0] != http.MethodHead {
+		t.Errorf("expected only HEAD request for 404 (no GET fallback), got: %v", methods)
+	}
+}
+
 func TestCheckExternalLinks_429NotFlagged(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTooManyRequests)
