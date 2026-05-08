@@ -10,7 +10,7 @@ weight: 9
 ### Link checks
 
 - [x] `external-link`: Validate external HTTP/HTTPS URLs
-- [x] `link-fragments`: Internal anchor links must resolve to an existing heading (MD051)
+- [x] `link-fragments`: Internal anchor links must resolve to an existing heading
 
 ### Structure and formatting
 
@@ -25,21 +25,10 @@ All Priority 1 rules from the [ecosystem analysis (#76)](https://github.com/shin
 - [x] `no-emphasis-as-heading`: Bold/italic must not substitute for headings
 - [x] `no-setext-headings`: Setext-style headings must use ATX style instead
 - [x] `blanks-around-lists`: Lists must be surrounded by blank lines
-- [x] `max-line-length`: Enforce a maximum line length (MD013)
-- [x] `no-hard-tabs`: No hard tab characters in body text (MD010)
-- [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines (MD031)
-- [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`) (MD048)
-- [x] `no-trailing-punctuation`: No trailing punctuation in headings (MD026)
-- [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`) (MD049)
-- [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`) (MD004)
-
+- [x] `max-line-length`: Enforce a maximum line length- [x] `no-hard-tabs`: No hard tab characters in body text- [x] `blanks-around-fences`: Fenced code blocks must be surrounded by blank lines- [x] `consistent-code-fence`: Consistent fence character (`` ``` `` vs `~~~`)- [x] `no-trailing-punctuation`: No trailing punctuation in headings- [x] `consistent-emphasis-style`: Consistent emphasis marker (`*` vs `_`)- [x] `consistent-list-marker`: Consistent unordered list marker (`-` vs `*` vs `+`)
 ## Rules — Planned
 
-- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines (MD009)
-- [ ] `no-undefined-references`: Reference-style links/images must have a matching definition (MD052/MD053)
-- [ ] `table-formatting`: Table structure and cell-padding consistency (MD055/MD056/MD058)
-- [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here") (MD059)
-- [ ] `consistent-line-endings`: Enforce consistent line endings (LF vs CRLF)
+- [ ] `no-trailing-spaces`: No trailing whitespace at end of lines- [ ] `no-undefined-references`: Reference-style links/images must have a matching definition- [ ] `table-formatting`: Table structure and cell-padding consistency- [ ] `descriptive-link-text`: Link text must not be generic ("click here", "here")- [ ] `consistent-line-endings`: Enforce consistent line endings (LF vs CRLF)
 
 ## Extensibility
 
