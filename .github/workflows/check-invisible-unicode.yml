@@ -1,0 +1,28 @@
+name: Check Invisible Unicode
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Scan for invisible Unicode characters
+        run: |
+          if grep -rPn '[\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]' \
+            --include="*.go" \
+            --include="*.sh" \
+            .; then
+            echo "Invisible Unicode characters detected. Review the matches above."
+            exit 1
+          fi
