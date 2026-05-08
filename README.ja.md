@@ -11,7 +11,7 @@
 
 <a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
 
-> リンク切れをユーザーより先に発見。Markdown を整えながら、外部 URL と内部アンカーを検証。**100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要。
+> リンク切れをユーザーより先に発見。内部アンカーはデフォルトで検証、外部 URL は `external-link` を有効化して検証。**100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要。
 
 **かんたんインストール**（macOS / Linux）:
 
@@ -56,7 +56,7 @@ npm install -g @shinagawa-web/gomarklint
 go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
-- リンク切れをユーザーより先に発見 — 外部 URL と内部アンカーを検証。
+- リンク切れをユーザーより先に発見 — 内部アンカーはデフォルトで検証。`external-link` を有効化すると外部 URL も検証。
 - **100,000 行以上を約 170ms** で処理 — JIT ウォームアップなし、ランタイムオーバーヘッドなし。
 - 予測可能な構造を強制（「なぜ H2 の下に H4 があるの？」をなくす）。
 - 人間にも機械にも優しい出力（JSON 対応）。

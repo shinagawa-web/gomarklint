@@ -57,7 +57,7 @@ npm install -g @shinagawa-web/gomarklint
 go install github.com/shinagawa-web/gomarklint/v3@latest
 ```
 
-- Catch broken links before your readers do — validates external URLs and internal anchors.
+- Catch broken links before your readers do — validates internal anchors by default; enable `external-link` to also check external URLs.
 - **100,000+ lines in ~170ms** — single binary, no JIT warmup, no runtime overhead.
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).

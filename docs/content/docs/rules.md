@@ -12,7 +12,7 @@ weight: 2
 | Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `skipPatterns` (regex list)                 |
-| `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **off**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
+| `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **on**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
 
 ## Structure and formatting checks
 

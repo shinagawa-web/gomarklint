@@ -13,7 +13,7 @@ title: "gomarklint"
 <a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
 
 > Catch broken links before your readers do.
-> A fast Markdown checker built in Go — validates links, headings, and structure for local dev and CI alike.
+> A fast Markdown checker built in Go — validates internal anchors by default, external URLs when enabled, and enforces structure for local dev and CI alike.
 
 ```sh
 # macOS / Linux — one-line install
@@ -28,7 +28,7 @@ npm install -g @shinagawa-web/gomarklint
 
 [Quick Start →]({{< relref "/docs/quick-start" >}})
 
-- Catch broken links before your readers do — validates external URLs and internal anchors.
+- Catch broken links before your readers do — validates internal anchors by default; enable `external-link` to also check external URLs.
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).
 
