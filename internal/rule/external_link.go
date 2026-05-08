@@ -10,9 +10,12 @@ import (
 
 var (
 	// Link pattern matchers
-	inlineLinkPattern = regexp.MustCompile(`\[[^\]]*\]\((https?://[^\s)]+)\)`)
-	imageLinkPattern  = regexp.MustCompile(`!\[[^\]]*\]\((https?://[^\s)]+)\)`)
-	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://[^\s<>"'()]+).*?$`)
+	// Inline/image patterns allow balanced (...) groups inside the URL per CommonMark spec.
+	// [^\s()]+ allows square brackets (needed for IPv6 hosts like https://[::1]/).
+	// + quantifier ensures at least one character after the scheme (rejects bare https://).
+	inlineLinkPattern = regexp.MustCompile(`\[[^\]]*\]\((https?://(?:[^\s()]+|\([^\s()]*\))+)\)`)
+	imageLinkPattern  = regexp.MustCompile(`!\[[^\]]*\]\((https?://(?:[^\s()]+|\([^\s()]*\))+)\)`)
+	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://(?:[^\s<>"'()]+|\([^\s<>"'()]*\))+).*?$`)
 )
 
 type cacheResult struct {

@@ -584,6 +584,67 @@ See [link1](https://first.com) and [link2](https://second.com)
 				{URL: "https://example.com/img.png", Line: 2},
 			},
 		},
+		{
+			name: "inline link with parentheses in URL (DOI style)",
+			input: `
+[DOI](https://doi.org/10.1016/0026-0495(67)90027-3)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://doi.org/10.1016/0026-0495(67)90027-3", Line: 2},
+			},
+		},
+		{
+			name: "bare URL with parentheses (DOI style)",
+			input: `
+https://doi.org/10.1016/0026-0495(67)90027-3
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://doi.org/10.1016/0026-0495(67)90027-3", Line: 2},
+			},
+		},
+		{
+			name: "image link with parentheses in URL",
+			input: `
+![fig](https://example.com/image(v2).png)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/image(v2).png", Line: 2},
+			},
+		},
+		{
+			name: "unmatched closing paren terminates bare URL",
+			input: `
+See (https://example.com/page) for details.
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://example.com/page", Line: 2},
+			},
+		},
+		{
+			name: "inline link with IPv6 host",
+			input: `
+[local](https://[::1]/path)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://[::1]/path", Line: 2},
+			},
+		},
+		{
+			name: "image link with IPv6 host",
+			input: `
+![img](https://[::1]/image.png)
+`,
+			expected: []rule.ExtractedLink{
+				{URL: "https://[::1]/image.png", Line: 2},
+			},
+		},
+		{
+			name: "scheme-only URL is not extracted",
+			input: `
+[broken](https://)
+`,
+			expected: nil,
+		},
 	}
 
 	for _, tt := range tests {
