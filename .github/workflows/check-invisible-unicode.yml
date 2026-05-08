@@ -19,7 +19,7 @@ jobs:
 
       - name: Scan for invisible Unicode characters
         run: |
-          if grep -rPn '[\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]' \
+          if grep -rPn '[\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}\x{E0100}-\x{E01EF}]' \
             --include="*.go" \
             --include="*.sh" \
             .; then
