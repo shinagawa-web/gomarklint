@@ -207,13 +207,15 @@ func performCheck(client *http.Client, url string) (int, error) {
 
 	resp, err := client.Do(req)
 	if err == nil {
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-		return resp.StatusCode, nil
+		_ = resp.Body.Close()
+		// Some servers reject HEAD with 405 (Method Not Allowed) or 403 (Forbidden)
+		// but serve GET normally. Fall back to GET in those cases.
+		if resp.StatusCode != http.StatusMethodNotAllowed && resp.StatusCode != http.StatusForbidden {
+			return resp.StatusCode, nil
+		}
 	}
 
-	// fallback to GET: reuse the existing request to avoid a second NewRequest call
+	// fallback to GET: covers both network errors and HEAD 405/403
 	req.Method = "GET"
 
 	resp, err = client.Do(req)
