@@ -12,6 +12,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
 
     steps:
       - name: Checkout code
@@ -41,6 +44,13 @@ jobs:
           fail_ci_if_error: true
 
       - name: Lint Markdown files
-        uses: shinagawa-web/gomarklint@fa7f82ab243d82375836601e98e9e4171903e95f # v3
+        run: ./gomarklint --output junit --config .gomarklint.ci.json > gomarklint.xml
+        continue-on-error: true
+
+      - name: Publish gomarklint results
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386 # v6.4.0
+        if: always()
         with:
-          args: --config .gomarklint.ci.json
+          report_paths: gomarklint.xml
+          check_name: gomarklint
+          fail_on_failure: true
