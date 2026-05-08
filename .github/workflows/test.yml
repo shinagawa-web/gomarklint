@@ -54,3 +54,4 @@ jobs:
           report_paths: gomarklint.xml
           check_name: gomarklint
           fail_on_failure: true
+          include_passed: true
