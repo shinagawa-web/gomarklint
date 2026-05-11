@@ -17,6 +17,11 @@
       "automerge": true,
       "automergeType": "pr",
       "requiredStatusChecks": ["Test / test"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest"],
+      "enabled": false
     }
   ]
 }
