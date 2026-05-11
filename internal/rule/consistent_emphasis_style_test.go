@@ -69,7 +69,7 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			content: "This is __bold__ text.\n",
 			style:   "asterisk",
 			wantErrs: []LintError{
-				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk strong, got underscore strong"},
 			},
 		},
 
@@ -92,7 +92,7 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			style:   "underscore",
 			wantErrs: []LintError{
 				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis"},
-				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis"},
+				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected underscore strong, got asterisk strong"},
 			},
 		},
 
@@ -115,7 +115,7 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			style:   "asterisk",
 			wantErrs: []LintError{
 				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
-				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected asterisk strong, got underscore strong"},
 			},
 		},
 
@@ -229,6 +229,14 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			content:  "[text](https://example.com/_path_\n",
 			style:    "asterisk",
 			wantErrs: nil,
+		},
+		{
+			name:    "bare ]( sequence without preceding [ is not treated as link",
+			content: "array](index) contains _value_\n",
+			style:   "asterisk",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+			},
 		},
 		{
 			name:     "malformed link with opening paren at end of line not flagged",

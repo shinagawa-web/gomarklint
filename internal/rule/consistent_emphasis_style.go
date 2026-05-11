@@ -113,10 +113,12 @@ func checkEmphasisLine(s string, filename string, lineNum int, style string, exp
 		}
 
 		expected := expectedEmphCh
+		kind := "emphasis"
 		if runLen == 2 {
 			expected = expectedStrongCh
+			kind = "strong"
 		}
-		if err := checkEmphasisStyle(filename, lineNum, ch, style, expected); err != nil {
+		if err := checkEmphasisStyle(filename, lineNum, ch, style, expected, kind); err != nil {
 			*errs = append(*errs, *err)
 		}
 		i = closerPos + runLen // advance past the entire span
@@ -163,9 +165,10 @@ func isEmphWordChar(b byte) bool {
 }
 
 // checkEmphasisStyle validates ch against the configured style and updates
-// expectedCh in consistent mode. Returns a LintError if the emphasis character
-// does not match, nil otherwise.
-func checkEmphasisStyle(filename string, line int, ch byte, style string, expectedCh *byte) *LintError {
+// expectedCh in consistent mode. kind is "emphasis" for single-delimiter spans
+// and "strong" for double-delimiter spans. Returns a LintError if the marker
+// character does not match, nil otherwise.
+func checkEmphasisStyle(filename string, line int, ch byte, style string, expectedCh *byte, kind string) *LintError {
 	switch style {
 	case "consistent":
 		if *expectedCh == 0 {
@@ -176,7 +179,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected " + emphCharName(*expectedCh) + " emphasis, got " + emphCharName(ch) + " emphasis",
+				Message: "consistent-emphasis-style: expected " + emphCharName(*expectedCh) + " " + kind + ", got " + emphCharName(ch) + " " + kind,
 			}
 		}
 	case "asterisk":
@@ -184,7 +187,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis",
+				Message: "consistent-emphasis-style: expected asterisk " + kind + ", got underscore " + kind,
 			}
 		}
 	case "underscore":
@@ -192,7 +195,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis",
+				Message: "consistent-emphasis-style: expected underscore " + kind + ", got asterisk " + kind,
 			}
 		}
 	}
@@ -214,7 +217,7 @@ func stripLinkURLs(s string) string {
 	b.Grow(len(s))
 	i := 0
 	for i < len(s) {
-		if s[i] != ']' || i+1 >= len(s) || s[i+1] != '(' {
+		if s[i] != ']' || i+1 >= len(s) || s[i+1] != '(' || !hasPrecedingBracket(s, i) {
 			b.WriteByte(s[i])
 			i++
 			continue
@@ -230,6 +233,16 @@ func stripLinkURLs(s string) string {
 		}
 	}
 	return b.String()
+}
+
+// hasPrecedingBracket reports whether there is an unescaped '[' before position i in s.
+func hasPrecedingBracket(s string, i int) bool {
+	for j := i - 1; j >= 0; j-- {
+		if s[j] == '[' {
+			return true
+		}
+	}
+	return false
 }
 
 // consumeLinkDest blanks out the link destination starting at i and returns
