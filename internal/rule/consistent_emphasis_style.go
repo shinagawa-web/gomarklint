@@ -16,7 +16,8 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
-	var expectedCh byte // 0 until first emphasis seen (consistent mode)
+	var expectedEmphCh byte   // for runLen == 1 (emphasis)
+	var expectedStrongCh byte // for runLen == 2 (strong)
 
 	for i, line := range lines {
 		first := firstNonSpaceByte(line)
@@ -45,8 +46,11 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 		if strings.ContainsRune(scanned, '`') {
 			scanned = stripInlineCode(scanned)
 		}
+		if strings.Contains(scanned, "](") {
+			scanned = stripLinkURLs(scanned)
+		}
 
-		checkEmphasisLine(scanned, filename, offset+i+1, style, &expectedCh, &errs)
+		checkEmphasisLine(scanned, filename, offset+i+1, style, &expectedEmphCh, &expectedStrongCh, &errs)
 	}
 
 	return errs
@@ -56,7 +60,11 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 // to errs. Only valid spans (opener + matching closer) are counted, so closing
 // delimiters followed by punctuation are never double-counted. The function is
 // allocation-free: no intermediate slice is created.
-func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedCh *byte, errs *[]LintError) {
+//
+// expectedEmphCh tracks the expected marker for single-delimiter spans (emphasis);
+// expectedStrongCh tracks it for double-delimiter spans (strong). They are kept
+// separate so that *italic* and __strong__ can coexist without a violation.
+func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedEmphCh *byte, expectedStrongCh *byte, errs *[]LintError) {
 	i := 0
 	for i < len(s) {
 		ch := s[i]
@@ -104,7 +112,13 @@ func checkEmphasisLine(s string, filename string, lineNum int, style string, exp
 			continue
 		}
 
-		if err := checkEmphasisStyle(filename, lineNum, ch, style, expectedCh); err != nil {
+		expected := expectedEmphCh
+		kind := "emphasis"
+		if runLen == 2 {
+			expected = expectedStrongCh
+			kind = "strong"
+		}
+		if err := checkEmphasisStyle(filename, lineNum, ch, style, expected, kind); err != nil {
 			*errs = append(*errs, *err)
 		}
 		i = closerPos + runLen // advance past the entire span
@@ -151,9 +165,10 @@ func isEmphWordChar(b byte) bool {
 }
 
 // checkEmphasisStyle validates ch against the configured style and updates
-// expectedCh in consistent mode. Returns a LintError if the emphasis character
-// does not match, nil otherwise.
-func checkEmphasisStyle(filename string, line int, ch byte, style string, expectedCh *byte) *LintError {
+// expectedCh in consistent mode. kind is "emphasis" for single-delimiter spans
+// and "strong" for double-delimiter spans. Returns a LintError if the marker
+// character does not match, nil otherwise.
+func checkEmphasisStyle(filename string, line int, ch byte, style string, expectedCh *byte, kind string) *LintError {
 	switch style {
 	case "consistent":
 		if *expectedCh == 0 {
@@ -164,7 +179,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected " + emphCharName(*expectedCh) + " emphasis, got " + emphCharName(ch) + " emphasis",
+				Message: "consistent-emphasis-style: expected " + emphCharName(*expectedCh) + " " + kind + ", got " + emphCharName(ch) + " " + kind,
 			}
 		}
 	case "asterisk":
@@ -172,7 +187,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis",
+				Message: "consistent-emphasis-style: expected asterisk " + kind + ", got underscore " + kind,
 			}
 		}
 	case "underscore":
@@ -180,7 +195,7 @@ func checkEmphasisStyle(filename string, line int, ch byte, style string, expect
 			return &LintError{
 				File:    filename,
 				Line:    line,
-				Message: "consistent-emphasis-style: expected underscore emphasis, got asterisk emphasis",
+				Message: "consistent-emphasis-style: expected underscore " + kind + ", got asterisk " + kind,
 			}
 		}
 	}
@@ -192,4 +207,120 @@ func emphCharName(ch byte) string {
 		return "asterisk"
 	}
 	return "underscore"
+}
+
+// stripLinkURLs replaces the destination and title of inline Markdown links
+// with spaces so that underscores or asterisks in URLs are not mistaken for
+// emphasis markers. The link text between [ and ] is preserved.
+func stripLinkURLs(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	i := 0
+	for i < len(s) {
+		if s[i] != ']' || i+1 >= len(s) || s[i+1] != '(' || !hasPrecedingBracket(s, i) {
+			b.WriteByte(s[i])
+			i++
+			continue
+		}
+		b.WriteByte(']')
+		b.WriteByte('(')
+		i += 2
+		i = consumeLinkDest(&b, s, i)
+		i = consumeLinkTitle(&b, s, i)
+		if i < len(s) && s[i] == ')' {
+			b.WriteByte(')')
+			i++
+		}
+	}
+	return b.String()
+}
+
+// hasPrecedingBracket reports whether there is an unescaped '[' before position i in s.
+func hasPrecedingBracket(s string, i int) bool {
+	for j := i - 1; j >= 0; j-- {
+		if s[j] == '[' {
+			return true
+		}
+	}
+	return false
+}
+
+// consumeLinkDest blanks out the link destination starting at i and returns
+// the position after it. Handles both angle-bracket form (<dest>) and the
+// regular balanced-paren form.
+func consumeLinkDest(b *strings.Builder, s string, i int) int {
+	if i >= len(s) {
+		return i
+	}
+	if s[i] == '<' {
+		b.WriteByte('<')
+		i++
+		for i < len(s) && s[i] != '>' {
+			b.WriteByte(' ')
+			i++
+		}
+		if i < len(s) {
+			b.WriteByte('>')
+			i++
+		}
+		return i
+	}
+	depth := 0
+	for i < len(s) {
+		c := s[i]
+		switch {
+		case c == '(':
+			depth++
+			b.WriteByte(' ')
+			i++
+		case c == ')' && depth > 0:
+			depth--
+			b.WriteByte(' ')
+			i++
+		case c == ')' || c == ' ' || c == '\t':
+			return i
+		default:
+			b.WriteByte(' ')
+			i++
+		}
+	}
+	return i
+}
+
+// consumeLinkTitle blanks out optional whitespace and the link title (if any)
+// starting at i and returns the position after it.
+func consumeLinkTitle(b *strings.Builder, s string, i int) int {
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		b.WriteByte(' ')
+		i++
+	}
+	if i >= len(s) {
+		return i
+	}
+	var closer byte
+	switch s[i] {
+	case '"':
+		closer = '"'
+	case '\'':
+		closer = '\''
+	case '(':
+		closer = ')'
+	default:
+		return i
+	}
+	b.WriteByte(s[i])
+	i++
+	for i < len(s) && s[i] != closer {
+		b.WriteByte(' ')
+		i++
+	}
+	if i < len(s) {
+		b.WriteByte(s[i])
+		i++
+	}
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		b.WriteByte(' ')
+		i++
+	}
+	return i
 }
