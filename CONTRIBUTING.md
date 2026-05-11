@@ -63,6 +63,19 @@ Always run `make test-all` before opening a pull request.
 
 ## Adding a new lint rule
 
+### Criteria for adding a new rule
+
+A new Rule belongs in gomarklint's core domain when **all** of the following are true:
+
+- It detects a structural or stylistic issue expressible as a single-file scan — no cross-file or project-wide context required.
+- It is language-agnostic: the check applies to any Markdown document, not to a specific framework, tool, or authoring convention.
+- It produces a Diagnostic with a stable rule key and a clear, actionable fix message.
+- It is a linter, not a formatter — gomarklint reports violations; it does not rewrite files.
+
+If a proposed rule requires knowledge of multiple files, targets a specific toolchain, or would rewrite content, it falls outside the core domain and should not be added.
+
+### Implementation steps
+
 1. Create the rule implementation under `internal/rule/`.
 2. Register the rule in the linter.
 3. Add unit tests in `internal/rule/`.

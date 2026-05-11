@@ -62,6 +62,22 @@ go install github.com/shinagawa-web/gomarklint/v3@latest
 - Enforce predictable structure (no more "why is this H4 under H2?").
 - Output that's friendly for both humans and machines (JSON).
 
+## Concepts
+
+gomarklint is built around four core concepts:
+
+| Term | Description |
+|---|---|
+| **Rule** | A named, versioned check applied to a Markdown file, identified by a stable key (e.g. `heading-level`) |
+| **Diagnostic** | A single violation emitted by a Rule, carrying file path, line number, rule key, message, and severity |
+| **Severity** | The impact level of a violation: `error` causes a non-zero exit code; `warning` is informational only |
+| **Config** | The per-rule and global settings that control enablement, severity, and rule-specific options |
+
+Rule keys are stable identifiers — they will not be renamed without a major version bump.
+Severity controls exit code behavior: any `error`-level Diagnostic makes gomarklint exit non-zero, making it safe as a CI gate.
+
+See [docs/glossary.md](docs/glossary.md) for full definitions and Go type references.
+
 ## CI Integration
 
 ### GitHub Actions
