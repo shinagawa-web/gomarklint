@@ -222,87 +222,92 @@ func stripLinkURLs(s string) string {
 		b.WriteByte(']')
 		b.WriteByte('(')
 		i += 2
-
-		// Consume destination.
-		if i < len(s) && s[i] == '<' {
-			// Angle-bracket form: <dest>
-			b.WriteByte('<')
-			i++
-			for i < len(s) && s[i] != '>' {
-				b.WriteByte(' ')
-				i++
-			}
-			if i < len(s) {
-				b.WriteByte('>')
-				i++
-			}
-		} else {
-			// Regular form: balanced parentheses, stops at space.
-			depth := 0
-			for i < len(s) {
-				c := s[i]
-				if c == '(' {
-					depth++
-					b.WriteByte(' ')
-					i++
-				} else if c == ')' {
-					if depth == 0 {
-						break
-					}
-					depth--
-					b.WriteByte(' ')
-					i++
-				} else if c == ' ' || c == '\t' {
-					break
-				} else {
-					b.WriteByte(' ')
-					i++
-				}
-			}
-		}
-
-		// Optional whitespace before title.
-		for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
-			b.WriteByte(' ')
-			i++
-		}
-
-		// Optional title: "...", '...', or (...).
-		if i < len(s) {
-			var closer byte
-			switch s[i] {
-			case '"':
-				closer = '"'
-			case '\'':
-				closer = '\''
-			case '(':
-				closer = ')'
-			}
-			if closer != 0 {
-				b.WriteByte(s[i])
-				i++
-				for i < len(s) && s[i] != closer {
-					b.WriteByte(' ')
-					i++
-				}
-				if i < len(s) {
-					b.WriteByte(s[i])
-					i++
-				}
-			}
-		}
-
-		// Trailing whitespace before ')'.
-		for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
-			b.WriteByte(' ')
-			i++
-		}
-
-		// Closing ')'.
+		i = consumeLinkDest(&b, s, i)
+		i = consumeLinkTitle(&b, s, i)
 		if i < len(s) && s[i] == ')' {
 			b.WriteByte(')')
 			i++
 		}
 	}
 	return b.String()
+}
+
+// consumeLinkDest blanks out the link destination starting at i and returns
+// the position after it. Handles both angle-bracket form (<dest>) and the
+// regular balanced-paren form.
+func consumeLinkDest(b *strings.Builder, s string, i int) int {
+	if i >= len(s) {
+		return i
+	}
+	if s[i] == '<' {
+		b.WriteByte('<')
+		i++
+		for i < len(s) && s[i] != '>' {
+			b.WriteByte(' ')
+			i++
+		}
+		if i < len(s) {
+			b.WriteByte('>')
+			i++
+		}
+		return i
+	}
+	depth := 0
+	for i < len(s) {
+		c := s[i]
+		switch {
+		case c == '(':
+			depth++
+			b.WriteByte(' ')
+			i++
+		case c == ')' && depth > 0:
+			depth--
+			b.WriteByte(' ')
+			i++
+		case c == ')' || c == ' ' || c == '\t':
+			return i
+		default:
+			b.WriteByte(' ')
+			i++
+		}
+	}
+	return i
+}
+
+// consumeLinkTitle blanks out optional whitespace and the link title (if any)
+// starting at i and returns the position after it.
+func consumeLinkTitle(b *strings.Builder, s string, i int) int {
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		b.WriteByte(' ')
+		i++
+	}
+	if i >= len(s) {
+		return i
+	}
+	var closer byte
+	switch s[i] {
+	case '"':
+		closer = '"'
+	case '\'':
+		closer = '\''
+	case '(':
+		closer = ')'
+	default:
+		return i
+	}
+	b.WriteByte(s[i])
+	i++
+	for i < len(s) && s[i] != closer {
+		b.WriteByte(' ')
+		i++
+	}
+	if i < len(s) {
+		b.WriteByte(s[i])
+		i++
+	}
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		b.WriteByte(' ')
+		i++
+	}
+	return i
 }
