@@ -142,8 +142,57 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			style:   "consistent",
 			wantErrs: []LintError{
 				{File: "test.md", Line: 3, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
-				{File: "test.md", Line: 5, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
 			},
+		},
+
+		// emphasis and strong are tracked independently in consistent mode
+		{
+			name:     "asterisk emphasis with underscore strong no violation",
+			content:  "*italic* and __bold__\n",
+			style:    "consistent",
+			wantErrs: nil,
+		},
+		{
+			name:     "underscore emphasis with asterisk strong no violation",
+			content:  "_italic_ and **bold**\n",
+			style:    "consistent",
+			wantErrs: nil,
+		},
+		{
+			name:    "mixed emphasis consistent violation not affected by strong",
+			content: "*italic* **bold** _also italic_\n",
+			style:   "consistent",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+			},
+		},
+
+		// URL with underscores must not be flagged
+		{
+			name:     "underscore in link URL not treated as emphasis",
+			content:  "[text](https://example.com/_foo_bar_/path) more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "underscore in link title not treated as emphasis",
+			content:  "[text](https://example.com/ \"_title_\") more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:    "emphasis outside link still checked when URL has underscores",
+			content: "[text](https://example.com/_path_/) _italic_\n",
+			style:   "asterisk",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "consistent-emphasis-style: expected asterisk emphasis, got underscore emphasis"},
+			},
+		},
+		{
+			name:     "URL with underscores and title paren from issue #279",
+			content:  "[or text](https://example.com/_path_ \"title (2015)\") **essai_strong** _inconsistent_\n",
+			style:    "consistent",
+			wantErrs: nil,
 		},
 
 		// mid-word underscores must not be flagged

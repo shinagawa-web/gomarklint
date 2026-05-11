@@ -16,7 +16,8 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 	var errs []LintError
 	inBlock := false
 	fenceMarker := ""
-	var expectedCh byte // 0 until first emphasis seen (consistent mode)
+	var expectedEmphCh byte   // for runLen == 1 (emphasis)
+	var expectedStrongCh byte // for runLen == 2 (strong)
 
 	for i, line := range lines {
 		first := firstNonSpaceByte(line)
@@ -45,8 +46,11 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 		if strings.ContainsRune(scanned, '`') {
 			scanned = stripInlineCode(scanned)
 		}
+		if strings.Contains(scanned, "](") {
+			scanned = stripLinkURLs(scanned)
+		}
 
-		checkEmphasisLine(scanned, filename, offset+i+1, style, &expectedCh, &errs)
+		checkEmphasisLine(scanned, filename, offset+i+1, style, &expectedEmphCh, &expectedStrongCh, &errs)
 	}
 
 	return errs
@@ -56,7 +60,11 @@ func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, s
 // to errs. Only valid spans (opener + matching closer) are counted, so closing
 // delimiters followed by punctuation are never double-counted. The function is
 // allocation-free: no intermediate slice is created.
-func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedCh *byte, errs *[]LintError) {
+//
+// expectedEmphCh tracks the expected marker for single-delimiter spans (emphasis);
+// expectedStrongCh tracks it for double-delimiter spans (strong). They are kept
+// separate so that *italic* and __strong__ can coexist without a violation.
+func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedEmphCh *byte, expectedStrongCh *byte, errs *[]LintError) {
 	i := 0
 	for i < len(s) {
 		ch := s[i]
@@ -104,7 +112,11 @@ func checkEmphasisLine(s string, filename string, lineNum int, style string, exp
 			continue
 		}
 
-		if err := checkEmphasisStyle(filename, lineNum, ch, style, expectedCh); err != nil {
+		expected := expectedEmphCh
+		if runLen == 2 {
+			expected = expectedStrongCh
+		}
+		if err := checkEmphasisStyle(filename, lineNum, ch, style, expected); err != nil {
 			*errs = append(*errs, *err)
 		}
 		i = closerPos + runLen // advance past the entire span
@@ -192,4 +204,105 @@ func emphCharName(ch byte) string {
 		return "asterisk"
 	}
 	return "underscore"
+}
+
+// stripLinkURLs replaces the destination and title of inline Markdown links
+// with spaces so that underscores or asterisks in URLs are not mistaken for
+// emphasis markers. The link text between [ and ] is preserved.
+func stripLinkURLs(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	i := 0
+	for i < len(s) {
+		if s[i] != ']' || i+1 >= len(s) || s[i+1] != '(' {
+			b.WriteByte(s[i])
+			i++
+			continue
+		}
+		b.WriteByte(']')
+		b.WriteByte('(')
+		i += 2
+
+		// Consume destination.
+		if i < len(s) && s[i] == '<' {
+			// Angle-bracket form: <dest>
+			b.WriteByte('<')
+			i++
+			for i < len(s) && s[i] != '>' {
+				b.WriteByte(' ')
+				i++
+			}
+			if i < len(s) {
+				b.WriteByte('>')
+				i++
+			}
+		} else {
+			// Regular form: balanced parentheses, stops at space.
+			depth := 0
+			for i < len(s) {
+				c := s[i]
+				if c == '(' {
+					depth++
+					b.WriteByte(' ')
+					i++
+				} else if c == ')' {
+					if depth == 0 {
+						break
+					}
+					depth--
+					b.WriteByte(' ')
+					i++
+				} else if c == ' ' || c == '\t' {
+					break
+				} else {
+					b.WriteByte(' ')
+					i++
+				}
+			}
+		}
+
+		// Optional whitespace before title.
+		for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+			b.WriteByte(' ')
+			i++
+		}
+
+		// Optional title: "...", '...', or (...).
+		if i < len(s) {
+			var closer byte
+			switch s[i] {
+			case '"':
+				closer = '"'
+			case '\'':
+				closer = '\''
+			case '(':
+				closer = ')'
+			}
+			if closer != 0 {
+				b.WriteByte(s[i])
+				i++
+				for i < len(s) && s[i] != closer {
+					b.WriteByte(' ')
+					i++
+				}
+				if i < len(s) {
+					b.WriteByte(s[i])
+					i++
+				}
+			}
+		}
+
+		// Trailing whitespace before ')'.
+		for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+			b.WriteByte(' ')
+			i++
+		}
+
+		// Closing ')'.
+		if i < len(s) && s[i] == ')' {
+			b.WriteByte(')')
+			i++
+		}
+	}
+	return b.String()
 }
