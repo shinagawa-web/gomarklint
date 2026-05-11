@@ -194,6 +194,54 @@ func TestCheckConsistentEmphasisStyle(t *testing.T) {
 			style:    "consistent",
 			wantErrs: nil,
 		},
+		{
+			name:     "angle-bracket link destination with underscores not flagged",
+			content:  "[text](<https://example.com/_path_>) more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "link destination with nested parentheses not flagged",
+			content:  "[text](https://en.wikipedia.org/wiki/Foo_(bar)/_path_) more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "link with single-quoted title containing underscores not flagged",
+			content:  "[text](https://example.com/ '_title_') more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "link with paren title containing underscores not flagged",
+			content:  "[text](https://example.com/ (_title_)) more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "link with trailing whitespace in destination not flagged",
+			content:  "[text](https://example.com/_path_   ) more text\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "malformed link with no closing paren not flagged",
+			content:  "[text](https://example.com/_path_\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "malformed link with opening paren at end of line not flagged",
+			content:  "[text_label](\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
+		{
+			name:     "link with trailing whitespace after title not flagged",
+			content:  "[text](https://example.com/ \"_title_\"   ) more\n",
+			style:    "asterisk",
+			wantErrs: nil,
+		},
 
 		// mid-word underscores must not be flagged
 		{
