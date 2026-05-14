@@ -249,6 +249,26 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
+// externalLinkMaxConcurrency returns the configured maxConcurrency for the external-link rule.
+func (l *Linter) externalLinkMaxConcurrency() int {
+	if v, ok := l.config.RuleOptions("external-link")["maxConcurrency"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultMaxConcurrency
+}
+
+// externalLinkMaxRetries returns the configured maxRetries for the external-link rule.
+func (l *Linter) externalLinkMaxRetries() int {
+	if v, ok := l.config.RuleOptions("external-link")["maxRetries"]; ok {
+		if f, ok := v.(float64); ok && int(f) >= 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultMaxRetries
+}
+
 // externalLinkAllowedStatuses returns the configured allowedStatuses for the external-link rule.
 func (l *Linter) externalLinkAllowedStatuses() []int {
 	raw, _ := l.config.RuleOptions("external-link")["allowedStatuses"].([]interface{})
@@ -332,7 +352,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkAllowedStatuses(), l.urlCache)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache)
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}

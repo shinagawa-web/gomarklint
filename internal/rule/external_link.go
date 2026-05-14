@@ -32,6 +32,10 @@ type ExtractedLink struct {
 const (
 	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
 	DefaultRetryDelayMs = 1000
+	// DefaultMaxConcurrency is the default maximum number of concurrent HTTP requests
+	DefaultMaxConcurrency = 10
+	// DefaultMaxRetries is the default maximum number of retry attempts for failed requests
+	DefaultMaxRetries = 2
 
 	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )
@@ -90,7 +94,7 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 // CheckExternalLinks checks external links in the given lines.
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
 // Returns lint errors and the count of unique URLs checked.
-func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, allowedStatuses []int, urlCache *sync.Map) ([]LintError, int) {
+func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map) ([]LintError, int) {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 	links := ExtractExternalLinksWithLineNumbers(lines, offset)
 
@@ -108,8 +112,6 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// maxConcurrency limits the number of concurrent HTTP requests
-	const maxConcurrency = 10
 	sem := make(chan struct{}, maxConcurrency)
 
 	client := &http.Client{
@@ -131,11 +133,11 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 					err = result.err
 				} else {
 					// Cache contained unexpected type, re-check the URL
-					status, err = checkURL(client, url, retryDelayMs, allowedStatuses)
+					status, err = checkURL(client, url, retryDelayMs, maxRetries, allowedStatuses)
 					urlCache.Store(url, cacheResult{status: status, err: err})
 				}
 			} else {
-				status, err = checkURL(client, url, retryDelayMs, allowedStatuses)
+				status, err = checkURL(client, url, retryDelayMs, maxRetries, allowedStatuses)
 				urlCache.Store(url, cacheResult{status: status, err: err})
 			}
 
@@ -158,9 +160,7 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 }
 
 // checkURL performs the URL check with retry logic.
-func checkURL(client *http.Client, url string, retryDelayMs int, allowedStatuses []int) (int, error) {
-	// maxRetries is the maximum number of retry attempts for failed requests
-	const maxRetries = 2
+func checkURL(client *http.Client, url string, retryDelayMs int, maxRetries int, allowedStatuses []int) (int, error) {
 	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
 
 	var status int
