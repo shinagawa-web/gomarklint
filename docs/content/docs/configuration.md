@@ -104,7 +104,7 @@ In the object form, `enabled` can be omitted — it defaults to `true`. These ar
 | `consistent-emphasis-style` | `error` | `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`) |
 | `consistent-list-marker` | `error` | `style` (`consistent` \| `dash` \| `asterisk` \| `plus`, default `consistent`) |
 | `max-line-length` | disabled | `lineLength` (int, default `80`) |
-| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
+| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `maxConcurrency` (int, default `10`, max `10`), `maxRetries` (int, default `2`, max `2`), `retryDelayMs` (int, default `1000`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
 | `link-fragments` | disabled | `slug-algorithm` (string, default `github`), `slug-params` (object, for `custom` algorithm) |
 
 ## Option validation
