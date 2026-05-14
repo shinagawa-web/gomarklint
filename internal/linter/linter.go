@@ -50,7 +50,7 @@ func New(cfg config.Config) (*Linter, error) {
 	if err := validateExternalLinkIntOption(cfg, "maxRetries", 0, rule.MaxRetriesLimit); err != nil {
 		return nil, err
 	}
-	if err := validateExternalLinkIntOption(cfg, "perHostConcurrency", 0, rule.MaxPerHostConcurrencyLimit); err != nil {
+	if err := validateExternalLinkIntOption(cfg, "perHostConcurrency", 1, rule.MaxPerHostConcurrencyLimit); err != nil {
 		return nil, err
 	}
 	if err := validateExternalLinkIntOption(cfg, "perHostIntervalMs", 0, rule.MaxPerHostIntervalMsLimit); err != nil {
@@ -303,7 +303,7 @@ func (l *Linter) externalLinkMaxRetries() int {
 // externalLinkPerHostConcurrency returns the configured perHostConcurrency for the external-link rule.
 func (l *Linter) externalLinkPerHostConcurrency() int {
 	if v, ok := l.config.RuleOptions("external-link")["perHostConcurrency"]; ok {
-		if f, ok := v.(float64); ok && int(f) >= 0 {
+		if f, ok := v.(float64); ok && int(f) > 0 {
 			return int(f)
 		}
 	}

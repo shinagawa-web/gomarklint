@@ -42,12 +42,12 @@ const (
 	// MaxRetriesLimit is the maximum allowed value for maxRetries
 	MaxRetriesLimit = 4
 
-	// DefaultPerHostConcurrency is the default per-host concurrency limit (0 = disabled)
-	DefaultPerHostConcurrency = 0
+	// DefaultPerHostConcurrency is the default per-host concurrency limit
+	DefaultPerHostConcurrency = 2
 	// MaxPerHostConcurrencyLimit is the maximum allowed value for perHostConcurrency
 	MaxPerHostConcurrencyLimit = 15
-	// DefaultPerHostIntervalMs is the default minimum interval between requests to the same host (0 = disabled)
-	DefaultPerHostIntervalMs = 0
+	// DefaultPerHostIntervalMs is the default minimum interval between requests to the same host
+	DefaultPerHostIntervalMs = 3000
 	// MaxPerHostIntervalMsLimit is the maximum allowed value for perHostIntervalMs in milliseconds
 	MaxPerHostIntervalMsLimit = 60000
 
@@ -209,10 +209,7 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
-	var hostReg *hostLimiterRegistry
-	if perHostConcurrency > 0 || perHostIntervalMs > 0 {
-		hostReg = newHostLimiterRegistry(perHostConcurrency, perHostIntervalMs)
-	}
+	hostReg := newHostLimiterRegistry(perHostConcurrency, perHostIntervalMs)
 
 	for u, lines := range urlToLines {
 		wg.Add(1)
@@ -234,11 +231,9 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 			}
 
 			if needHTTP {
-				if hostReg != nil {
-					lim := hostReg.get(extractHost(url))
-					lim.acquire()
-					defer lim.release()
-				}
+				lim := hostReg.get(extractHost(url))
+				lim.acquire()
+				defer lim.release()
 				status, err = checkURL(client, url, retryDelayMs, maxRetries, allowedStatuses)
 				urlCache.Store(url, cacheResult{status: status, err: err})
 			}

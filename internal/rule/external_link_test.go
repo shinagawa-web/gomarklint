@@ -953,16 +953,3 @@ func TestCheckExternalLinks_PerHostIntervalMs(t *testing.T) {
 	}
 }
 
-func TestCheckExternalLinks_PerHostDisabled(t *testing.T) {
-	ts := setupTestServer()
-	defer ts.Close()
-
-	markdown := fmt.Sprintf("[ok](%s/ok)\n[fail](%s/fail)\n", ts.URL, ts.URL)
-	lines, offset := toLines(markdown)
-
-	// Both per-host options 0 → same behavior as before
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
-	if len(results) != 1 {
-		t.Errorf("expected 1 error with per-host disabled, got %d", len(results))
-	}
-}

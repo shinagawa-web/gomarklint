@@ -1156,16 +1156,16 @@ func TestExternalLink_ConfigurablePerHostConcurrency(t *testing.T) {
 	}
 }
 
-func TestExternalLink_PerHostConcurrencyZeroIsValid(t *testing.T) {
+func TestExternalLink_PerHostConcurrencyZeroIsInvalid(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["external-link"] = &config.RuleConfig{
 		Enabled:  true,
 		Severity: config.SeverityError,
 		Options:  map[string]interface{}{"perHostConcurrency": float64(0)},
 	}
-	l := mustNew(t, cfg)
-	if got := l.externalLinkPerHostConcurrency(); got != 0 {
-		t.Errorf("expected perHostConcurrency 0, got %d", got)
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for perHostConcurrency 0, got nil")
 	}
 }
 

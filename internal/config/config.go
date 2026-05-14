@@ -34,7 +34,7 @@ const DefaultConfigJSON = `{
     "consistent-emphasis-style": { "style": "consistent" },
     "consistent-list-marker": { "style": "consistent" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
-    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "perHostConcurrency": 0, "perHostIntervalMs": 0, "skipPatterns": [] },
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "perHostConcurrency": 2, "perHostIntervalMs": 3000, "skipPatterns": [] },
     "link-fragments": { "enabled": true, "slug-algorithm": "github" }
   },
   "include": ["README.md", "testdata"],
@@ -264,7 +264,7 @@ func Default() Config {
 			"external-link": {
 				Enabled:  false,
 				Severity: SeverityError,
-				Options:  map[string]interface{}{"timeoutSeconds": float64(5), "maxConcurrency": float64(10), "maxRetries": float64(2), "perHostConcurrency": float64(0), "perHostIntervalMs": float64(0), "skipPatterns": []interface{}{}},
+				Options:  map[string]interface{}{"timeoutSeconds": float64(5), "maxConcurrency": float64(10), "maxRetries": float64(2), "perHostConcurrency": float64(2), "perHostIntervalMs": float64(3000), "skipPatterns": []interface{}{}},
 			},
 			"link-fragments": {
 				Enabled:  true,
