@@ -952,4 +952,3 @@ func TestCheckExternalLinks_PerHostIntervalMs(t *testing.T) {
 		}
 	}
 }
-
