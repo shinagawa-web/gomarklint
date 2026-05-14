@@ -1109,7 +1109,7 @@ func TestExternalLink_MaxConcurrencyTooHighReturnsError(t *testing.T) {
 	cfg.Rules["external-link"] = &config.RuleConfig{
 		Enabled:  true,
 		Severity: config.SeverityError,
-		Options:  map[string]interface{}{"maxConcurrency": float64(11)},
+		Options:  map[string]interface{}{"maxConcurrency": float64(16)},
 	}
 	_, err := New(cfg)
 	if err == nil {
@@ -1135,7 +1135,7 @@ func TestExternalLink_MaxRetriesTooHighReturnsError(t *testing.T) {
 	cfg.Rules["external-link"] = &config.RuleConfig{
 		Enabled:  true,
 		Severity: config.SeverityError,
-		Options:  map[string]interface{}{"maxRetries": float64(3)},
+		Options:  map[string]interface{}{"maxRetries": float64(5)},
 	}
 	_, err := New(cfg)
 	if err == nil {

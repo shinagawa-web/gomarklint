@@ -1,5 +1,5 @@
 {
   "rules": {
-    "external-link": { "enabled": true, "maxConcurrency": 11 }
+    "external-link": { "enabled": true, "maxConcurrency": 16 }
   }
 }

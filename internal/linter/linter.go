@@ -101,8 +101,8 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 }
 
 // validateExternalLinkIntOption checks that a numeric external-link option, if present,
-// is within [min, max]. Returns a descriptive error if not.
-func validateExternalLinkIntOption(cfg config.Config, optKey string, min, max int) error {
+// is within [minVal, maxVal]. Returns a descriptive error if not.
+func validateExternalLinkIntOption(cfg config.Config, optKey string, minVal, maxVal int) error {
 	raw, exists := cfg.RuleOptions("external-link")[optKey]
 	if !exists {
 		return nil
@@ -112,8 +112,8 @@ func validateExternalLinkIntOption(cfg config.Config, optKey string, min, max in
 		return fmt.Errorf("gomarklint: invalid value for external-link.%s: expected integer, got %T (%#v)", optKey, raw, raw)
 	}
 	v := int(f)
-	if v < min || v > max {
-		return fmt.Errorf("gomarklint: external-link.%s must be between %d and %d, got %d", optKey, min, max, v)
+	if v < minVal || v > maxVal {
+		return fmt.Errorf("gomarklint: external-link.%s must be between %d and %d, got %d", optKey, minVal, maxVal, v)
 	}
 	return nil
 }
