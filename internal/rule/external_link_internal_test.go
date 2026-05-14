@@ -140,6 +140,26 @@ func Test_performCheck(t *testing.T) {
 	})
 }
 
+func Test_extractHost(t *testing.T) {
+	tests := []struct {
+		rawURL string
+		want   string
+	}{
+		{"https://example.com/path", "example.com"},
+		{"https://example.com:8080/path", "example.com:8080"},
+		{"http://user:pass@example.com", "example.com"},
+		{"not-a-url", "not-a-url"},
+		{"/relative/path", "/relative/path"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.rawURL, func(t *testing.T) {
+			if got := extractHost(tt.rawURL); got != tt.want {
+				t.Errorf("extractHost(%q) = %q, want %q", tt.rawURL, got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_formatLinkError(t *testing.T) {
 	tests := []struct {
 		url      string

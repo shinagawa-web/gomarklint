@@ -60,11 +60,12 @@ check-coverage: ## Run tests with coverage and enforce minimum threshold
 	@echo "Running tests with coverage (threshold: $(COVERAGE_THRESHOLD)%)..."
 	@mkdir -p coverage
 	$(GOTEST) $(shell go list ./... | grep -v '/e2e') -coverprofile=coverage/coverage.out
-	@total=$$($(GOCMD) tool cover -func=coverage/coverage.out | grep '^total' | awk '{print $$3}' | tr -d '%'); \
-	echo "Total coverage: $${total}%"; \
-	if ! awk "BEGIN { exit !($$total >= $(COVERAGE_THRESHOLD)) }"; then \
-		echo "FAIL: coverage $${total}% is below threshold $(COVERAGE_THRESHOLD)%"; exit 1; \
-	fi
+	@awk 'NR>1 { total+=$$2; if($$3>0) covered+=$$2 } END { \
+		printf "Total coverage: %d/%d statements\n", covered, total; \
+		if (covered * 100 < total * $(COVERAGE_THRESHOLD)) { \
+			printf "FAIL: %d uncovered statement(s), below threshold $(COVERAGE_THRESHOLD)%%\n", total-covered; exit 1 \
+		} \
+	}' coverage/coverage.out
 	@echo "Coverage OK."
 
 bench: ## Run benchmark tests
