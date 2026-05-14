@@ -94,7 +94,7 @@ This creates `.gomarklint.json` with sensible defaults:
     "consistent-list-marker": { "style": "consistent" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] },
-    "link-fragments": { "enabled": false, "slug-algorithm": "github" }
+    "link-fragments": { "enabled": true, "slug-algorithm": "github" }
   },
   "include": ["README.md", "testdata"],
   "ignore": [],
@@ -107,10 +107,10 @@ You can edit it anytime — CLI flags override config values.
 ## 2) Run it
 
 ```sh
-# lint current directory recursively
+# check current directory recursively
 gomarklint .
 
-# lint specific targets
+# check specific targets
 gomarklint docs README.md internal/rule
 ```
 

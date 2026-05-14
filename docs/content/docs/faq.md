@@ -94,7 +94,7 @@ In CI, add both commands as separate steps.
 
 ---
 
-## Running the linter
+## Running gomarklint
 
 ### `unknown shorthand flag: 'v'`
 

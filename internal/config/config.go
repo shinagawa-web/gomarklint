@@ -35,7 +35,7 @@ const DefaultConfigJSON = `{
     "consistent-list-marker": { "style": "consistent" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
     "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "skipPatterns": [] },
-    "link-fragments": { "enabled": false, "slug-algorithm": "github" }
+    "link-fragments": { "enabled": true, "slug-algorithm": "github" }
   },
   "include": ["README.md", "testdata"],
   "ignore": [],
@@ -267,8 +267,8 @@ func Default() Config {
 				Options:  map[string]interface{}{"timeoutSeconds": float64(5), "skipPatterns": []interface{}{}},
 			},
 			"link-fragments": {
-				Enabled:  false,
-				Severity: SeverityOff,
+				Enabled:  true,
+				Severity: SeverityError,
 				Options:  map[string]interface{}{"slug-algorithm": "github"},
 			},
 		},

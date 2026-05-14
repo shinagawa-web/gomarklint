@@ -14,7 +14,7 @@ You can use gomarklint in your CI workflows using the official [GitHub Action](h
 
 ```yml
 # .github/workflows/docs-lint.yml
-name: Lint Markdown
+name: gomarklint
 
 on:
   pull_request:
