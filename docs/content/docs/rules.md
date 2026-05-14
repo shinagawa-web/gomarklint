@@ -11,7 +11,7 @@ weight: 2
 
 | Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `maxConcurrency` (default `10`, max `15`), `maxRetries` (default `2`, max `4`), `skipPatterns` (regex list)                 |
+| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `maxConcurrency` (default `10`, max `15`), `maxRetries` (default `2`, max `4`), `perHostConcurrency` (default `0` = disabled, max `15`), `perHostIntervalMs` (default `0` = disabled, max `60000`), `skipPatterns` (regex list) |
 | `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **on**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
 
 ## Structure and formatting checks

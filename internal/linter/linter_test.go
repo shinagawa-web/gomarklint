@@ -1142,3 +1142,107 @@ func TestExternalLink_MaxRetriesTooHighReturnsError(t *testing.T) {
 		t.Fatal("expected error for maxRetries above limit, got nil")
 	}
 }
+
+func TestExternalLink_ConfigurablePerHostConcurrency(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostConcurrency": float64(3)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkPerHostConcurrency(); got != 3 {
+		t.Errorf("expected perHostConcurrency 3, got %d", got)
+	}
+}
+
+func TestExternalLink_PerHostConcurrencyZeroIsValid(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostConcurrency": float64(0)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkPerHostConcurrency(); got != 0 {
+		t.Errorf("expected perHostConcurrency 0, got %d", got)
+	}
+}
+
+func TestExternalLink_PerHostConcurrencyTooHighReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostConcurrency": float64(16)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for perHostConcurrency above limit, got nil")
+	}
+}
+
+func TestExternalLink_PerHostConcurrencyWrongTypeReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostConcurrency": "one"},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for non-integer perHostConcurrency, got nil")
+	}
+}
+
+func TestExternalLink_ConfigurablePerHostIntervalMs(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostIntervalMs": float64(500)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkPerHostIntervalMs(); got != 500 {
+		t.Errorf("expected perHostIntervalMs 500, got %d", got)
+	}
+}
+
+func TestExternalLink_PerHostIntervalMsZeroIsValid(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostIntervalMs": float64(0)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkPerHostIntervalMs(); got != 0 {
+		t.Errorf("expected perHostIntervalMs 0, got %d", got)
+	}
+}
+
+func TestExternalLink_PerHostIntervalMsTooHighReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostIntervalMs": float64(60001)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for perHostIntervalMs above limit, got nil")
+	}
+}
+
+func TestExternalLink_PerHostIntervalMsWrongTypeReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostIntervalMs": "fast"},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for non-integer perHostIntervalMs, got nil")
+	}
+}
