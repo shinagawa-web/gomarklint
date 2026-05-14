@@ -674,6 +674,24 @@ func TestE2E_EdgeCases(t *testing.T) {
 		assertOutputContains(t, output, "valid values: consistent, backtick, tilde")
 	})
 
+	t.Run("ExternalLinkMaxConcurrencyTooHigh", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/valid.md", "--config", "config-external-link-max-concurrency-too-high.json")
+		if err == nil {
+			t.Errorf("expected error for maxConcurrency above limit, but command succeeded")
+		}
+		assertOutputContains(t, output, "[gomarklint error]:")
+		assertOutputContains(t, output, "external-link.maxConcurrency")
+	})
+
+	t.Run("ExternalLinkMaxRetriesTooHigh", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/valid.md", "--config", "config-external-link-max-retries-too-high.json")
+		if err == nil {
+			t.Errorf("expected error for maxRetries above limit, but command succeeded")
+		}
+		assertOutputContains(t, output, "[gomarklint error]:")
+		assertOutputContains(t, output, "external-link.maxRetries")
+	})
+
 	t.Run("EmptyFile", func(t *testing.T) {
 		output := runTest(t, "fixtures/empty.md", "--config", ".gomarklint.json")
 		assertOutputContains(t, output, "Errors in fixtures/empty.md:")

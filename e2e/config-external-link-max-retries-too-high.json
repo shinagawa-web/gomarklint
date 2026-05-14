@@ -1,0 +1,5 @@
+{
+  "rules": {
+    "external-link": { "enabled": true, "maxRetries": 3 }
+  }
+}
