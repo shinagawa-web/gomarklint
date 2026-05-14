@@ -44,6 +44,13 @@ func New(cfg config.Config) (*Linter, error) {
 		return nil, err
 	}
 
+	if err := validateExternalLinkIntOption(cfg, "maxConcurrency", 1, rule.MaxConcurrencyLimit); err != nil {
+		return nil, err
+	}
+	if err := validateExternalLinkIntOption(cfg, "maxRetries", 0, rule.MaxRetriesLimit); err != nil {
+		return nil, err
+	}
+
 	compiledPatterns := []*regexp.Regexp{}
 	if cfg.IsEnabled("external-link") {
 		opts := cfg.RuleOptions("external-link")
@@ -91,6 +98,24 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 		}
 	}
 	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
+}
+
+// validateExternalLinkIntOption checks that a numeric external-link option, if present,
+// is within [min, max]. Returns a descriptive error if not.
+func validateExternalLinkIntOption(cfg config.Config, optKey string, min, max int) error {
+	raw, exists := cfg.RuleOptions("external-link")[optKey]
+	if !exists {
+		return nil
+	}
+	f, ok := raw.(float64)
+	if !ok {
+		return fmt.Errorf("gomarklint: invalid value for external-link.%s: expected integer, got %T (%#v)", optKey, raw, raw)
+	}
+	v := int(f)
+	if v < min || v > max {
+		return fmt.Errorf("gomarklint: external-link.%s must be between %d and %d, got %d", optKey, min, max, v)
+	}
+	return nil
 }
 
 // Run performs linting on the given file paths concurrently.

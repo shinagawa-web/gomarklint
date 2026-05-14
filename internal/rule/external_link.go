@@ -34,8 +34,12 @@ const (
 	DefaultRetryDelayMs = 1000
 	// DefaultMaxConcurrency is the default maximum number of concurrent HTTP requests
 	DefaultMaxConcurrency = 10
+	// MaxConcurrencyLimit is the maximum allowed value for maxConcurrency
+	MaxConcurrencyLimit = 10
 	// DefaultMaxRetries is the default maximum number of retry attempts for failed requests
 	DefaultMaxRetries = 2
+	// MaxRetriesLimit is the maximum allowed value for maxRetries
+	MaxRetriesLimit = 2
 
 	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )
