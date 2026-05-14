@@ -1051,3 +1051,94 @@ func TestNew_InvalidStyleOption_DisabledRuleStillValidated(t *testing.T) {
 		t.Fatal("expected error for invalid style even when rule is disabled, got nil")
 	}
 }
+
+func TestExternalLink_ConfigurableMaxConcurrency(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxConcurrency": float64(3)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkMaxConcurrency(); got != 3 {
+		t.Errorf("expected maxConcurrency 3, got %d", got)
+	}
+}
+
+func TestExternalLink_ConfigurableMaxRetries(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxRetries": float64(1)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkMaxRetries(); got != 1 {
+		t.Errorf("expected maxRetries 1, got %d", got)
+	}
+}
+
+func TestExternalLink_MaxRetriesZeroIsValid(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxRetries": float64(0)},
+	}
+	l := mustNew(t, cfg)
+	if got := l.externalLinkMaxRetries(); got != 0 {
+		t.Errorf("expected maxRetries 0, got %d", got)
+	}
+}
+
+func TestExternalLink_MaxConcurrencyWrongTypeReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxConcurrency": "five"},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for non-integer maxConcurrency, got nil")
+	}
+}
+
+func TestExternalLink_MaxConcurrencyTooHighReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxConcurrency": float64(16)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for maxConcurrency above limit, got nil")
+	}
+}
+
+func TestExternalLink_MaxConcurrencyZeroReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxConcurrency": float64(0)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for maxConcurrency=0, got nil")
+	}
+}
+
+func TestExternalLink_MaxRetriesTooHighReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxRetries": float64(5)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for maxRetries above limit, got nil")
+	}
+}

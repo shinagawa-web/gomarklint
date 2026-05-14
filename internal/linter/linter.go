@@ -44,6 +44,13 @@ func New(cfg config.Config) (*Linter, error) {
 		return nil, err
 	}
 
+	if err := validateExternalLinkIntOption(cfg, "maxConcurrency", 1, rule.MaxConcurrencyLimit); err != nil {
+		return nil, err
+	}
+	if err := validateExternalLinkIntOption(cfg, "maxRetries", 0, rule.MaxRetriesLimit); err != nil {
+		return nil, err
+	}
+
 	compiledPatterns := []*regexp.Regexp{}
 	if cfg.IsEnabled("external-link") {
 		opts := cfg.RuleOptions("external-link")
@@ -91,6 +98,24 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 		}
 	}
 	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
+}
+
+// validateExternalLinkIntOption checks that a numeric external-link option, if present,
+// is within [minVal, maxVal]. Returns a descriptive error if not.
+func validateExternalLinkIntOption(cfg config.Config, optKey string, minVal, maxVal int) error {
+	raw, exists := cfg.RuleOptions("external-link")[optKey]
+	if !exists {
+		return nil
+	}
+	f, ok := raw.(float64)
+	if !ok {
+		return fmt.Errorf("gomarklint: invalid value for external-link.%s: expected integer, got %T (%#v)", optKey, raw, raw)
+	}
+	v := int(f)
+	if v < minVal || v > maxVal {
+		return fmt.Errorf("gomarklint: external-link.%s must be between %d and %d, got %d", optKey, minVal, maxVal, v)
+	}
+	return nil
 }
 
 // Run performs linting on the given file paths concurrently.
@@ -249,6 +274,26 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
+// externalLinkMaxConcurrency returns the configured maxConcurrency for the external-link rule.
+func (l *Linter) externalLinkMaxConcurrency() int {
+	if v, ok := l.config.RuleOptions("external-link")["maxConcurrency"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultMaxConcurrency
+}
+
+// externalLinkMaxRetries returns the configured maxRetries for the external-link rule.
+func (l *Linter) externalLinkMaxRetries() int {
+	if v, ok := l.config.RuleOptions("external-link")["maxRetries"]; ok {
+		if f, ok := v.(float64); ok && int(f) >= 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultMaxRetries
+}
+
 // externalLinkAllowedStatuses returns the configured allowedStatuses for the external-link rule.
 func (l *Linter) externalLinkAllowedStatuses() []int {
 	raw, _ := l.config.RuleOptions("external-link")["allowedStatuses"].([]interface{})
@@ -332,7 +377,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkAllowedStatuses(), l.urlCache)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache)
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
