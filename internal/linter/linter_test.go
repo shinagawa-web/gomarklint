@@ -1091,6 +1091,19 @@ func TestExternalLink_MaxRetriesZeroIsValid(t *testing.T) {
 	}
 }
 
+func TestExternalLink_MaxConcurrencyWrongTypeReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"maxConcurrency": "five"},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for non-integer maxConcurrency, got nil")
+	}
+}
+
 func TestExternalLink_MaxConcurrencyTooHighReturnsError(t *testing.T) {
 	cfg := allOff()
 	cfg.Rules["external-link"] = &config.RuleConfig{
