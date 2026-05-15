@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func Test_checkURL(t *testing.T) {
@@ -70,6 +72,36 @@ func Test_checkURL(t *testing.T) {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, status)
 			}
 		})
+	}
+}
+
+func Test_checkURL_ExponentialBackoff(t *testing.T) {
+	var mu sync.Mutex
+	var requestTimes []time.Time
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requestTimes = append(requestTimes, time.Now())
+		mu.Unlock()
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	// retryDelayMs=100, maxRetries=3 → delays: 100ms, 200ms, 400ms
+	_, _ = checkURL(ts.Client(), ts.URL, 100, 3, nil)
+
+	mu.Lock()
+	times := requestTimes
+	mu.Unlock()
+
+	if len(times) < 3 {
+		t.Fatalf("expected at least 3 requests, got %d", len(times))
+	}
+	gap0 := times[1].Sub(times[0])
+	gap1 := times[2].Sub(times[1])
+	// second gap should be roughly double the first
+	if gap1 < gap0 {
+		t.Errorf("expected exponential backoff: gap1 (%v) should be >= gap0 (%v)", gap1, gap0)
 	}
 }
 

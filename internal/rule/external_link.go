@@ -267,8 +267,7 @@ func checkURL(client *http.Client, url string, retryDelayMs int, maxRetries int,
 
 	for i := 0; i <= maxRetries; i++ {
 		if i > 0 {
-			// Wait a bit before retrying (simple backoff)
-			time.Sleep(retryDelay * time.Duration(i))
+			time.Sleep(retryDelay * time.Duration(1<<uint(i-1)))
 		}
 
 		status, err = performCheck(client, url)
