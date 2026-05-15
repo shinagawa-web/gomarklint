@@ -934,8 +934,8 @@ func TestCheckExternalLinks_PerHostIntervalMs(t *testing.T) {
 	}
 	lines, offset := toLines(strings.Join(links, "\n"))
 
-	intervalMs := 50
-	// perHostConcurrency=1 to serialize requests; interval=50ms
+	intervalMs := 1000
+	// perHostConcurrency=1 to serialize requests; interval=1000ms (minimum valid value)
 	_, _ = rule.CheckExternalLinks("interval.md", lines, offset, []*regexp.Regexp{}, 5, 0, 10, rule.DefaultMaxRetries, nil, &sync.Map{}, 1, intervalMs)
 
 	mu.Lock()
@@ -947,7 +947,7 @@ func TestCheckExternalLinks_PerHostIntervalMs(t *testing.T) {
 	}
 	for i := 1; i < len(times); i++ {
 		gap := times[i].Sub(times[i-1])
-		if gap < time.Duration(intervalMs-10)*time.Millisecond {
+		if gap < time.Duration(intervalMs-100)*time.Millisecond {
 			t.Errorf("expected ≥ %dms between requests, got %v", intervalMs, gap)
 		}
 	}
