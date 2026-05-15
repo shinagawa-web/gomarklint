@@ -121,3 +121,4 @@ This applies even when the rule is disabled, so misconfigured options are caught
 
 - If no CLI paths are provided, `include` becomes the target set.
 - `external-link` is disabled by default due to network cost. Enable it explicitly in config.
+- Avoid setting `perHostConcurrency` to a high value or `perHostIntervalMs` to a low value — doing so may overwhelm target servers and cause your requests to be rate-limited or blocked. The defaults (`perHostConcurrency: 2`, `perHostIntervalMs: 3000`) are chosen to be polite to external hosts.
