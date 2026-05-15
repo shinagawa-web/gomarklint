@@ -88,20 +88,23 @@ func Test_checkURL_ExponentialBackoff(t *testing.T) {
 	defer ts.Close()
 
 	// retryDelayMs=100, maxRetries=3 → delays: 100ms, 200ms, 400ms
+	// linear would give: 100ms, 200ms, 300ms — gap2/gap1 ≈ 1.5×
+	// exponential gives: 100ms, 200ms, 400ms — gap2/gap1 ≈ 2×
 	_, _ = checkURL(ts.Client(), ts.URL, 100, 3, nil)
 
 	mu.Lock()
 	times := requestTimes
 	mu.Unlock()
 
-	if len(times) < 3 {
-		t.Fatalf("expected at least 3 requests, got %d", len(times))
+	if len(times) < 4 {
+		t.Fatalf("expected 4 requests (initial + 3 retries), got %d", len(times))
 	}
-	gap0 := times[1].Sub(times[0])
 	gap1 := times[2].Sub(times[1])
-	// second gap should be roughly double the first
-	if gap1 < gap0 {
-		t.Errorf("expected exponential backoff: gap1 (%v) should be >= gap0 (%v)", gap1, gap0)
+	gap2 := times[3].Sub(times[2])
+	// exponential: gap2 ≈ 2× gap1; linear: gap2 ≈ 1.5× gap1
+	// require gap2 >= gap1 * 1.8 to distinguish the two
+	if gap2 < time.Duration(float64(gap1)*1.8) {
+		t.Errorf("expected exponential backoff: gap2 (%v) should be >= 1.8× gap1 (%v)", gap2, gap1)
 	}
 }
 
