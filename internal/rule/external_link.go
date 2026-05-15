@@ -3,6 +3,7 @@ package rule
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"sync"
 	"time"
@@ -41,6 +42,17 @@ const (
 	// MaxRetriesLimit is the maximum allowed value for maxRetries
 	MaxRetriesLimit = 4
 
+	// DefaultPerHostConcurrency is the default per-host concurrency limit
+	DefaultPerHostConcurrency = 2
+	// MaxPerHostConcurrencyLimit is the maximum allowed value for perHostConcurrency
+	MaxPerHostConcurrencyLimit = 15
+	// DefaultPerHostIntervalMs is the default minimum interval between requests to the same host
+	DefaultPerHostIntervalMs = 3000
+	// MinPerHostIntervalMs is the minimum non-zero value for perHostIntervalMs; values between 1 and 999 are rejected
+	MinPerHostIntervalMs = 1000
+	// MaxPerHostIntervalMsLimit is the maximum allowed value for perHostIntervalMs in milliseconds
+	MaxPerHostIntervalMsLimit = 60000
+
 	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )
 
@@ -60,6 +72,83 @@ func isAllowedStatus(status int, extra []int) bool {
 		}
 	}
 	return false
+}
+
+// hostLimiter enforces per-host concurrency and minimum request interval.
+type hostLimiter struct {
+	sem       chan struct{} // nil when perHostConcurrency == 0
+	interval  time.Duration
+	nextAvail time.Time
+	mu        sync.Mutex
+}
+
+// acquire waits for a per-host slot and enforces the minimum interval before returning.
+func (h *hostLimiter) acquire() {
+	if h.sem != nil {
+		h.sem <- struct{}{}
+	}
+	if h.interval <= 0 {
+		return
+	}
+	h.mu.Lock()
+	now := time.Now()
+	var wait time.Duration
+	if h.nextAvail.After(now) {
+		wait = h.nextAvail.Sub(now)
+		h.nextAvail = h.nextAvail.Add(h.interval)
+	} else {
+		h.nextAvail = now.Add(h.interval)
+	}
+	h.mu.Unlock()
+	if wait > 0 {
+		time.Sleep(wait)
+	}
+}
+
+// release frees the per-host semaphore slot.
+func (h *hostLimiter) release() {
+	if h.sem != nil {
+		<-h.sem
+	}
+}
+
+// hostLimiterRegistry maintains one hostLimiter per host.
+type hostLimiterRegistry struct {
+	mu                 sync.Mutex
+	limiters           map[string]*hostLimiter
+	perHostConcurrency int
+	perHostIntervalMs  int
+}
+
+func newHostLimiterRegistry(perHostConcurrency, perHostIntervalMs int) *hostLimiterRegistry {
+	return &hostLimiterRegistry{
+		limiters:           make(map[string]*hostLimiter),
+		perHostConcurrency: perHostConcurrency,
+		perHostIntervalMs:  perHostIntervalMs,
+	}
+}
+
+func (r *hostLimiterRegistry) get(host string) *hostLimiter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if lim, ok := r.limiters[host]; ok {
+		return lim
+	}
+	lim := &hostLimiter{interval: time.Duration(r.perHostIntervalMs) * time.Millisecond}
+	if r.perHostConcurrency > 0 {
+		lim.sem = make(chan struct{}, r.perHostConcurrency)
+	}
+	r.limiters[host] = lim
+	return lim
+}
+
+// extractHost returns the host component of rawURL (e.g. "github.com").
+func extractHost(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return rawURL
+	}
+	return u.Host
 }
 
 // ExtractExternalLinksWithLineNumbers extracts external links from the given lines.
@@ -98,7 +187,7 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 // CheckExternalLinks checks external links in the given lines.
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
 // Returns lint errors and the count of unique URLs checked.
-func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map) ([]LintError, int) {
+func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map, perHostConcurrency int, perHostIntervalMs int) ([]LintError, int) {
 	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
 	links := ExtractExternalLinksWithLineNumbers(lines, offset)
 
@@ -122,25 +211,31 @@ func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 
+	hostReg := newHostLimiterRegistry(perHostConcurrency, perHostIntervalMs)
+
 	for u, lines := range urlToLines {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(url string, lns []int) {
 			defer wg.Done()
 			defer func() { <-sem }()
+
 			var status int
 			var err error
 
+			needHTTP := true
 			if cached, ok := urlCache.Load(url); ok {
 				if result, ok := cached.(cacheResult); ok {
 					status = result.status
 					err = result.err
-				} else {
-					// Cache contained unexpected type, re-check the URL
-					status, err = checkURL(client, url, retryDelayMs, maxRetries, allowedStatuses)
-					urlCache.Store(url, cacheResult{status: status, err: err})
+					needHTTP = false
 				}
-			} else {
+			}
+
+			if needHTTP {
+				lim := hostReg.get(extractHost(url))
+				lim.acquire()
+				defer lim.release()
 				status, err = checkURL(client, url, retryDelayMs, maxRetries, allowedStatuses)
 				urlCache.Store(url, cacheResult{status: status, err: err})
 			}

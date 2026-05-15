@@ -16,7 +16,7 @@
     "no-emphasis-as-heading": true,
     "blanks-around-lists": true,
     "max-line-length": { "enabled": false, "lineLength": 80 },
-    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "skipPatterns": [] }
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "perHostConcurrency": 2, "perHostIntervalMs": 3000, "skipPatterns": [] }
   },
   "include": ["README.md", "testdata"],
   "ignore": [],

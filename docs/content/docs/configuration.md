@@ -104,7 +104,7 @@ In the object form, `enabled` can be omitted — it defaults to `true`. These ar
 | `consistent-emphasis-style` | `error` | `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`) |
 | `consistent-list-marker` | `error` | `style` (`consistent` \| `dash` \| `asterisk` \| `plus`, default `consistent`) |
 | `max-line-length` | disabled | `lineLength` (int, default `80`) |
-| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `maxConcurrency` (int, default `10`, max `15`), `maxRetries` (int, default `2`, max `4`), `retryDelayMs` (int, default `1000`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
+| `external-link` | disabled | `timeoutSeconds` (int, default `5`), `maxConcurrency` (int, default `10`, max `15`), `maxRetries` (int, default `2`, max `4`), `perHostConcurrency` (int, default `2`, min `1`, max `15`), `perHostIntervalMs` (int, default `3000`, max `60000`), `retryDelayMs` (int, default `1000`), `skipPatterns` (string[]), `allowedStatuses` (int[]) |
 | `link-fragments` | disabled | `slug-algorithm` (string, default `github`), `slug-params` (object, for `custom` algorithm) |
 
 ## Option validation
@@ -121,3 +121,4 @@ This applies even when the rule is disabled, so misconfigured options are caught
 
 - If no CLI paths are provided, `include` becomes the target set.
 - `external-link` is disabled by default due to network cost. Enable it explicitly in config.
+- Avoid setting `perHostConcurrency` to a high value or `perHostIntervalMs` to a low value — doing so may overwhelm target servers and cause your requests to be rate-limited or blocked. The defaults (`perHostConcurrency: 2`, `perHostIntervalMs: 3000`) are chosen to be polite to external hosts.

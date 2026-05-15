@@ -43,7 +43,7 @@ func TestCheckExternalLinks_BasicSuccessFailure(t *testing.T) {
 
 	file := "mock.md"
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(file, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(file, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(results))
@@ -71,7 +71,7 @@ func TestCheckExternalLinks_SkipPattern(t *testing.T) {
 	}
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 2, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 2, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only non-localhost link should be checked), got %d", len(results))
@@ -90,7 +90,7 @@ func TestCheckExternalLinks_IgnoreCodeBlocks(t *testing.T) {
 	skip := []*regexp.Regexp{}
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (code block link should be ignored), got %d", len(results))
 	}
@@ -120,7 +120,7 @@ Line 8 [link8](%s/fail8)
 
 	skip := []*regexp.Regexp{}
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, skip, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 5 {
 		t.Fatalf("expected 5 errors, got %d", len(results))
@@ -152,9 +152,9 @@ func TestCheckExternalLinks_Deduplication(t *testing.T) {
 	lines, offset := toLines(markdown)
 
 	// First call - should trigger HTTP request
-	_, _ = rule.CheckExternalLinks("file1.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache)
+	_, _ = rule.CheckExternalLinks("file1.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache, 0, 0)
 	// Second call - should use cache
-	_, _ = rule.CheckExternalLinks("file2.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache)
+	_, _ = rule.CheckExternalLinks("file2.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache, 0, 0)
 
 	if requestCount != 1 {
 		t.Errorf("expected only 1 HTTP request due to caching, but got %d", requestCount)
@@ -168,7 +168,7 @@ func TestCheckExternalLinks_MultipleOccurrences(t *testing.T) {
 	markdown := fmt.Sprintf("[fail](%s/fail)\n[fail again](%s/fail)", ts.URL, ts.URL)
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	// Should report errors for each occurrence
 	if len(results) != 2 {
@@ -196,7 +196,7 @@ func TestCheckExternalLinks_AllLinksSucceed(t *testing.T) {
 [link3](%s/ok)`, ts.URL, ts.URL, ts.URL)
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors for all successful links, got %d", len(results))
@@ -218,7 +218,7 @@ func TestCheckExternalLinks_HTTPStatusBoundary(t *testing.T) {
 	fileName := "boundary.md"
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only 400), got %d", len(results))
@@ -251,7 +251,7 @@ func TestCheckExternalLinks_MultipleSkipPatterns(t *testing.T) {
 	}
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(fileName, lines, offset, skip, 2, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, skip, 2, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error (only httpstat.us), got %d", len(results))
@@ -276,7 +276,7 @@ func TestCheckExternalLinks_NetworkError(t *testing.T) {
 	unreachableURL := "http://invalid.test.localhost.invalid:9999/path"
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 error for network failure, got %d", len(results))
@@ -310,7 +310,7 @@ func TestCheckExternalLinks_DifferentHTTPStatusCodes(t *testing.T) {
 	markdown := fmt.Sprintf("[not-found](%s/404)\n[server-error](%s/500)\n[unavailable](%s/503)", statusTs.URL, statusTs.URL, statusTs.URL)
 	fileName := "test.md"
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 3 {
 		t.Fatalf("expected 3 errors, got %d", len(results))
@@ -355,7 +355,7 @@ func TestCheckExternalLinks_RetrySuccess(t *testing.T) {
 	markdown := fmt.Sprintf("[retry-link](%s/retry)", ts.URL)
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors due to successful retry, but got %d", len(results))
@@ -377,7 +377,7 @@ func TestCheckExternalLinks_NoRetryFor404(t *testing.T) {
 	markdown := fmt.Sprintf("[not-found](%s/404)", ts.URL)
 
 	lines, offset := toLines(markdown)
-	_, _ = rule.CheckExternalLinks("404.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	_, _ = rule.CheckExternalLinks("404.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	// For 404, there should be no retry; it should give up after a single request
 	if requestCount != 1 {
@@ -398,7 +398,7 @@ func TestCheckExternalLinks_ConcurrencyLimit(t *testing.T) {
 	markdown := strings.Join(links, "\n")
 
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 errors, got %d", len(results))
@@ -413,14 +413,14 @@ func TestCheckExternalLinks_CacheErrorState(t *testing.T) {
 
 	// First call - should trigger network error
 	lines, offset := toLines(markdown)
-	results1, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache)
+	results1, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache, 0, 0)
 
 	if len(results1) != 1 {
 		t.Fatalf("first call: expected 1 error for network failure, got %d", len(results1))
 	}
 
 	// Second call with same cache - should use cached error and report the same error
-	results2, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache)
+	results2, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 1, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache, 0, 0)
 
 	if len(results2) != 1 {
 		t.Fatalf("second call: expected 1 error from cache, got %d", len(results2))
@@ -447,7 +447,7 @@ func TestCheckExternalLinks_CacheInvalidType(t *testing.T) {
 
 	// Call CheckExternalLinks - should detect invalid cache type and re-check
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache)
+	results, _ := rule.CheckExternalLinks(fileName, lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, urlCache, 0, 0)
 
 	// Should still get error because URL returns 404
 	if len(results) != 1 {
@@ -696,7 +696,7 @@ func TestCheckExternalLinks_GETFallback(t *testing.T) {
 
 	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
 	lines, offset := toLines(markdown)
-	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 10, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected no errors (GET fallback should succeed), got: %v", results)
@@ -718,7 +718,7 @@ func TestCheckExternalLinks_GETFallback_On405(t *testing.T) {
 
 	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
 	lines, offset := toLines(markdown)
-	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected no errors (GET fallback on 405 should succeed), got: %v", results)
@@ -740,7 +740,7 @@ func TestCheckExternalLinks_GETFallback_On403(t *testing.T) {
 
 	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
 	lines, offset := toLines(markdown)
-	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, count := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected no errors (GET fallback on 403 should succeed), got: %v", results)
@@ -763,7 +763,7 @@ func TestCheckExternalLinks_NoGETFallback_On404(t *testing.T) {
 
 	markdown := fmt.Sprintf("[link](%s/page)\n", ts.URL)
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("mock.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -783,7 +783,7 @@ func TestCheckExternalLinks_429NotFlagged(t *testing.T) {
 
 	markdown := fmt.Sprintf("[rate-limited](%s/429)", ts.URL)
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if len(results) != 0 {
 		t.Errorf("expected no violations for 429 (rate limiting), got %d: %v", len(results), results)
@@ -804,7 +804,7 @@ func TestCheckExternalLinks_AllowedStatuses(t *testing.T) {
 	// 403 is in allowedStatuses → no violation; 500 is not → violation
 	markdown := fmt.Sprintf("[forbidden](%s/403)\n[server-error](%s/500)", ts.URL, ts.URL)
 	lines, offset := toLines(markdown)
-	results, _ := rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, []int{403}, &sync.Map{})
+	results, _ := rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, []int{403}, &sync.Map{}, 0, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 violation (500 only), got %d: %v", len(results), results)
@@ -840,7 +840,7 @@ func TestCheckExternalLinks_ConfigurableMaxConcurrency(t *testing.T) {
 	}
 	lines, offset := toLines(strings.Join(links, "\n"))
 
-	_, _ = rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 0, 2, rule.DefaultMaxRetries, nil, &sync.Map{})
+	_, _ = rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 0, 2, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if maxSeen > 2 {
 		t.Errorf("expected max concurrency of 2, but saw %d concurrent requests", maxSeen)
@@ -858,7 +858,7 @@ func TestCheckExternalLinks_ConfigurableMaxRetries(t *testing.T) {
 	markdown := fmt.Sprintf("[retry-link](%s/retry)", ts.URL)
 	lines, offset := toLines(markdown)
 
-	_, _ = rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 5, 0, rule.DefaultMaxConcurrency, 0, nil, &sync.Map{})
+	_, _ = rule.CheckExternalLinks("retry.md", lines, offset, []*regexp.Regexp{}, 5, 0, rule.DefaultMaxConcurrency, 0, nil, &sync.Map{}, 0, 0)
 
 	if requestCount != 1 {
 		t.Errorf("maxRetries=0: expected 1 request, got %d", requestCount)
@@ -875,9 +875,80 @@ func TestPerformCheck_UserAgentHeader(t *testing.T) {
 
 	markdown := fmt.Sprintf("[link](%s/page)", ts.URL)
 	lines, offset := toLines(markdown)
-	_, _ = rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{})
+	_, _ = rule.CheckExternalLinks("test.md", lines, offset, []*regexp.Regexp{}, 10, 0, rule.DefaultMaxConcurrency, rule.DefaultMaxRetries, nil, &sync.Map{}, 0, 0)
 
 	if !strings.Contains(gotUA, "gomarklint") {
 		t.Errorf("expected User-Agent to contain 'gomarklint', got %q", gotUA)
+	}
+}
+
+func TestCheckExternalLinks_PerHostConcurrencyLimit(t *testing.T) {
+	var mu sync.Mutex
+	concurrent := 0
+	maxSeen := 0
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		concurrent++
+		if concurrent > maxSeen {
+			maxSeen = concurrent
+		}
+		mu.Unlock()
+		time.Sleep(20 * time.Millisecond)
+		mu.Lock()
+		concurrent--
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	var links []string
+	for i := range 8 {
+		links = append(links, fmt.Sprintf("[L%d](%s/%d)", i, ts.URL, i))
+	}
+	lines, offset := toLines(strings.Join(links, "\n"))
+
+	// global concurrency=8, per-host=2 → max simultaneous to same host should be ≤ 2
+	_, _ = rule.CheckExternalLinks("heavy.md", lines, offset, []*regexp.Regexp{}, 5, 0, 8, rule.DefaultMaxRetries, nil, &sync.Map{}, 2, 0)
+
+	if maxSeen > 2 {
+		t.Errorf("expected per-host concurrency ≤ 2, but saw %d concurrent requests", maxSeen)
+	}
+}
+
+func TestCheckExternalLinks_PerHostIntervalMs(t *testing.T) {
+	var mu sync.Mutex
+	var requestTimes []time.Time
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requestTimes = append(requestTimes, time.Now())
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	var links []string
+	for i := range 3 {
+		links = append(links, fmt.Sprintf("[L%d](%s/%d)", i, ts.URL, i))
+	}
+	lines, offset := toLines(strings.Join(links, "\n"))
+
+	intervalMs := 1000
+	// perHostConcurrency=1 to serialize requests; interval=1000ms (minimum valid value)
+	_, _ = rule.CheckExternalLinks("interval.md", lines, offset, []*regexp.Regexp{}, 5, 0, 10, rule.DefaultMaxRetries, nil, &sync.Map{}, 1, intervalMs)
+
+	mu.Lock()
+	times := requestTimes
+	mu.Unlock()
+
+	if len(times) < 2 {
+		return
+	}
+	for i := 1; i < len(times); i++ {
+		gap := times[i].Sub(times[i-1])
+		if gap < time.Duration(intervalMs-100)*time.Millisecond {
+			t.Errorf("expected ≥ %dms between requests, got %v", intervalMs, gap)
+		}
 	}
 }

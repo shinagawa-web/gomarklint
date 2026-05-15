@@ -93,7 +93,7 @@ This creates `.gomarklint.json` with sensible defaults:
     "consistent-emphasis-style": { "style": "consistent" },
     "consistent-list-marker": { "style": "consistent" },
     "max-line-length": { "enabled": false, "lineLength": 80 },
-    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "skipPatterns": [] },
+    "external-link": { "enabled": false, "severity": "error", "timeoutSeconds": 5, "maxConcurrency": 10, "maxRetries": 2, "perHostConcurrency": 0, "perHostIntervalMs": 0, "skipPatterns": [] },
     "link-fragments": { "enabled": true, "slug-algorithm": "github" }
   },
   "include": ["README.md", "testdata"],

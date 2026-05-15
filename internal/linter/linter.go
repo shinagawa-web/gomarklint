@@ -50,6 +50,12 @@ func New(cfg config.Config) (*Linter, error) {
 	if err := validateExternalLinkIntOption(cfg, "maxRetries", 0, rule.MaxRetriesLimit); err != nil {
 		return nil, err
 	}
+	if err := validateExternalLinkIntOption(cfg, "perHostConcurrency", 1, rule.MaxPerHostConcurrencyLimit); err != nil {
+		return nil, err
+	}
+	if err := validatePerHostIntervalMs(cfg); err != nil {
+		return nil, err
+	}
 
 	compiledPatterns := []*regexp.Regexp{}
 	if cfg.IsEnabled("external-link") {
@@ -98,6 +104,27 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 		}
 	}
 	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
+}
+
+// validatePerHostIntervalMs checks that perHostIntervalMs is either 0 (disabled) or within
+// [MinPerHostIntervalMs, MaxPerHostIntervalMsLimit]. Values between 1 and 999 are rejected.
+func validatePerHostIntervalMs(cfg config.Config) error {
+	raw, exists := cfg.RuleOptions("external-link")["perHostIntervalMs"]
+	if !exists {
+		return nil
+	}
+	f, ok := raw.(float64)
+	if !ok {
+		return fmt.Errorf("gomarklint: invalid value for external-link.perHostIntervalMs: expected integer, got %T (%#v)", raw, raw)
+	}
+	v := int(f)
+	if v == 0 {
+		return nil
+	}
+	if v < rule.MinPerHostIntervalMs || v > rule.MaxPerHostIntervalMsLimit {
+		return fmt.Errorf("gomarklint: external-link.perHostIntervalMs must be 0 (disabled) or between %d and %d, got %d", rule.MinPerHostIntervalMs, rule.MaxPerHostIntervalMsLimit, v)
+	}
+	return nil
 }
 
 // validateExternalLinkIntOption checks that a numeric external-link option, if present,
@@ -294,6 +321,26 @@ func (l *Linter) externalLinkMaxRetries() int {
 	return rule.DefaultMaxRetries
 }
 
+// externalLinkPerHostConcurrency returns the configured perHostConcurrency for the external-link rule.
+func (l *Linter) externalLinkPerHostConcurrency() int {
+	if v, ok := l.config.RuleOptions("external-link")["perHostConcurrency"]; ok {
+		if f, ok := v.(float64); ok && int(f) > 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultPerHostConcurrency
+}
+
+// externalLinkPerHostIntervalMs returns the configured perHostIntervalMs for the external-link rule.
+func (l *Linter) externalLinkPerHostIntervalMs() int {
+	if v, ok := l.config.RuleOptions("external-link")["perHostIntervalMs"]; ok {
+		if f, ok := v.(float64); ok && int(f) >= 0 {
+			return int(f)
+		}
+	}
+	return rule.DefaultPerHostIntervalMs
+}
+
 // externalLinkAllowedStatuses returns the configured allowedStatuses for the external-link rule.
 func (l *Linter) externalLinkAllowedStatuses() []int {
 	raw, _ := l.config.RuleOptions("external-link")["allowedStatuses"].([]interface{})
@@ -377,7 +424,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache)
+		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache, l.externalLinkPerHostConcurrency(), l.externalLinkPerHostIntervalMs())
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}
