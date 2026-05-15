@@ -53,7 +53,7 @@ func New(cfg config.Config) (*Linter, error) {
 	if err := validateExternalLinkIntOption(cfg, "perHostConcurrency", 1, rule.MaxPerHostConcurrencyLimit); err != nil {
 		return nil, err
 	}
-	if err := validateExternalLinkIntOption(cfg, "perHostIntervalMs", 0, rule.MaxPerHostIntervalMsLimit); err != nil {
+	if err := validatePerHostIntervalMs(cfg); err != nil {
 		return nil, err
 	}
 
@@ -104,6 +104,27 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 		}
 	}
 	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
+}
+
+// validatePerHostIntervalMs checks that perHostIntervalMs is either 0 (disabled) or within
+// [MinPerHostIntervalMs, MaxPerHostIntervalMsLimit]. Values between 1 and 999 are rejected.
+func validatePerHostIntervalMs(cfg config.Config) error {
+	raw, exists := cfg.RuleOptions("external-link")["perHostIntervalMs"]
+	if !exists {
+		return nil
+	}
+	f, ok := raw.(float64)
+	if !ok {
+		return fmt.Errorf("gomarklint: invalid value for external-link.perHostIntervalMs: expected integer, got %T (%#v)", raw, raw)
+	}
+	v := int(f)
+	if v == 0 {
+		return nil
+	}
+	if v < rule.MinPerHostIntervalMs || v > rule.MaxPerHostIntervalMsLimit {
+		return fmt.Errorf("gomarklint: external-link.perHostIntervalMs must be 0 (disabled) or between %d and %d, got %d", rule.MinPerHostIntervalMs, rule.MaxPerHostIntervalMsLimit, v)
+	}
+	return nil
 }
 
 // validateExternalLinkIntOption checks that a numeric external-link option, if present,

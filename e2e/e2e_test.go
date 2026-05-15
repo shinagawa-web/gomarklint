@@ -710,6 +710,15 @@ func TestE2E_EdgeCases(t *testing.T) {
 		assertOutputContains(t, output, "external-link.perHostIntervalMs")
 	})
 
+	t.Run("ExternalLinkPerHostIntervalTooLow", func(t *testing.T) {
+		output, err := runTestWithCmd(t, "fixtures/valid.md", "--config", "config-external-link-per-host-interval-too-low.json")
+		if err == nil {
+			t.Errorf("expected error for perHostIntervalMs below minimum, but command succeeded")
+		}
+		assertOutputContains(t, output, "[gomarklint error]:")
+		assertOutputContains(t, output, "external-link.perHostIntervalMs")
+	})
+
 	t.Run("EmptyFile", func(t *testing.T) {
 		output := runTest(t, "fixtures/empty.md", "--config", ".gomarklint.json")
 		assertOutputContains(t, output, "Errors in fixtures/empty.md:")

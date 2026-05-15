@@ -48,6 +48,8 @@ const (
 	MaxPerHostConcurrencyLimit = 15
 	// DefaultPerHostIntervalMs is the default minimum interval between requests to the same host
 	DefaultPerHostIntervalMs = 3000
+	// MinPerHostIntervalMs is the minimum non-zero value for perHostIntervalMs; values between 1 and 999 are rejected
+	MinPerHostIntervalMs = 1000
 	// MaxPerHostIntervalMsLimit is the maximum allowed value for perHostIntervalMs in milliseconds
 	MaxPerHostIntervalMsLimit = 60000
 

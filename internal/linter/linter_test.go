@@ -1200,11 +1200,11 @@ func TestExternalLink_ConfigurablePerHostIntervalMs(t *testing.T) {
 	cfg.Rules["external-link"] = &config.RuleConfig{
 		Enabled:  true,
 		Severity: config.SeverityError,
-		Options:  map[string]interface{}{"perHostIntervalMs": float64(500)},
+		Options:  map[string]interface{}{"perHostIntervalMs": float64(1000)},
 	}
 	l := mustNew(t, cfg)
-	if got := l.externalLinkPerHostIntervalMs(); got != 500 {
-		t.Errorf("expected perHostIntervalMs 500, got %d", got)
+	if got := l.externalLinkPerHostIntervalMs(); got != 1000 {
+		t.Errorf("expected perHostIntervalMs 1000, got %d", got)
 	}
 }
 
@@ -1218,6 +1218,19 @@ func TestExternalLink_PerHostIntervalMsZeroIsValid(t *testing.T) {
 	l := mustNew(t, cfg)
 	if got := l.externalLinkPerHostIntervalMs(); got != 0 {
 		t.Errorf("expected perHostIntervalMs 0, got %d", got)
+	}
+}
+
+func TestExternalLink_PerHostIntervalMsTooLowReturnsError(t *testing.T) {
+	cfg := allOff()
+	cfg.Rules["external-link"] = &config.RuleConfig{
+		Enabled:  true,
+		Severity: config.SeverityError,
+		Options:  map[string]interface{}{"perHostIntervalMs": float64(500)},
+	}
+	_, err := New(cfg)
+	if err == nil {
+		t.Fatal("expected error for perHostIntervalMs below minimum, got nil")
 	}
 }
 
