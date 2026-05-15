@@ -11,7 +11,7 @@ weight: 2
 
 | Rule key                       | What it detects                                                         | Notes / Options                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `maxConcurrency` (default `10`, max `15`), `maxRetries` (default `2`, max `4`), `perHostConcurrency` (default `2`, min `1`, max `15`), `perHostIntervalMs` (default `3000`, max `60000`), `skipPatterns` (regex list) |
+| `external-link`                | External links that fail HTTP validation                                | Default **off**. Options: `timeoutSeconds` (default `5`), `maxConcurrency` (default `10`, max `15`), `maxRetries` (default `2`, max `4`), `retryDelayMs` (default `1000`), `perHostConcurrency` (default `2`, min `1`, max `15`), `perHostIntervalMs` (default `3000`, min `1000`, max `60000`; `0` = disabled), `skipPatterns` (regex list), `allowedStatuses` (int[]) |
 | `link-fragments`               | Internal fragment links (`#section`) that do not resolve to a heading  | Default **on**. Options: `slug-algorithm` (default `github`), `slug-params` (for `custom` algorithm) |
 
 ## Structure and formatting checks
@@ -39,6 +39,28 @@ weight: 2
 | `consistent-emphasis-style`    | Inconsistent emphasis marker (`*text*` vs `_text_`)                     | Default **on**. Option: `style` (`consistent` \| `asterisk` \| `underscore`, default `consistent`)   |
 | `consistent-list-marker`       | Inconsistent unordered list marker (`-` vs `*` vs `+`)                 | Default **on**. Option: `style` (`consistent` \| `dash` \| `asterisk` \| `plus`, default `consistent`) |
 | `max-line-length`              | Lines exceeding the configured maximum length                           | Default **off**. Option: `lineLength` (default `80`)                                                  |
+
+## external-link
+
+`external-link` performs HTTP validation of every external link in the document. It is disabled by default due to network cost.
+
+### Retry behavior
+
+On transient failures (5xx, network errors), gomarklint retries up to `maxRetries` times using **exponential backoff**: the wait before each retry doubles relative to the previous one.
+
+With the default `retryDelayMs: 1000` and `maxRetries: 2`:
+
+| Attempt | Wait before request |
+| --- | --- |
+| 1st (initial) | — |
+| 2nd (retry 1) | 1000 ms |
+| 3rd (retry 2) | 2000 ms |
+
+Permanent failures (404, 401) are not retried.
+
+### Per-host rate limiting
+
+`perHostConcurrency` and `perHostIntervalMs` limit how aggressively gomarklint hits any single host. The defaults (`perHostConcurrency: 2`, `perHostIntervalMs: 3000`) are intentionally conservative — avoid raising them to prevent your requests from being rate-limited or blocked. Set `perHostIntervalMs: 0` to disable the interval limit entirely.
 
 ## link-fragments
 
