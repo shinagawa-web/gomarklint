@@ -44,6 +44,6 @@ jobs:
           fail_ci_if_error: true
 
       - name: Lint Markdown files
-        uses: shinagawa-web/gomarklint@fa7f82ab243d82375836601e98e9e4171903e95f # v3.0.0
+        uses: shinagawa-web/gomarklint@9353d0c4eed97d8832fb124f9d68d8980fb5515c # v3.2.0
         with:
           args: --config .gomarklint.ci.json
