@@ -1,0 +1,6 @@
+rules:
+  cache-poisoning:
+    ignore:
+      # goreleaser.yml only runs on push:tags (not PRs), so cache poisoning
+      # from untrusted contributors is not a realistic attack vector here.
+      - goreleaser.yml

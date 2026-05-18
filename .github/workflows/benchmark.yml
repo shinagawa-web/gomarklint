@@ -49,17 +49,19 @@ jobs:
       - name: Compare benchmarks
         id: benchmark_comparison
         run: |
-          echo "## Benchmark Comparison" > comparison.txt
-          echo "" >> comparison.txt
-          echo "Comparing PR branch against main branch:" >> comparison.txt
-          echo "" >> comparison.txt
-          echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)" >> comparison.txt
-          echo "" >> comparison.txt
-          echo '```' >> comparison.txt
-          benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-          bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
-          cat formatted-comparison.txt >> comparison.txt
-          echo '```' >> comparison.txt
+          {
+            echo "## Benchmark Comparison"
+            echo ""
+            echo "Comparing PR branch against main branch:"
+            echo ""
+            echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)"
+            echo ""
+            echo '```'
+            benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
+            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
+            cat formatted-comparison.txt
+            echo '```'
+          } > comparison.txt
           cat comparison.txt
 
       - name: Upload benchmark results
