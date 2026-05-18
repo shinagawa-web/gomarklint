@@ -1,0 +1,6 @@
+rules:
+  cache-poisoning:
+    ignore:
+      # setup-go uses cache: false and setup-node uses cache: "", so no
+      # cache is read or written in this workflow — poisoning is not possible.
+      - goreleaser.yml

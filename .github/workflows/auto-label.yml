@@ -7,16 +7,17 @@ on:
 jobs:
   auto-label:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       pull-requests: write
     steps:
       - name: Auto label based on PR title
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const title = context.payload.pull_request.title.toLowerCase();
             const labels = [];
-            
+
             // Conventional Commits pattern matching
             if (title.startsWith('feat:') || title.startsWith('feat(')) {
               labels.push('enhancement');
@@ -41,7 +42,7 @@ jobs:
             if (/^[a-z]+(\([^)]+\))?!:/.test(title)) {
               labels.push('breaking-change');
             }
-            
+
             if (labels.length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -56,6 +57,7 @@ jobs:
 
   check-labels:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: auto-label
     permissions:
       pull-requests: read
