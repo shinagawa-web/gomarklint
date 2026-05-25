@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, edited, reopened, labeled, unlabeled, synchronize]
 
+permissions:
+  contents: read
+
 jobs:
   auto-label:
     runs-on: ubuntu-latest
