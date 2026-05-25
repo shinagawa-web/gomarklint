@@ -243,6 +243,13 @@ func TestCheckNoEmphasisAsHeading(t *testing.T) {
 			content:  "_under_score_\n",
 			wantErrs: nil,
 		},
+		{
+			name:    "violation: delimiter-only inner content does not panic",
+			content: "_*_\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 1, Message: "no-emphasis-as-heading: emphasis used as heading, use ATX heading instead: _*_"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
