@@ -38,6 +38,9 @@ jobs:
             if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
               labels.push('refactor');
             }
+            if (title.startsWith('test:') || title.startsWith('test(')) {
+              labels.push('test');
+            }
             if (title.startsWith('deps:') || title.startsWith('deps(') || title.includes('dependencies')) {
               labels.push('dependencies');
             }
@@ -68,5 +71,5 @@ jobs:
       - name: Check for labels
         uses: docker://agilepathway/pull-request-label-checker@sha256:65e57fd98ba3ab6ca4fcbc5a0aef288dd984ee4ab988f124d83424d19b55b801
         with:
-          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore,refactor
+          one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore,refactor,test
           repo_token: ${{ secrets.GITHUB_TOKEN }}
