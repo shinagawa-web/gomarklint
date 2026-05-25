@@ -6,6 +6,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/shinagawa-web/gomarklint.svg)](https://pkg.go.dev/github.com/shinagawa-web/gomarklint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/shinagawa-web/gomarklint/badge)](https://securityscorecards.dev/viewer/?uri=github.com/shinagawa-web/gomarklint)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12970/badge)](https://www.bestpractices.dev/projects/12970)
 
 [English](README.md) | 日本語
 
