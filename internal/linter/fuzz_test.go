@@ -15,7 +15,7 @@ func FuzzLintContent(f *testing.F) {
 		"[link text](https://example.com)\n",
 		"![alt text](image.png)\n",
 		"| col1 | col2 |\n|------|------|\n| a    | b    |\n",
-		"    code with hard tab\n",
+		"\tcode with hard tab\n",
 		"Line that is intentionally very long and exceeds the default maximum line length limit set by the linter configuration.\n",
 		"",
 		"---\ntitle: frontmatter\n---\n\n# Body\n",
@@ -30,7 +30,8 @@ func FuzzLintContent(f *testing.F) {
 	}
 
 	cfg := config.Default()
-	// Disable external-link to avoid network calls during fuzzing.
+	// Explicitly keep external-link disabled as a safeguard against network calls
+	// during fuzzing, even though config.Default() already disables it.
 	cfg.Rules["external-link"] = &config.RuleConfig{
 		Enabled:  false,
 		Severity: config.SeverityOff,
