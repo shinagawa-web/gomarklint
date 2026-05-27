@@ -21,7 +21,8 @@ jobs:
       - name: Try go install (with retry for module proxy)
         run: |
           for i in 1 2 3 4 5; do
-            go install github.com/shinagawa-web/gomarklint@latest && break
+            go install github.com/shinagawa-web/gomarklint/v3@latest && exit 0
             echo "Attempt $i failed, retrying in 30s..."
             sleep 30
           done
+          exit 1
