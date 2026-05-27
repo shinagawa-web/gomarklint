@@ -78,7 +78,13 @@ jobs:
           persist-credentials: false
 
       - name: Update floating major version tag
+        # persist-credentials: false removes auth after checkout, so we must
+        # re-inject GITHUB_TOKEN into the remote URL before pushing.
+        # Do not remove this env block or the git remote set-url line.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           MAJOR=$(echo "${GITHUB_REF_NAME}" | cut -d. -f1)
           git tag -f "${MAJOR}" "${GITHUB_SHA}"
           git push origin "${MAJOR}" --force
