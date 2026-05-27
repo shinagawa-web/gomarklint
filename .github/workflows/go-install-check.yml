@@ -22,8 +22,20 @@ jobs:
       - name: Try go install (with retry for module proxy)
         run: |
           for i in 1 2 3 4 5; do
-            go install github.com/shinagawa-web/gomarklint/v3@latest && exit 0
+            if go install github.com/shinagawa-web/gomarklint/v3@latest; then
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "All attempts failed"
+              exit 1
+            fi
             echo "Attempt $i failed, retrying in 30s..."
             sleep 30
           done
-          exit 1
+          INSTALLED=$(go version -m "$(which gomarklint)" | awk '/^\s+mod/{print $3}')
+          EXPECTED="${{ github.event.release.tag_name }}"
+          if [ "$INSTALLED" != "$EXPECTED" ]; then
+            echo "Version mismatch: installed=$INSTALLED expected=$EXPECTED"
+            exit 1
+          fi
+          echo "OK: $INSTALLED"
