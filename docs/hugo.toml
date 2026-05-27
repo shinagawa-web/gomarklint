@@ -3,6 +3,9 @@ languageCode = "en-us"
 title = "gomarklint"
 theme = "hugo-book"
 
+[markup.goldmark.renderer]
+  unsafe = true
+
 [params]
   BookToC = true
   BookRepo = "https://github.com/shinagawa-web/gomarklint"
