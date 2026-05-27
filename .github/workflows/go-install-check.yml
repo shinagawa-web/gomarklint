@@ -1,17 +1,15 @@
 name: Check go install
 
 on:
-  workflow_run:
-    workflows: ["Release"]
+  release:
     types:
-      - completed
+      - published
 
 permissions:
   contents: read
 
 jobs:
   check-go-install:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
