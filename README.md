@@ -7,6 +7,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/shinagawa-web/gomarklint/badge)](https://securityscorecards.dev/viewer/?uri=github.com/shinagawa-web/gomarklint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12970/badge)](https://www.bestpractices.dev/projects/12970)
+[![npm version](https://img.shields.io/npm/v/@shinagawa-web/gomarklint.svg)](https://www.npmjs.com/package/@shinagawa-web/gomarklint)
+[![npm downloads](https://img.shields.io/npm/dw/@shinagawa-web/gomarklint.svg)](https://www.npmjs.com/package/@shinagawa-web/gomarklint)
 
 English | [日本語](README.ja.md)
 
