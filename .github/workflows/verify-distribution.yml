@@ -37,3 +37,49 @@ jobs:
             exit 1
           fi
           echo "OK: $installed"
+
+  homebrew:
+    runs-on: macos-latest
+    steps:
+      - name: Install via Homebrew
+        run: brew install shinagawa-web/tap/gomarklint
+
+      - name: Verify version matches latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          expected=$(gh release view --repo shinagawa-web/gomarklint --json tagName -q .tagName)
+          expected_no_v="${expected#v}"
+          installed=$(brew list --versions gomarklint | awk '{print $2}')
+          echo "Expected : $expected_no_v"
+          echo "Installed: $installed"
+          if [ "$installed" != "$expected_no_v" ]; then
+            echo "ERROR: version mismatch"
+            exit 1
+          fi
+          echo "OK: $installed"
+
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+
+      - name: Install via npm
+        run: npm install -g @shinagawa-web/gomarklint
+
+      - name: Verify version matches latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          expected=$(gh release view --repo shinagawa-web/gomarklint --json tagName -q .tagName)
+          expected_no_v="${expected#v}"
+          installed=$(gomarklint --version | awk '{print $3}')
+          echo "Expected : $expected_no_v"
+          echo "Installed: $installed"
+          if [ "$installed" != "$expected_no_v" ]; then
+            echo "ERROR: version mismatch"
+            exit 1
+          fi
+          echo "OK: $installed"
