@@ -1,0 +1,39 @@
+name: verify-distribution
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Install via go install
+        run: go install github.com/shinagawa-web/gomarklint/v3@latest
+
+      - name: Verify version matches latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          expected=$(gh release view --repo shinagawa-web/gomarklint --json tagName -q .tagName)
+          installed=$(go version -m "$(go env GOPATH)/bin/gomarklint" | awk '$1 == "mod" { print $3 }')
+          echo "Expected : $expected"
+          echo "Installed: $installed"
+          if [ "$installed" != "$expected" ]; then
+            echo "ERROR: version mismatch"
+            exit 1
+          fi
+          echo "OK: $installed"
