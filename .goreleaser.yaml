@@ -48,6 +48,7 @@ brews:
       owner: shinagawa-web
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
     homepage: "https://github.com/shinagawa-web/gomarklint"
     description: "A fast, extensible Markdown linter written in Go"
     license: "MIT"
