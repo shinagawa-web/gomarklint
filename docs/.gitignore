@@ -1,0 +1,5 @@
+# Hugo build artifacts (the site is built fresh in CI via .github/workflows/pages.yml)
+/public/
+/resources/
+/themes/
+.hugo_build.lock

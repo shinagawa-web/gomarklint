@@ -12,7 +12,7 @@
 
 [English](README.md) | 日本語
 
-<a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
+<img src="docs/static/demo.gif" width="800" alt="リンク切れと構造の問題を検出する gomarklint">
 
 > リンク切れをユーザーより先に発見。内部アンカーはデフォルトで検証、外部 URL は `external-link` を有効化して検証。**100,000 行以上を約 170ms** で処理。シングルバイナリで Node.js 不要。
 

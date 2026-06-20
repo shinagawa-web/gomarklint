@@ -12,8 +12,7 @@
 
 English | [日本語](README.ja.md)
 
-<!-- gomarklint-disable-next-line no-bare-urls -->
-<a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
+<img src="docs/static/demo.gif" width="800" alt="gomarklint catching a broken link and structure issues">
 
 > Catch broken links before your readers do — and keep your Markdown clean while you're at it. **100,000+ lines in ~170ms**, single binary, no Node.js required.
 

@@ -12,7 +12,7 @@ title: "gomarklint"
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/shinagawa-web/gomarklint/badge)](https://securityscorecards.dev/viewer/?uri=github.com/shinagawa-web/gomarklint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12970/badge)](https://www.bestpractices.dev/projects/12970)
 
-<a href="https://gyazo.com/a5f8265a0865e5a37dc83733ca61069a"><img src="https://i.gyazo.com/a5f8265a0865e5a37dc83733ca61069a.gif" width="800" alt="Demo"></a>
+<img src="demo.gif" width="800" alt="gomarklint catching a broken link and structure issues">
 
 > Catch broken links before your readers do.
 > A fast Markdown checker built in Go — validates internal anchors by default, external URLs when enabled, and enforces structure for local dev and CI alike.
