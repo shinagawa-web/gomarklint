@@ -1,4 +1,4 @@
-.PHONY: build test test-e2e test-coverage check-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench bench-compare lint-self install-hooks
+.PHONY: build test test-e2e test-coverage check-coverage clean install help lint run-dev static-lint lint-fix build-e2e clean-e2e test-all bench bench-compare lint-self install-hooks demo
 
 # Default target
 .DEFAULT_GOAL := help
@@ -119,6 +119,10 @@ install-hooks: ## Install git hooks (pre-push)
 mod-tidy: ## Tidy go.mod and go.sum
 	@echo "Tidying go.mod..."
 	$(GOMOD) tidy
+
+demo: ## Record the README/docs demo GIF with VHS (-> docs/static/demo.gif)
+	@echo "Recording demo GIF..."
+	./scripts/record-demo.sh
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
