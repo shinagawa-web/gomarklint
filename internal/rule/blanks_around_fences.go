@@ -22,8 +22,15 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 		if !inBlock && (inHTMLComment || strings.IndexByte(line, '<') >= 0) {
 			skip, stillInComment := stepHTMLComment(strings.TrimSpace(line), inHTMLComment)
 			if skip {
+				// Single-line HTML comments (<!-- ... --> on one line) are invisible
+				// in rendered output; preserve prevBlank so they don't break a
+				// blank-line chain established before the comment.
+				// Multi-line comment lines (opening, body, or closing) are not
+				// transparent and do reset the blank-line state.
+				if inHTMLComment || stillInComment {
+					prevBlank = false
+				}
 				inHTMLComment = stillInComment
-				prevBlank = false
 				continue
 			}
 		}
@@ -76,8 +83,11 @@ func stepHTMLComment(trimmed string, inComment bool) (bool, bool) {
 		}
 		return true, true
 	}
-	if strings.Contains(trimmed, "<!--") && !strings.Contains(trimmed, "-->") {
-		return true, true
+	if strings.Contains(trimmed, "<!--") {
+		if strings.Contains(trimmed, "-->") {
+			return true, false // single-line comment: <!-- ... -->
+		}
+		return true, true // opening of multi-line comment
 	}
 	return false, false
 }
