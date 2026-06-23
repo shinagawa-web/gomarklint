@@ -55,13 +55,13 @@ func TestCheckDuplicateHeadings(t *testing.T) {
 			},
 		},
 		{
-			name: "hash inside fenced code block is ignored",
-			content: "## Full source\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```\n\n## Closer look\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```",
+			name:     "hash inside fenced code block is ignored",
+			content:  "## Full source\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```\n\n## Closer look\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```",
 			wantErrs: nil,
 		},
 		{
-			name: "hash inside tilde fenced code block is ignored",
-			content: "## Section A\n\n~~~python\n# comment\n~~~\n\n## Section B\n\n~~~python\n# comment\n~~~",
+			name:     "hash inside tilde fenced code block is ignored",
+			content:  "## Section A\n\n~~~python\n# comment\n~~~\n\n## Section B\n\n~~~python\n# comment\n~~~",
 			wantErrs: nil,
 		},
 		{
