@@ -54,6 +54,21 @@ func TestCheckDuplicateHeadings(t *testing.T) {
 				{File: "test.md", Line: 5, Message: `duplicate heading: "intro"`},
 			},
 		},
+		{
+			name: "hash inside fenced code block is ignored",
+			content: "## Full source\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```\n\n## Closer look\n\n```rust\n#[tokio::main]\nasync fn main() {}\n```",
+			wantErrs: nil,
+		},
+		{
+			name: "hash inside tilde fenced code block is ignored",
+			content: "## Section A\n\n~~~python\n# comment\n~~~\n\n## Section B\n\n~~~python\n# comment\n~~~",
+			wantErrs: nil,
+		},
+		{
+			name:     "non-ATX hash (no space after #) is not a heading",
+			content:  "#hashtag\nSome text\n#hashtag",
+			wantErrs: nil,
+		},
 	}
 
 	for _, tt := range tests {
