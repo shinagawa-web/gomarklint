@@ -143,6 +143,13 @@ func TestCheckBlanksAroundFences(t *testing.T) {
 			content:  "Some text\n\n<!-- a -->\n<!-- b -->\n```go\ncode\n```\n\nMore text\n",
 			wantErrs: nil,
 		},
+		{
+			name:    "invalid: line with visible text and inline comment before fence triggers violation",
+			content: "Some text\n\ntext <!-- comment -->\n```go\ncode\n```\n\nMore text\n",
+			wantErrs: []LintError{
+				{File: "test.md", Line: 4, Message: "blanks-around-fences: fenced code block must be preceded by a blank line"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

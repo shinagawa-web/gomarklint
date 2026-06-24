@@ -20,14 +20,9 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 		// `<!--`-like content inside a fenced block is just code and must not
 		// interfere with detecting the closing fence.
 		if !inBlock && (inHTMLComment || strings.IndexByte(line, '<') >= 0) {
-			skip, stillInComment := stepHTMLComment(strings.TrimSpace(line), inHTMLComment)
+			skip, stillInComment, resetPrevBlank := stepHTMLComment(strings.TrimSpace(line), inHTMLComment)
 			if skip {
-				// Single-line HTML comments (<!-- ... --> on one line) are invisible
-				// in rendered output; preserve prevBlank so they don't break a
-				// blank-line chain established before the comment.
-				// Multi-line comment lines (opening, body, or closing) are not
-				// transparent and do reset the blank-line state.
-				if inHTMLComment || stillInComment {
+				if resetPrevBlank {
 					prevBlank = false
 				}
 				inHTMLComment = stillInComment
@@ -78,20 +73,26 @@ func appendMissingTrailingBlank(errs []LintError, filename string, lines []strin
 }
 
 // stepHTMLComment advances the HTML-comment state machine for one line.
-// It returns (skip, inComment) where skip indicates the caller should
-// `continue` past this line, and inComment is the updated state.
-func stepHTMLComment(trimmed string, inComment bool) (bool, bool) {
+// It returns (skip, newInComment, resetPrevBlank).
+// skip: caller should continue past this line.
+// newInComment: updated multi-line comment state.
+// resetPrevBlank: true when the line contains visible content and prevBlank
+// must be cleared; false for standalone single-line comments (<!-- ... -->)
+// that are invisible in rendered output and should not break a blank-line chain.
+func stepHTMLComment(trimmed string, inComment bool) (skip, newInComment, resetPrevBlank bool) {
 	if inComment {
 		if strings.Contains(trimmed, "-->") {
-			return true, false
+			return true, false, true
 		}
-		return true, true
+		return true, true, true
 	}
 	if strings.Contains(trimmed, "<!--") {
 		if strings.Contains(trimmed, "-->") {
-			return true, false // single-line comment: <!-- ... -->
+			// Standalone single-line comment is transparent; mixed lines like
+			// "text <!-- note -->" are not (HasPrefix distinguishes them).
+			return true, false, !strings.HasPrefix(trimmed, "<!--")
 		}
-		return true, true // opening of multi-line comment
+		return true, true, true
 	}
-	return false, false
+	return false, false, false
 }
