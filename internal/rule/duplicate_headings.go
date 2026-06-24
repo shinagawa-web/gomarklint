@@ -26,9 +26,13 @@ func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintE
 	fenceMarker := ""
 
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		first := firstNonSpaceByte(line)
 
 		if inBlock {
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
 			if IsClosingFence(trimmed, fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
@@ -36,13 +40,19 @@ func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintE
 			continue
 		}
 
+		if first != '#' && first != '`' && first != '~' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+
 		if marker := openingFenceMarker(trimmed); marker != "" {
 			inBlock = true
 			fenceMarker = marker
 			continue
 		}
 
-		if !isATXHeading(trimmed) {
+		if first != '#' || !isATXHeading(trimmed) {
 			continue
 		}
 
