@@ -39,14 +39,7 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
 				inBlock = false
 				fenceMarker = ""
-				// closing fence: check the next line
-				if i+1 < len(lines) && firstNonSpaceByte(lines[i+1]) != 0 {
-					errs = append(errs, LintError{
-						File:    filename,
-						Line:    offset + i + 1,
-						Message: "blanks-around-fences: fenced code block must be followed by a blank line",
-					})
-				}
+				errs = appendMissingTrailingBlank(errs, filename, lines, i, offset)
 			}
 			prevBlank = false
 			continue
@@ -70,6 +63,17 @@ func CheckBlanksAroundFences(filename string, lines []string, offset int) []Lint
 		prevBlank = isBlank
 	}
 
+	return errs
+}
+
+func appendMissingTrailingBlank(errs []LintError, filename string, lines []string, i, offset int) []LintError {
+	if i+1 < len(lines) && firstNonSpaceByte(lines[i+1]) != 0 {
+		return append(errs, LintError{
+			File:    filename,
+			Line:    offset + i + 1,
+			Message: "blanks-around-fences: fenced code block must be followed by a blank line",
+		})
+	}
 	return errs
 }
 
