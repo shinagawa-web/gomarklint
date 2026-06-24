@@ -22,13 +22,41 @@ import (
 func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintError {
 	var errs []LintError
 	seen := make(map[string]struct{}, len(lines)/10)
+	inBlock := false
+	fenceMarker := ""
 
 	for i, line := range lines {
-		if firstNonSpaceByte(line) != '#' {
+		first := firstNonSpaceByte(line)
+
+		if inBlock {
+			if first != fenceMarker[0] {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			if IsClosingFence(trimmed, fenceMarker) {
+				inBlock = false
+				fenceMarker = ""
+			}
 			continue
 		}
-		line = strings.TrimSpace(line)
-		heading := strings.TrimSpace(strings.TrimLeft(line, "#"))
+
+		if first != '#' && first != '`' && first != '~' {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+
+		if marker := openingFenceMarker(trimmed); marker != "" {
+			inBlock = true
+			fenceMarker = marker
+			continue
+		}
+
+		if first != '#' || !isATXHeading(trimmed) {
+			continue
+		}
+
+		heading := strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
 		normalized := strings.ToLower(heading)
 
 		if _, ok := seen[normalized]; ok {
