@@ -11,6 +11,11 @@
       "automerge": true
     },
     {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "major"],
       "automerge": true
