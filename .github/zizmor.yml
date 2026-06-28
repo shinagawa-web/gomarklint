@@ -4,3 +4,9 @@ rules:
       # setup-go uses cache: false and setup-node uses cache: "", so no
       # cache is read or written in this workflow — poisoning is not possible.
       - goreleaser.yml
+  adhoc-packages:
+    ignore:
+      # This workflow intentionally installs the published npm package
+      # globally to verify the released distribution works end-to-end;
+      # there is no lockfile to install from by design.
+      - verify-distribution.yml
