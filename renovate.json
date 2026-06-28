@@ -1,27 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
   "automerge": false,
+  "platformAutomerge": false,
   "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
-      "automergeType": "pr",
-      "requiredStatusChecks": ["Test / test"]
+      "automerge": true
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     },
     {
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
-      "automergeType": "pr",
-      "requiredStatusChecks": ["Test / test"]
+      "matchUpdateTypes": ["minor", "patch", "digest", "major"],
+      "automerge": true
     },
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": ["dockerfile"],
       "matchUpdateTypes": ["digest"],
-      "enabled": false
+      "automerge": true
     }
   ]
 }
