@@ -3,6 +3,8 @@ package rule
 import (
 	"regexp"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 var (
@@ -20,39 +22,29 @@ var (
 //
 // Parameters:
 //   - filename: the name of the file being linted as a string
-//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - ctx: the shared per-line context produced by preprocess.Scan
 //   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError containing the line number and description of each
 //     detected issue.
-func CheckNoSetextHeadings(filename string, lines []string, offset int) []LintError {
+//
+// A setext underline inside fenced code, indented code, an HTML block, or an HTML
+// comment is not a heading and is not reported.
+func CheckNoSetextHeadings(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inCodeBlock := false
-	var fenceMarker string
 	isPrevLineEmpty := true
 	isPrevLineOtherBlock := false
 	isInLazyBlockquote := false
 
-	for i, line := range lines {
+	for i := 0; i < ctx.Len(); i++ {
+		line := ctx.Line(i)
 		trimmed := strings.TrimSpace(line)
-
-		// Maintain code-block state inline to avoid a separate O(n) pass and
-		// the O(k) isInCodeBlock lookup per line.
-		if inCodeBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inCodeBlock = false
-				fenceMarker = ""
-			}
-		} else if marker := openingFenceMarker(trimmed); marker != "" {
-			inCodeBlock = true
-			fenceMarker = marker
-		}
 
 		isCurrentLineEmpty := trimmed == ""
 		isCurrentLineOtherBlock := setextOtherBlockRegex.MatchString(line)
 
-		if !inCodeBlock && setextUnderlineRegex.MatchString(line) &&
+		if !inBlockContext(ctx, i) && setextUnderlineRegex.MatchString(line) &&
 			!isPrevLineEmpty && !isPrevLineOtherBlock && !isInLazyBlockquote {
 			errs = append(errs, LintError{
 				File:    filename,

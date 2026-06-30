@@ -3,6 +3,8 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // CheckDuplicateHeadings detects duplicate headings in the given Markdown content.
@@ -14,45 +16,31 @@ import (
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - ctx: the shared per-line context produced by preprocess.Scan
 //   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError entries for each detected duplicate heading (excluding the first occurrence).
-func CheckDuplicateHeadings(filename string, lines []string, offset int) []LintError {
+//
+// Headings inside fenced code, indented code, HTML blocks, and HTML comments are
+// ignored.
+func CheckDuplicateHeadings(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	seen := make(map[string]struct{}, len(lines)/10)
-	inBlock := false
-	fenceMarker := ""
+	seen := make(map[string]struct{}, ctx.Len()/10)
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first != fenceMarker[0] {
-				continue
-			}
-			trimmed := strings.TrimSpace(line)
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
 			continue
 		}
 
-		if first != '#' && first != '`' && first != '~' {
+		line := ctx.Line(i)
+		if firstNonSpaceByte(line) != '#' {
 			continue
 		}
 
 		trimmed := strings.TrimSpace(line)
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
-		}
-
-		if first != '#' || !isATXHeading(trimmed) {
+		if !isATXHeading(trimmed) {
 			continue
 		}
 

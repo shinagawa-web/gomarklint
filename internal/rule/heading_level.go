@@ -3,6 +3,8 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // LintError represents a single lint violation detected in a Markdown file.
@@ -39,56 +41,33 @@ func atxHeadingLevel(line string) int {
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - ctx: the shared per-line context produced by preprocess.Scan
 //   - offset: the line number offset due to frontmatter removal
 //   - minLevel: the expected minimum level for the first heading (e.g., 2 for ##)
 //
 // Returns:
 //   - A slice of LintError containing the line number and description of each detected issue.
-func CheckHeadingLevels(filename string, lines []string, offset int, minLevel int) []LintError {
+//
+// Headings inside fenced code, indented code, HTML blocks, and HTML comments are
+// ignored, so they neither report nor pollute the heading-level state.
+func CheckHeadingLevels(filename string, ctx *preprocess.Context, offset int, minLevel int) []LintError {
 	var errs []LintError
 
 	prevLevel := 0
-	inCodeBlock := false
-	var fenceMarker string
 
-	for i, line := range lines {
-		if len(line) == 0 {
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
 			continue
 		}
 
-		// First-byte prefilter: skip lines that cannot start a fence or heading
-		// before calling strings.TrimSpace.
-		first := firstNonSpaceByte(line)
-
-		// Inline code-block tracking — avoids the O(n×k) isInCodeBlock lookup.
-		if inCodeBlock {
-			if first != fenceMarker[0] {
-				continue
-			}
-			trimmed := strings.TrimSpace(line)
-			if IsClosingFence(trimmed, fenceMarker) {
-				inCodeBlock = false
-				fenceMarker = ""
-			}
-			continue
-		}
-
-		if first != '#' && first != '`' && first != '~' {
+		line := ctx.Line(i)
+		// First-byte prefilter: skip lines that cannot start a heading before
+		// calling strings.TrimSpace.
+		if firstNonSpaceByte(line) != '#' {
 			continue
 		}
 
 		trimmed := strings.TrimSpace(line)
-
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inCodeBlock = true
-			fenceMarker = marker
-			continue
-		}
-
-		if first != '#' {
-			continue
-		}
 
 		// Pass trimmed so that CRLF '\r' and leading spaces are already removed.
 		currentLevel := atxHeadingLevel(trimmed)

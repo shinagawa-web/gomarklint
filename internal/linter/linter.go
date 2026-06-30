@@ -366,16 +366,26 @@ var simpleRules = []struct {
 	{"unclosed-code-block", rule.CheckUnclosedCodeBlocks},
 	{"empty-alt-text", rule.CheckEmptyAltText},
 	{"fenced-code-language", rule.CheckFencedCodeLanguage},
-	{"duplicate-heading", rule.CheckDuplicateHeadings},
 	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
-	{"no-setext-headings", rule.CheckNoSetextHeadings},
-	{"single-h1", rule.CheckSingleH1},
-	{"blanks-around-headings", rule.CheckBlanksAroundHeadings},
 	{"no-empty-links", rule.CheckNoEmptyLinks},
-	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
 	{"blanks-around-fences", rule.CheckBlanksAroundFences},
 	{"no-hard-tabs", rule.CheckNoHardTabs},
+}
+
+// contextRules lists rules migrated to consume the shared *preprocess.Context
+// (issue #337). They take (path, ctx, offset); rules that also need extra
+// options are still handled separately below.
+var contextRules = []struct {
+	name string
+	fn   func(string, *preprocess.Context, int) []rule.LintError
+}{
+	{"no-bare-urls", rule.CheckNoBareURLs},
+	{"single-h1", rule.CheckSingleH1},
+	{"duplicate-heading", rule.CheckDuplicateHeadings},
+	{"no-setext-headings", rule.CheckNoSetextHeadings},
+	{"blanks-around-headings", rule.CheckBlanksAroundHeadings},
+	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
@@ -391,12 +401,14 @@ func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.
 		}
 	}
 
-	if l.config.IsEnabled("no-bare-urls") {
-		errs = append(errs, l.withSeverity(rule.CheckNoBareURLs(path, ctx, offset), "no-bare-urls")...)
+	for _, r := range contextRules {
+		if l.config.IsEnabled(r.name) {
+			errs = append(errs, l.withSeverity(r.fn(path, ctx, offset), r.name)...)
+		}
 	}
 
 	if l.config.IsEnabled("heading-level") {
-		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, lines, offset, l.headingMinLevel()), "heading-level")...)
+		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, ctx, offset, l.headingMinLevel()), "heading-level")...)
 	}
 	if l.config.IsEnabled("consistent-code-fence") {
 		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, lines, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
