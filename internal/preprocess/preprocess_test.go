@@ -101,6 +101,21 @@ text`,
 			},
 		},
 		{
+			// A multi-line comment can start mid-line after prose and close
+			// mid-line before more prose. The opening and closing lines carry
+			// real prose, so neither is a pure comment line; only the fully
+			// commented middle line is flagged. Without this, downstream rules
+			// would skip the trailing "visible prose".
+			name: "multi-line comment opened and closed mid-line keeps prose",
+			doc: `
+text <!-- start
+inside comment
+end --> visible prose`,
+			want: []flags{
+				{}, {htmlComment: true}, {},
+			},
+		},
+		{
 			// Audit worst offender: empty-alt-text fires inside fenced code.
 			// The image line must be flagged as fenced so the rule skips it.
 			name: "fenced code block covers delimiters and content",
@@ -207,6 +222,17 @@ func TestScanSanitizedContract(t *testing.T) {
 		}
 		if !ctx[0].InHTMLComment {
 			t.Errorf("standalone comment not flagged InHTMLComment")
+		}
+	})
+
+	t.Run("prose after a mid-line comment close is preserved", func(t *testing.T) {
+		ctx := runScan(t, "text <!-- start\nend --> visible prose")
+		last := ctx[len(ctx)-1]
+		if last.InHTMLComment {
+			t.Errorf("line with trailing prose flagged InHTMLComment: %q", last.Original)
+		}
+		if !strings.Contains(last.Sanitized, "visible prose") {
+			t.Errorf("trailing prose not preserved in Sanitized: %q", last.Sanitized)
 		}
 	})
 

@@ -114,12 +114,21 @@ func (s *scanner) continueOpenBlock(line string, cols int, isBlank bool) (LineCo
 		s.inParagraph = false
 		return LineContext{Original: line, Sanitized: line, InFencedCode: true}, true
 
-	// Multi-line HTML comment: track until the closing "-->".
+	// Multi-line HTML comment: track until the closing "-->". The comment may
+	// close mid-line and leave trailing prose; in that case the line is not a
+	// pure comment line, so it is not flagged InHTMLComment and it reopens a
+	// paragraph — mirroring startLine's handling of a fresh comment line.
 	case s.inComment:
-		sanitized, stillInComment, _ := sanitizeInline(line, true)
+		sanitized, stillInComment, fullyComment := sanitizeInline(line, true)
 		s.inComment = stillInComment
-		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: sanitized, InHTMLComment: true}, true
+		ctx := LineContext{Original: line, Sanitized: sanitized}
+		if fullyComment {
+			ctx.InHTMLComment = true
+			s.inParagraph = false
+		} else {
+			s.inParagraph = true
+		}
+		return ctx, true
 
 	// Open HTML block. Types 1 and 3–5 end on a delimiter line; types 6 and 7
 	// end on a blank line, which is itself outside the block.
