@@ -10,6 +10,7 @@ import (
 
 	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 	"github.com/shinagawa-web/gomarklint/v3/internal/file"
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
@@ -353,8 +354,10 @@ func (l *Linter) externalLinkAllowedStatuses() []int {
 	return statuses
 }
 
-// simpleRules lists rules whose check function takes only (path, lines, offset).
-// Rules that require additional options are handled separately below.
+// simpleRules lists rules whose check function takes only (path, lines, offset)
+// and have not yet been migrated to the preprocess context. Rules that require
+// additional options, or that consume the shared *preprocess.Context, are
+// handled separately below.
 var simpleRules = []struct {
 	name string
 	fn   func(string, []string, int) []rule.LintError
@@ -368,7 +371,6 @@ var simpleRules = []struct {
 	{"no-setext-headings", rule.CheckNoSetextHeadings},
 	{"single-h1", rule.CheckSingleH1},
 	{"blanks-around-headings", rule.CheckBlanksAroundHeadings},
-	{"no-bare-urls", rule.CheckNoBareURLs},
 	{"no-empty-links", rule.CheckNoEmptyLinks},
 	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
@@ -377,13 +379,20 @@ var simpleRules = []struct {
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
-func (l *Linter) collectLineErrors(path string, lines []string, offset int) []rule.LintError {
+// ctx is the shared per-line context produced once by preprocess.Scan; rules
+// that have migrated to consume it receive ctx, while the rest continue to read
+// the raw lines slice (which Scan borrows, so no copy is made).
+func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.Context, offset int) []rule.LintError {
 	var errs []rule.LintError
 
 	for _, r := range simpleRules {
 		if l.config.IsEnabled(r.name) {
 			errs = append(errs, l.withSeverity(r.fn(path, lines, offset), r.name)...)
 		}
+	}
+
+	if l.config.IsEnabled("no-bare-urls") {
+		errs = append(errs, l.withSeverity(rule.CheckNoBareURLs(path, ctx, offset), "no-bare-urls")...)
 	}
 
 	if l.config.IsEnabled("heading-level") {
@@ -420,7 +429,9 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 		disabled = parseDisableComments(lines, offset)
 	}
 
-	allErrors := l.collectLineErrors(path, lines, offset)
+	ctx := preprocess.Scan(lines)
+
+	allErrors := l.collectLineErrors(path, lines, ctx, offset)
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
