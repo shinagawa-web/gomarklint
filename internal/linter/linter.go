@@ -363,9 +363,7 @@ var simpleRules = []struct {
 	fn   func(string, []string, int) []rule.LintError
 }{
 	{"final-blank-line", rule.CheckFinalBlankLine},
-	{"empty-alt-text", rule.CheckEmptyAltText},
 	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
-	{"no-empty-links", rule.CheckNoEmptyLinks},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
 	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
@@ -386,6 +384,8 @@ var contextRules = []struct {
 	{"unclosed-code-block", rule.CheckUnclosedCodeBlocks},
 	{"fenced-code-language", rule.CheckFencedCodeLanguage},
 	{"blanks-around-fences", rule.CheckBlanksAroundFences},
+	{"empty-alt-text", rule.CheckEmptyAltText},
+	{"no-empty-links", rule.CheckNoEmptyLinks},
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
@@ -426,7 +426,7 @@ func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.
 		errs = append(errs, l.withSeverity(rule.CheckNoTrailingPunctuation(path, lines, offset, l.noTrailingPunctuation()), "no-trailing-punctuation")...)
 	}
 	if l.config.IsEnabled("link-fragments") {
-		errs = append(errs, l.withSeverity(rule.CheckLinkFragments(path, lines, offset, l.config.RuleOptions("link-fragments")), "link-fragments")...)
+		errs = append(errs, l.withSeverity(rule.CheckLinkFragments(path, ctx, offset, l.config.RuleOptions("link-fragments")), "link-fragments")...)
 	}
 	return errs
 }
@@ -447,7 +447,7 @@ func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, i
 
 	linksChecked := 0
 	if l.config.IsEnabled("external-link") {
-		errors, count := rule.CheckExternalLinks(path, lines, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache, l.externalLinkPerHostConcurrency(), l.externalLinkPerHostIntervalMs())
+		errors, count := rule.CheckExternalLinks(path, ctx, offset, l.compiledPatterns, l.externalLinkTimeout(), rule.DefaultRetryDelayMs, l.externalLinkMaxConcurrency(), l.externalLinkMaxRetries(), l.externalLinkAllowedStatuses(), l.urlCache, l.externalLinkPerHostConcurrency(), l.externalLinkPerHostIntervalMs())
 		allErrors = append(allErrors, l.withSeverity(errors, "external-link")...)
 		linksChecked = count
 	}

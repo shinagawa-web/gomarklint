@@ -3,6 +3,8 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // emptyLinkDest reports whether dest is an "empty" link destination.
@@ -56,44 +58,24 @@ func findEmptyLinks(line string) []string {
 
 // CheckNoEmptyLinks flags Markdown links and images whose destination URL is
 // empty, contains only "#", or is "<>".
-// Links inside fenced code blocks and inline code spans are ignored.
-func CheckNoEmptyLinks(filename string, lines []string, offset int) []LintError {
+// Links inside fenced code, indented code, HTML blocks, HTML comments, and inline
+// code spans are ignored.
+func CheckNoEmptyLinks(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first != fenceMarker[0] {
-				continue
-			}
-			if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
 			continue
 		}
 
-		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-				continue
-			}
-		}
-
+		// Sanitized blanks inline code spans and inline comments, so links
+		// living inside them are not seen here.
+		line := ctx.Sanitized(i)
 		if !strings.Contains(line, "](") {
 			continue
 		}
 
-		scanned := line
-		if strings.ContainsRune(line, '`') {
-			scanned = stripInlineCode(line)
-		}
-
-		for _, match := range findEmptyLinks(scanned) {
+		for _, match := range findEmptyLinks(line) {
 			errs = append(errs, LintError{
 				File:    filename,
 				Line:    offset + i + 1,

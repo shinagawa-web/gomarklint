@@ -3,6 +3,8 @@ package rule
 import (
 	"strings"
 	"testing"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 func TestCheckEmptyAltText(t *testing.T) {
@@ -56,7 +58,7 @@ func TestCheckEmptyAltText(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
-			got := CheckEmptyAltText("test.md", lines, 0)
+			got := CheckEmptyAltText("test.md", preprocess.Scan(lines), 0)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\nGot: %v\nWant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
