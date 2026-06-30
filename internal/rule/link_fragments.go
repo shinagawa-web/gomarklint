@@ -51,7 +51,7 @@ var reStripInlineImages = regexp.MustCompile(`!\[[^\]]*\]\([^)]*\)`)
 
 // collectRefDefs returns a map from normalized reference label to fragment string (without #)
 // for all reference link definitions that target a fragment destination.
-// Definitions inside code or HTML block contexts are excluded.
+// Definitions inside fenced/indented code, HTML blocks, and HTML comments are excluded.
 func collectRefDefs(ctx *preprocess.Context) map[string]string {
 	defs := make(map[string]string)
 	for i := 0; i < ctx.Len(); i++ {
@@ -75,9 +75,10 @@ func collectRefDefs(ctx *preprocess.Context) map[string]string {
 }
 
 // collectHeadingSlugs returns the set of all valid fragment slugs computed from ATX headings.
-// Headings inside code or HTML block contexts are excluded, so a fake heading
-// inside (e.g.) an indented code block no longer pollutes the valid-slug set and
-// mask a broken fragment link (audit #337 false negative).
+// Headings inside fenced/indented code, HTML blocks, and HTML comments are
+// excluded, so a fake heading inside (e.g.) an indented code block no longer
+// pollutes the valid-slug set and masks a broken fragment link (audit #337 false
+// negative).
 // Duplicate headings produce suffixed slugs (-1, -2, …) following GitHub convention.
 func collectHeadingSlugs(ctx *preprocess.Context, slugger func(string) string) map[string]struct{} {
 	var headings []string
@@ -96,12 +97,20 @@ func collectHeadingSlugs(ctx *preprocess.Context, slugger func(string) string) m
 	return buildSlugSet(headings, slugger)
 }
 
-// hasAnyFragmentSyntax is a cheap pre-filter that reports whether lines contain
-// any text that could be a fragment link or fragment definition, without
-// allocating any state. Checks for "(#" (inline fragment links) and
-// "]: #" (reference definition pointing at a fragment).
+// hasAnyFragmentSyntax is a cheap pre-filter that reports whether any non-block
+// line could be a fragment link or fragment definition. Checks for "(#" (inline
+// fragment links) and "]: #" (reference definition pointing at a fragment).
+//
+// It skips block contexts, since every real pass below does too — so fragment
+// syntax that lives only inside code/HTML/comment no longer trips the more
+// expensive passes. It reads the raw line (a superset of the sanitized text and
+// of the raw text the ref-def pass uses), so it never exits early while a real
+// fragment construct exists.
 func hasAnyFragmentSyntax(ctx *preprocess.Context) bool {
 	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
+			continue
+		}
 		line := ctx.Line(i)
 		if strings.Contains(line, "(#") || strings.Contains(line, "]: #") {
 			return true
@@ -110,11 +119,14 @@ func hasAnyFragmentSyntax(ctx *preprocess.Context) bool {
 	return false
 }
 
-// hasAnyFragmentLinks reports whether lines contain at least one potential
-// fragment link. The check is intentionally coarse (no code-block awareness)
-// to stay O(n) with a single pass and minimal overhead.
+// hasAnyFragmentLinks reports whether any non-block line contains at least one
+// potential fragment link. Like hasAnyFragmentSyntax it skips block contexts and
+// reads the raw line, staying O(n) with a single pass and minimal overhead.
 func hasAnyFragmentLinks(ctx *preprocess.Context, refDefs map[string]string) bool {
 	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
+			continue
+		}
 		line := ctx.Line(i)
 		if strings.Contains(line, "(#") {
 			return true
