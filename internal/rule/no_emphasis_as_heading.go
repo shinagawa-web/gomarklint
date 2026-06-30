@@ -3,6 +3,8 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // matchDoubleDelim returns the inner text if line is entirely wrapped in a
@@ -90,31 +92,18 @@ func endsWithPunctuation(s string) bool {
 //  1. The trimmed line consists entirely of a single bold/italic span.
 //  2. The inner text does not end with sentence-ending punctuation.
 //
-// Lines inside fenced code blocks and inline code spans are ignored.
-func CheckNoEmphasisAsHeading(filename string, lines []string, offset int) []LintError {
+// Lines inside fenced code, indented code, HTML blocks, and HTML comments are
+// ignored.
+func CheckNoEmphasisAsHeading(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 
-	for i, line := range lines {
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
+			continue
+		}
+
+		line := ctx.Line(i)
 		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
-			continue
-		}
-
-		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-			}
-			continue
-		}
-
 		if first != '*' && first != '_' {
 			continue
 		}
