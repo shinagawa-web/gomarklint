@@ -3,69 +3,9 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
-
-// countBacktickRun returns the number of consecutive backticks starting at
-// position start in s.
-func countBacktickRun(s string, start int) int {
-	n := 0
-	for start+n < len(s) && s[start+n] == '`' {
-		n++
-	}
-	return n
-}
-
-// stripInlineCode replaces content inside backtick spans (including the
-// delimiters) with spaces so that URLs within inline code are not scanned.
-// Handles both single-backtick (` " `) and multi-backtick (` " `) spans per
-// CommonMark: a code span opens with a run of N backticks and closes with the
-// next run of exactly N backticks.
-func stripInlineCode(s string) string {
-	var b strings.Builder
-	b.Grow(len(s))
-
-	for i := 0; i < len(s); {
-		if s[i] != '`' {
-			b.WriteByte(s[i])
-			i++
-			continue
-		}
-
-		delimLen := countBacktickRun(s, i)
-		closing := -1
-		j := i + delimLen
-		for j < len(s) {
-			if s[j] != '`' {
-				j++
-				continue
-			}
-			runLen := countBacktickRun(s, j)
-			if runLen == delimLen {
-				closing = j
-				break
-			}
-			j += runLen
-		}
-
-		if closing == -1 {
-			// No matching closing run — emit backticks as-is.
-			for k := 0; k < delimLen; k++ {
-				b.WriteByte('`')
-			}
-			i += delimLen
-			continue
-		}
-
-		// Replace the entire span (delimiters + content) with spaces.
-		spanLen := (closing + delimLen) - i
-		for k := 0; k < spanLen; k++ {
-			b.WriteByte(' ')
-		}
-		i = closing + delimLen
-	}
-
-	return b.String()
-}
 
 // isURLBodyChar returns true for characters allowed in a URL body
 // (everything except whitespace, <>, ()[], and quotes).
@@ -93,36 +33,6 @@ func isWrappedURL(line string, start int) bool {
 		return i >= 0 && line[i] == '='
 	}
 	return false
-}
-
-// stripHTMLComments replaces content inside <!-- ... --> spans (including the
-// delimiters) with spaces so that URLs within HTML comments are not scanned.
-// It handles multiple comment spans on a single line. The second return value
-// reports whether the line ended inside an unclosed comment.
-func stripHTMLComments(s string) (string, bool) {
-	var b strings.Builder
-	b.Grow(len(s))
-	for i := 0; i < len(s); {
-		if i+4 <= len(s) && s[i:i+4] == "<!--" {
-			end := strings.Index(s[i+4:], "-->")
-			if end == -1 {
-				// Unclosed comment — blank the rest of the line.
-				for k := i; k < len(s); k++ {
-					b.WriteByte(' ')
-				}
-				return b.String(), true
-			}
-			spanLen := 4 + end + 3
-			for k := 0; k < spanLen; k++ {
-				b.WriteByte(' ')
-			}
-			i += spanLen
-		} else {
-			b.WriteByte(s[i])
-			i++
-		}
-	}
-	return b.String(), false
 }
 
 // scanURLEnd returns the end index of the URL body starting at bodyStart.
@@ -171,39 +81,14 @@ func findBareURLs(line string) []string {
 	return urls
 }
 
-// advanceComment advances a line that is currently inside a multi-line HTML
-// comment. It returns the (possibly modified) line and the updated inComment
-// state. If "-->" is found, inComment becomes false and the remainder of the
-// line after "-->" is returned for further processing.
-func advanceComment(line string) (string, bool) {
-	idx := strings.Index(line, "-->")
-	if idx == -1 {
-		return line, true
-	}
-	return strings.Repeat(" ", idx+3) + line[idx+3:], false
-}
-
-// prepareScanned strips inline code and HTML comments from line, returning the
-// sanitized string and whether the line ended inside an unclosed comment.
-func prepareScanned(line string) (string, bool) {
-	scanned := line
-	if strings.ContainsRune(scanned, '`') {
-		scanned = stripInlineCode(scanned)
-	}
-	if strings.Contains(scanned, "<!--") {
-		var endedInComment bool
-		scanned, endedInComment = stripHTMLComments(scanned)
-		return scanned, endedInComment
-	}
-	return scanned, false
-}
-
 // isLinkCard reports whether line i is a standalone link-card URL: the
 // trimmed line is a single http/https URL with no surrounding prose, preceded
 // and followed by a blank line (or the file boundary). Such lines are
 // intentionally placed by the author to trigger renderer-level link card
-// previews (GitHub, Zenn, etc.) and must not be flagged.
-func isLinkCard(lines []string, i int, trimmed string) bool {
+// previews (GitHub, Zenn, etc.) and must not be flagged. The trimmed argument
+// is derived from the original line so that inline code or comment markers on
+// the line disqualify it from being a bare link card.
+func isLinkCard(ctx *preprocess.Context, i int, trimmed string) bool {
 	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
 		return false
 	}
@@ -211,71 +96,47 @@ func isLinkCard(lines []string, i int, trimmed string) bool {
 	if len(urls) != 1 || trimmed != urls[0] {
 		return false
 	}
-	prevBlank := i == 0 || strings.TrimSpace(lines[i-1]) == ""
-	nextBlank := i >= len(lines)-1 || strings.TrimSpace(lines[i+1]) == ""
+	prevBlank := i == 0 || strings.TrimSpace(ctx.Line(i-1)) == ""
+	nextBlank := i >= ctx.Len()-1 || strings.TrimSpace(ctx.Line(i+1)) == ""
 	return prevBlank && nextBlank
 }
 
 // CheckNoBareURLs flags HTTP/HTTPS URLs that appear as bare text rather than
 // being wrapped in angle brackets or used inside a Markdown link or image.
-// URLs inside fenced code blocks, inline code spans, HTML comments, and HTML
-// attribute values are ignored. A URL that stands alone on its own line
-// surrounded by blank lines is treated as a link card and not flagged.
-func CheckNoBareURLs(filename string, lines []string, offset int) []LintError {
+// URLs inside fenced code blocks, indented code blocks, HTML blocks, HTML
+// comments, inline code spans, and HTML attribute values are ignored. A URL
+// that stands alone on its own line surrounded by blank lines is treated as a
+// link card and not flagged.
+//
+// This rule is the reference adoption of the shared preprocess pass (#337
+// Phase 2): rather than re-deriving code/comment context, it skips lines the
+// scanner already classified as code or HTML and scans the inline-sanitized
+// text (code spans and inline comments blanked) for the remaining lines.
+func CheckNoBareURLs(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
-	inComment := false
 
-	for i, line := range lines {
-		// Multi-line HTML comment tracking takes priority: fences inside
-		// comments are not treated as code block delimiters.
-		if inComment {
-			var stillInComment bool
-			line, stillInComment = advanceComment(line)
-			if stillInComment {
-				continue
-			}
-			inComment = false
-			// Fall through to process the remainder of the line.
-		}
-
-		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		// Skip every block context the scanner already identified. This closes
+		// the indented-code and HTML-block gaps the previous bespoke fence/
+		// comment tracking missed.
+		if ctx.InFencedCode(i) || ctx.InIndentedCode(i) || ctx.InHTMLBlock(i) || ctx.InHTMLComment(i) {
 			continue
 		}
 
-		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-				continue
-			}
-		}
-
-		if !strings.Contains(line, "http") {
-			if strings.Contains(line, "<!--") {
-				_, inComment = stripHTMLComments(line)
-			}
+		// Sanitized has inline code spans and inline comments blanked, so URLs
+		// living inside them are not seen here.
+		sanitized := ctx.Sanitized(i)
+		if !strings.Contains(sanitized, "http") {
 			continue
 		}
 
-		trimmed := strings.TrimSpace(line)
-		if isLinkCard(lines, i, trimmed) {
+		// The link-card test uses the original text: a line carrying anything
+		// besides the URL (e.g. an inline code span) is not a bare link card.
+		if isLinkCard(ctx, i, strings.TrimSpace(ctx.Line(i))) {
 			continue
 		}
 
-		scanned, endedInComment := prepareScanned(line)
-		if endedInComment {
-			inComment = true
-		}
-
-		for _, url := range findBareURLs(scanned) {
+		for _, url := range findBareURLs(sanitized) {
 			errs = append(errs, LintError{
 				File:    filename,
 				Line:    offset + i + 1,
