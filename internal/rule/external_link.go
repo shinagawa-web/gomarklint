@@ -188,7 +188,7 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
 // Returns lint errors and the count of unique URLs checked.
 func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map, perHostConcurrency int, perHostIntervalMs int) ([]LintError, int) {
-	codeBlockRanges, _ := GetCodeBlockLineRanges(lines)
+	codeBlockRanges := GetCodeBlockLineRanges(lines)
 	links := ExtractExternalLinksWithLineNumbers(lines, offset)
 
 	urlToLines := make(map[string][]int)

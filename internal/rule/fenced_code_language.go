@@ -1,76 +1,34 @@
 package rule
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
+)
 
 // CheckFencedCodeLanguage checks that all fenced code blocks specify a language identifier.
 // Fenced code blocks opened with ``` or ~~~ without a language tag are flagged (MD040).
 //
 // Parameters:
 //   - filename: the name of the file being checked (used in error reporting)
-//   - lines: the Markdown content split into lines (with frontmatter already removed)
+//   - ctx: the shared per-line context produced by preprocess.Scan
 //   - offset: the line number offset due to frontmatter removal
 //
 // Returns:
 //   - A slice of LintError, one per opening fence that is missing a language identifier.
-func CheckFencedCodeLanguage(filename string, lines []string, offset int) []LintError {
+//
+// Fence openers inside indented code, HTML blocks, and HTML comments are not real
+// fences and are excluded by the scanner, so they are never examined.
+func CheckFencedCodeLanguage(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
-	inComment := false
 
-	for i, line := range lines {
-		// HTML comments take priority: fences inside comments are ignored.
-		if inComment {
-			if idx := strings.Index(line, "-->"); idx != -1 {
-				inComment = false
-				line = strings.Repeat(" ", idx+3) + line[idx+3:]
-			} else {
-				continue
-			}
-		}
-
-		if inBlock {
-			// Only lines starting with the same fence character as the opener can close a fence.
-			first := firstNonSpaceByte(line)
-			if first != fenceMarker[0] {
-				continue
-			}
-			trimmed := strings.TrimSpace(line)
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
-			continue
-		}
-
-		// Cheap guard: '<' must be present before invoking stripHTMLComments.
-		if strings.IndexByte(line, '<') >= 0 && strings.Contains(line, "<!--") {
-			_, endedInComment := stripHTMLComments(line)
-			if endedInComment {
-				inComment = true
-				continue
-			}
-		}
-
-		// Only backtick or tilde lines can open a fence; skip TrimSpace for all others.
-		first := firstNonSpaceByte(line)
-		if first != '`' && first != '~' {
-			continue
-		}
-
-		trimmed := strings.TrimSpace(line)
+	for _, span := range ctx.FenceSpans() {
+		trimmed := strings.TrimSpace(ctx.Line(span.Start))
 		marker := openingFenceMarker(trimmed)
-		if marker == "" {
-			continue
-		}
-
-		inBlock = true
-		fenceMarker = marker
-
 		if strings.TrimSpace(trimmed[len(marker):]) == "" {
 			errs = append(errs, LintError{
 				File:    filename,
-				Line:    offset + i + 1,
+				Line:    offset + span.Start + 1,
 				Message: "Fenced code block must have a language identifier",
 			})
 		}

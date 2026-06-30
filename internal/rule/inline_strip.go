@@ -2,13 +2,11 @@ package rule
 
 import "strings"
 
-// This file holds inline-sanitization helpers shared by several rules that have
-// not yet been migrated to the preprocess context (#337 Phase 3): no-empty-links,
-// link-fragments, consistent-emphasis-style, no-hard-tabs, and
-// fenced-code-language. They duplicate logic now centralized in
-// internal/preprocess (see Context.Sanitized) and are removed once their last
-// consumer migrates. no-bare-urls, the Phase 2 reference adoption, no longer
-// uses them.
+// This file holds inline-code-stripping helpers shared by several rules that
+// have not yet been migrated to the preprocess context (#337 Phase 3):
+// no-empty-links, link-fragments, consistent-emphasis-style, and no-hard-tabs.
+// They duplicate logic now centralized in internal/preprocess (see
+// Context.Sanitized) and are removed once their last consumer migrates.
 
 // countBacktickRun returns the number of consecutive backticks starting at
 // position start in s.
@@ -70,34 +68,4 @@ func stripInlineCode(s string) string {
 	}
 
 	return b.String()
-}
-
-// stripHTMLComments replaces content inside <!-- ... --> spans (including the
-// delimiters) with spaces so that URLs within HTML comments are not scanned.
-// It handles multiple comment spans on a single line. The second return value
-// reports whether the line ended inside an unclosed comment.
-func stripHTMLComments(s string) (string, bool) {
-	var b strings.Builder
-	b.Grow(len(s))
-	for i := 0; i < len(s); {
-		if i+4 <= len(s) && s[i:i+4] == "<!--" {
-			end := strings.Index(s[i+4:], "-->")
-			if end == -1 {
-				// Unclosed comment — blank the rest of the line.
-				for k := i; k < len(s); k++ {
-					b.WriteByte(' ')
-				}
-				return b.String(), true
-			}
-			spanLen := 4 + end + 3
-			for k := 0; k < spanLen; k++ {
-				b.WriteByte(' ')
-			}
-			i += spanLen
-		} else {
-			b.WriteByte(s[i])
-			i++
-		}
-	}
-	return b.String(), false
 }

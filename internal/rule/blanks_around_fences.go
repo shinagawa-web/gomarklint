@@ -1,98 +1,62 @@
 package rule
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
+)
 
 // CheckBlanksAroundFences flags fenced code blocks that are not preceded or
 // followed by a blank line. Fences at the start or end of the file are exempt
-// from the respective check. Fences inside HTML comment blocks are ignored.
-func CheckBlanksAroundFences(filename string, lines []string, offset int) []LintError {
+// from the respective check. Fences inside indented code, HTML blocks, and HTML
+// comments are not real fences and are ignored.
+//
+// A standalone single-line HTML comment (<!-- ... --> on its own line) is
+// transparent: it is invisible in rendered output, so it does not satisfy or
+// break the "preceded by a blank line" requirement. The preceding-blank check
+// therefore looks past such lines. Multi-line comment blocks and inline comments
+// (lines with visible text) are opaque.
+func CheckBlanksAroundFences(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
-	inHTMLComment := false
-	prevBlank := true
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-		isBlank := first == 0
-
-		// HTML comment tracking only applies outside fenced code blocks;
-		// `<!--`-like content inside a fenced block is just code and must not
-		// interfere with detecting the closing fence.
-		if !inBlock && (inHTMLComment || strings.IndexByte(line, '<') >= 0) {
-			skip, stillInComment, resetPrevBlank := stepHTMLComment(strings.TrimSpace(line), inHTMLComment)
-			if skip {
-				if resetPrevBlank {
-					prevBlank = false
-				}
-				inHTMLComment = stillInComment
-				continue
-			}
+	for _, span := range ctx.FenceSpans() {
+		// Preceded by a blank line? Skip past transparent standalone comment
+		// lines to find the nearest visible line.
+		j := span.Start - 1
+		for j >= 0 && isTransparentComment(ctx, j) {
+			j--
+		}
+		if j >= 0 && firstNonSpaceByte(ctx.Line(j)) != 0 {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + span.Start + 1,
+				Message: "blanks-around-fences: fenced code block must be preceded by a blank line",
+			})
 		}
 
-		if inBlock {
-			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-				errs = appendMissingTrailingBlank(errs, filename, lines, i, offset)
-			}
-			prevBlank = false
-			continue
+		// Followed by a blank line? Only closed fences have a line after them to
+		// check; an unclosed fence (End == -1) runs to EOF.
+		if span.End >= 0 && span.End+1 < ctx.Len() && firstNonSpaceByte(ctx.Line(span.End+1)) != 0 {
+			errs = append(errs, LintError{
+				File:    filename,
+				Line:    offset + span.End + 1,
+				Message: "blanks-around-fences: fenced code block must be followed by a blank line",
+			})
 		}
-
-		if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			// opening fence: check the previous line
-			if i > 0 && !prevBlank {
-				errs = append(errs, LintError{
-					File:    filename,
-					Line:    offset + i + 1,
-					Message: "blanks-around-fences: fenced code block must be preceded by a blank line",
-				})
-			}
-			prevBlank = false
-			continue
-		}
-
-		prevBlank = isBlank
 	}
 
 	return errs
 }
 
-func appendMissingTrailingBlank(errs []LintError, filename string, lines []string, i, offset int) []LintError {
-	if i+1 < len(lines) && firstNonSpaceByte(lines[i+1]) != 0 {
-		return append(errs, LintError{
-			File:    filename,
-			Line:    offset + i + 1,
-			Message: "blanks-around-fences: fenced code block must be followed by a blank line",
-		})
+// isTransparentComment reports whether line i is a standalone single-line HTML
+// comment (the whole line is a comment, and it both opens and closes on that
+// line). Such lines render to nothing, so blanks-around-fences looks through them
+// when checking for a preceding blank line. Multi-line comment lines carry only
+// one of the markers and are therefore opaque.
+func isTransparentComment(ctx *preprocess.Context, i int) bool {
+	if !ctx.InHTMLComment(i) {
+		return false
 	}
-	return errs
-}
-
-// stepHTMLComment advances the HTML-comment state machine for one line.
-// It returns (skip, newInComment, resetPrevBlank).
-// skip: caller should continue past this line.
-// newInComment: updated multi-line comment state.
-// resetPrevBlank: true when the line contains visible content and prevBlank
-// must be cleared; false for standalone single-line comments (<!-- ... -->)
-// that are invisible in rendered output and should not break a blank-line chain.
-func stepHTMLComment(trimmed string, inComment bool) (skip, newInComment, resetPrevBlank bool) {
-	if inComment {
-		if strings.Contains(trimmed, "-->") {
-			return true, false, true
-		}
-		return true, true, true
-	}
-	if strings.Contains(trimmed, "<!--") {
-		if strings.Contains(trimmed, "-->") {
-			// Standalone single-line comment is transparent; mixed lines like
-			// "text <!-- note -->" are not (HasPrefix distinguishes them).
-			return true, false, !strings.HasPrefix(trimmed, "<!--")
-		}
-		return true, true, true
-	}
-	return false, false, false
+	line := ctx.Line(i)
+	return strings.Contains(line, "<!--") && strings.Contains(line, "-->")
 }
