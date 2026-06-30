@@ -1,0 +1,6 @@
+{
+  "default": false,
+  "rules": {
+    "fenced-code-language": true
+  }
+}
