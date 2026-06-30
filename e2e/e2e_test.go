@@ -615,7 +615,10 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputContains(t, output, "expected asterisk emphasis, got underscore emphasis")
 		assertOutputContains(t, output, "Errors in fixtures/consistent_list_marker_violation.md:")
 		assertOutputContains(t, output, "expected dash marker, got asterisk marker")
-		assertOutputContains(t, output, "Checked 55 file(s)")
+		// no_hard_tabs_context.md (#337 preprocess e2e): tabs outside fenced code
+		// are still reported.
+		assertOutputContains(t, output, "Errors in fixtures/no_hard_tabs_context.md:")
+		assertOutputContains(t, output, "Checked 60 file(s)")
 		assertOutputNotContains(t, output, "Errors in fixtures/valid.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/with_frontmatter.md")
 		assertOutputNotContains(t, output, "Errors in fixtures/frontmatter_only.md")
@@ -632,6 +635,12 @@ func TestE2E_MultipleFiles(t *testing.T) {
 		assertOutputNotContains(t, output, "Errors in fixtures/blanks_around_fences_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/consistent_emphasis_style_valid.md:")
 		assertOutputNotContains(t, output, "Errors in fixtures/consistent_list_marker_valid.md:")
+		// #337 preprocess context-skipping fixtures: markers live only inside
+		// skipped contexts, so these must be clean under the full default ruleset.
+		assertOutputNotContains(t, output, "Errors in fixtures/duplicate_heading_context_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/empty_alt_text_context_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/fenced_code_language_context_valid.md:")
+		assertOutputNotContains(t, output, "Errors in fixtures/consistent_emphasis_context_valid.md:")
 	})
 
 	t.Run("ErrorsFromAllFiles", func(t *testing.T) {
@@ -913,6 +922,65 @@ func TestE2E_Severity(t *testing.T) {
 		}
 		assertOutputContains(t, output, "No issues found")
 		assertOutputNotContains(t, output, "Setext heading found")
+	})
+}
+
+// TestE2E_PreprocessContext drives the #337 preprocess context-skipping through
+// the compiled binary for one rule per family plus the no-hard-tabs Section-B
+// divergence. The unit-level regression tests (internal/rule/*_context_regression_test.go)
+// call the rule functions directly with a hand-built *preprocess.Context; these
+// cases prove the same skipping survives the full CLI path (config wiring,
+// frontmatter offset, output formatting). Each "valid" fixture places a marker
+// that WOULD fire (verified out of context during authoring) only inside a
+// skipped context, so a regression in the shared scanner turns the case red.
+func TestE2E_PreprocessContext(t *testing.T) {
+	t.Run("DuplicateHeadingIgnoresBlockContexts", func(t *testing.T) {
+		// The real "## Section One" appears once; copies inside fenced code,
+		// indented code, and an HTML block must not be counted as duplicates.
+		output := runTest(t, "fixtures/duplicate_heading_context_valid.md", "--config", "config-duplicate-heading.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "duplicate heading")
+	})
+
+	t.Run("FencedCodeLanguageIgnoresBlockContexts", func(t *testing.T) {
+		// Bare ``` opener lines inside indented code and an HTML block are not
+		// real fences, so the missing-language rule must stay silent.
+		output := runTest(t, "fixtures/fenced_code_language_context_valid.md", "--config", "config-fenced-code-language.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "Fenced code block must have a language identifier")
+	})
+
+	t.Run("EmptyAltTextIgnoresBlockAndInlineContexts", func(t *testing.T) {
+		// ![](...) with empty alt text inside fenced/indented code, an HTML
+		// block, and an inline code span must all be ignored.
+		output := runTest(t, "fixtures/empty_alt_text_context_valid.md", "--config", "config-empty-alt-text.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "image with empty alt text")
+	})
+
+	t.Run("ConsistentEmphasisIgnoresSanitizedContexts", func(t *testing.T) {
+		// Asterisk is the expected style (set by the real *asterisk* span). The
+		// _underscore_ spans live only inside an inline code span, an HTML
+		// comment, and an HTML block, so ctx.Sanitized keeps them unflagged.
+		output := runTest(t, "fixtures/consistent_emphasis_context_valid.md", "--config", "config-consistent-emphasis-style.json")
+		assertOutputContains(t, output, "No issues found")
+		assertOutputNotContains(t, output, "consistent-emphasis-style")
+	})
+
+	t.Run("NoHardTabsSectionBSkipsOnlyFencedCode", func(t *testing.T) {
+		// Section-B divergence: tabs in fenced code are skipped, but tabs in
+		// indented code (line 9) and HTML blocks (line 12) are still reported.
+		output, err := runTestWithCmd(t, "fixtures/no_hard_tabs_context.md", "--config", "config-no-hard-tabs.json")
+		if err == nil {
+			t.Error("expected non-zero exit code for hard tabs outside fenced code")
+		}
+		assertOutputContains(t, output, "Errors in fixtures/no_hard_tabs_context.md:")
+		assertOutputContains(t, output, "fixtures/no_hard_tabs_context.md:9:")
+		assertOutputContains(t, output, "fixtures/no_hard_tabs_context.md:12:")
+		assertOutputContains(t, output, "hard tab character found")
+		// The tab inside the fenced code block (line 6) must not be reported.
+		assertOutputNotContains(t, output, "fixtures/no_hard_tabs_context.md:6:")
+		assertOutputContains(t, output, "2 issues found")
 	})
 }
 
