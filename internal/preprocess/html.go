@@ -4,7 +4,7 @@ import "strings"
 
 // HTML comments (CommonMark §4.6 type 2) are handled by sanitizeInline and the
 // comment-continuation state in Scan, not here, so they can be tracked
-// independently of other HTML blocks and surfaced via LineContext.InHTMLComment.
+// independently of other HTML blocks and surfaced via Context.InHTMLComment.
 // The detectors below cover the remaining HTML block types 1 and 3–7.
 
 // htmlType1Names are the tag names whose blocks (type 1) end only when a
