@@ -363,13 +363,10 @@ var simpleRules = []struct {
 	fn   func(string, []string, int) []rule.LintError
 }{
 	{"final-blank-line", rule.CheckFinalBlankLine},
-	{"unclosed-code-block", rule.CheckUnclosedCodeBlocks},
 	{"empty-alt-text", rule.CheckEmptyAltText},
-	{"fenced-code-language", rule.CheckFencedCodeLanguage},
 	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
 	{"no-empty-links", rule.CheckNoEmptyLinks},
 	{"blanks-around-lists", rule.CheckBlanksAroundLists},
-	{"blanks-around-fences", rule.CheckBlanksAroundFences},
 	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
@@ -386,6 +383,9 @@ var contextRules = []struct {
 	{"no-setext-headings", rule.CheckNoSetextHeadings},
 	{"blanks-around-headings", rule.CheckBlanksAroundHeadings},
 	{"no-emphasis-as-heading", rule.CheckNoEmphasisAsHeading},
+	{"unclosed-code-block", rule.CheckUnclosedCodeBlocks},
+	{"fenced-code-language", rule.CheckFencedCodeLanguage},
+	{"blanks-around-fences", rule.CheckBlanksAroundFences},
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
@@ -411,7 +411,7 @@ func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.
 		errs = append(errs, l.withSeverity(rule.CheckHeadingLevels(path, ctx, offset, l.headingMinLevel()), "heading-level")...)
 	}
 	if l.config.IsEnabled("consistent-code-fence") {
-		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, lines, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
+		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, ctx, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
 	}
 	if l.config.IsEnabled("consistent-emphasis-style") {
 		errs = append(errs, l.withSeverity(rule.CheckConsistentEmphasisStyle(path, lines, offset, l.consistentEmphasisStyle()), "consistent-emphasis-style")...)

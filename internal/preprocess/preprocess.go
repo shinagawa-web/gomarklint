@@ -54,6 +54,19 @@ type Context struct {
 	// absent from the map are their own sanitized form. nil until the first such
 	// line is seen.
 	sanitized map[int]string
+	// fences records one span per fenced code block, in document order. It is
+	// the structural view that InFencedCode (a per-line membership flag) cannot
+	// give: two back-to-back fences with no blank line between them are distinct
+	// spans here even though every line is InFencedCode.
+	fences []FenceSpan
+}
+
+// FenceSpan is the line range of one fenced code block. Start is the 0-based
+// opening-fence line; End is the 0-based closing-fence line, or -1 when the
+// fence is never closed (it then runs to end of file).
+type FenceSpan struct {
+	Start int
+	End   int
 }
 
 // Context flag bits, packed one set per line in Context.flags.
@@ -101,6 +114,12 @@ func (c *Context) InHTMLBlock(i int) bool { return c.flags[i]&flagHTMLBlock != 0
 // comment is blanked in Sanitized instead.
 func (c *Context) InHTMLComment(i int) bool { return c.flags[i]&flagHTMLComment != 0 }
 
+// FenceSpans returns the fenced code blocks in document order. Unlike the
+// InFencedCode flag, this distinguishes adjacent blocks and identifies each
+// block's opening and closing lines (End == -1 for an unclosed block). It is the
+// structural source of truth for fence rules.
+func (c *Context) FenceSpans() []FenceSpan { return c.fences }
+
 // Scan classifies every line of a Markdown file in a single pass and returns a
 // Context to query by line index. The input slice is borrowed, not copied, and
 // must not be mutated while the Context is in use. The input is expected to have
@@ -112,9 +131,22 @@ func Scan(lines []string) *Context {
 		flags: make([]uint8, len(lines)),
 	}
 	var s scanner
+	prevInFence := false
+	fenceStart := 0
 	for i, line := range lines {
 		lc := s.classify(line)
 		c.flags[i] = lc.flags
+		// Record fence spans from the scanner's open/close transitions. A line is
+		// at most one transition: a closing-fence line drops inFence on the same
+		// line that is still flagged fenced, and the next opener (even if
+		// adjacent) is a separate open transition, so adjacent blocks stay
+		// distinct.
+		if s.inFence && !prevInFence {
+			fenceStart = i
+		} else if !s.inFence && prevInFence {
+			c.fences = append(c.fences, FenceSpan{Start: fenceStart, End: i})
+		}
+		prevInFence = s.inFence
 		// Store the sanitized text only when it actually differs from the
 		// original. The fast path in sanitizeInline returns the original string
 		// unchanged for ordinary lines, so this comparison is a cheap identity
@@ -125,6 +157,10 @@ func Scan(lines []string) *Context {
 			}
 			c.sanitized[i] = lc.sanitized
 		}
+	}
+	// A fence still open at EOF is unclosed; record it with End == -1.
+	if s.inFence {
+		c.fences = append(c.fences, FenceSpan{Start: fenceStart, End: -1})
 	}
 	return c
 }

@@ -298,3 +298,64 @@ func TestScanSanitizedIsSparse(t *testing.T) {
 		t.Errorf("sanitized map has %d entries, want 2 (only differing lines)", len(ctx.sanitized))
 	}
 }
+
+// TestFenceSpans verifies the structural fence view, which InFencedCode (a
+// per-line membership flag) cannot provide. The adjacency and closed-then-
+// unclosed cases are the ones a flag-run derivation would get wrong.
+func TestFenceSpans(t *testing.T) {
+	tests := []struct {
+		name string
+		doc  string
+		want []FenceSpan
+	}{
+		{
+			name: "single closed fence",
+			doc:  "```\ncode\n```",
+			want: []FenceSpan{{Start: 0, End: 2}},
+		},
+		{
+			// Two fences with NO blank line between them: the closing line of the
+			// first and the opening line of the second are both InFencedCode, so a
+			// flag-run would merge them. They must stay distinct spans.
+			name: "adjacent fences with no gap",
+			doc:  "```\na\n```\n~~~\nb\n~~~",
+			want: []FenceSpan{{Start: 0, End: 2}, {Start: 3, End: 5}},
+		},
+		{
+			name: "unclosed fence runs to EOF",
+			doc:  "```\ncode\nmore",
+			want: []FenceSpan{{Start: 0, End: -1}},
+		},
+		{
+			// A closed fence immediately followed by an unclosed one: the unclosed
+			// span's Start must be the second opener, not the first.
+			name: "closed fence then unclosed fence",
+			doc:  "```\na\n```\n```\nb",
+			want: []FenceSpan{{Start: 0, End: 2}, {Start: 3, End: -1}},
+		},
+		{
+			name: "no fences",
+			doc:  "just\nprose",
+			want: nil,
+		},
+		{
+			// A fence inside an HTML comment is not a fence at all.
+			name: "fence inside html comment is not a span",
+			doc:  "<!--\n```\ncode\n```\n-->",
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Scan(strings.Split(tt.doc, "\n")).FenceSpans()
+			if len(got) != len(tt.want) {
+				t.Fatalf("got %d spans %+v, want %d %+v", len(got), got, len(tt.want), tt.want)
+			}
+			for i := range tt.want {
+				if got[i] != tt.want[i] {
+					t.Errorf("span %d = %+v, want %+v", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}

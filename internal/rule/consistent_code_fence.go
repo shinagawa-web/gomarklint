@@ -1,7 +1,7 @@
 package rule
 
 import (
-	"strings"
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // CheckConsistentCodeFence flags fenced code blocks that use a different fence
@@ -10,58 +10,17 @@ import (
 // In "consistent" mode the first fence character found in the document sets the
 // expected style; every subsequent opener that differs is flagged.
 // In "backtick"/"tilde" mode every opener using the wrong character is flagged.
-func CheckConsistentCodeFence(filename string, lines []string, offset int, style string) []LintError {
+//
+// Fence openers inside indented code, HTML blocks, and HTML comments are not
+// real fences and are excluded by the scanner, so they are never examined.
+func CheckConsistentCodeFence(filename string, ctx *preprocess.Context, offset int, style string) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
-	inHTMLComment := false
 	var expectedCh byte // 0 until first fence seen (consistent mode)
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-
-		// Inside a code block: only look for the closing fence.
-		if inBlock {
-			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
-			continue
-		}
-
-		// Inside an HTML comment block: skip until "-->" is found.
-		if inHTMLComment {
-			if strings.Contains(line, "-->") {
-				inHTMLComment = false
-			}
-			continue
-		}
-
-		// Lines that cannot open a fence are checked only for "<!--".
-		if first != '`' && first != '~' {
-			if strings.IndexByte(line, '<') >= 0 {
-				inHTMLComment = isHTMLCommentStart(line)
-			}
-			continue
-		}
-
-		// Check for an opening fence before inspecting the line for "<!--" so
-		// that fence openers whose info string contains "<!--" (e.g.
-		// "```go <!-- note -->") are treated as fences, not comment starts.
-		trimmed := strings.TrimSpace(line)
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			ch := marker[0]
-			inBlock = true
-			fenceMarker = marker
-			if err := checkFenceStyle(filename, offset+i+1, ch, style, &expectedCh); err != nil {
-				errs = append(errs, *err)
-			}
-			continue
-		}
-
-		// `` ` ``/`~` line that is not a fence opener: still check for "<!--".
-		if strings.IndexByte(line, '<') >= 0 {
-			inHTMLComment = isHTMLCommentStart(trimmed)
+	for _, span := range ctx.FenceSpans() {
+		ch := firstNonSpaceByte(ctx.Line(span.Start))
+		if err := checkFenceStyle(filename, offset+span.Start+1, ch, style, &expectedCh); err != nil {
+			errs = append(errs, *err)
 		}
 	}
 
@@ -103,12 +62,6 @@ func checkFenceStyle(filename string, line int, ch byte, style string, expectedC
 		}
 	}
 	return nil
-}
-
-// isHTMLCommentStart reports whether line opens an HTML comment that does not
-// close on the same line (contains "<!--" but not "-->").
-func isHTMLCommentStart(line string) bool {
-	return strings.Contains(line, "<!--") && !strings.Contains(line, "-->")
 }
 
 func fenceCharName(ch byte) string {
