@@ -3,6 +3,8 @@ package rule
 import (
 	"strings"
 	"testing"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 func TestCheckLinkFragments(t *testing.T) {
@@ -177,7 +179,7 @@ func TestCheckLinkFragments(t *testing.T) {
 			if tt.name == "invalid: offset applied to line numbers" {
 				offset = 5
 			}
-			got := CheckLinkFragments("test.md", lines, offset, tt.opts)
+			got := CheckLinkFragments("test.md", preprocess.Scan(lines), offset, tt.opts)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d:\n  got:  %v\n  want: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)
@@ -255,7 +257,7 @@ func TestCheckLinkFragments_NewPresets(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
 			opts := map[string]interface{}{"slug-algorithm": tt.algorithm}
-			got := CheckLinkFragments("test.md", lines, 0, opts)
+			got := CheckLinkFragments("test.md", preprocess.Scan(lines), 0, opts)
 			if len(got) != tt.wantErrs {
 				t.Errorf("got %d errors, want %d: %v", len(got), tt.wantErrs, got)
 			}
@@ -277,7 +279,7 @@ func TestCheckLinkFragments_CustomEngine(t *testing.T) {
 			},
 		}
 		lines := strings.Split(content, "\n")
-		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		errs := CheckLinkFragments("test.md", preprocess.Scan(lines), 0, opts)
 		if len(errs) != 0 {
 			t.Errorf("expected no errors, got %d: %v", len(errs), errs)
 		}
@@ -296,7 +298,7 @@ func TestCheckLinkFragments_CustomEngine(t *testing.T) {
 			},
 		}
 		lines := strings.Split(content, "\n")
-		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		errs := CheckLinkFragments("test.md", preprocess.Scan(lines), 0, opts)
 		if len(errs) != 1 {
 			t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
 		}
@@ -313,7 +315,7 @@ func TestCheckLinkFragments_CustomEngine(t *testing.T) {
 			},
 		}
 		lines := strings.Split(content, "\n")
-		errs := CheckLinkFragments("test.md", lines, 0, opts)
+		errs := CheckLinkFragments("test.md", preprocess.Scan(lines), 0, opts)
 		if len(errs) != 0 {
 			t.Errorf("expected no errors, got %d: %v", len(errs), errs)
 		}
@@ -321,13 +323,13 @@ func TestCheckLinkFragments_CustomEngine(t *testing.T) {
 }
 
 func TestHasAnyFragmentSyntax(t *testing.T) {
-	if hasAnyFragmentSyntax([]string{"no links here", "just text"}) {
+	if hasAnyFragmentSyntax(preprocess.Scan([]string{"no links here", "just text"})) {
 		t.Error("expected false for plain text")
 	}
-	if !hasAnyFragmentSyntax([]string{"See [intro](#intro) here."}) {
+	if !hasAnyFragmentSyntax(preprocess.Scan([]string{"See [intro](#intro) here."})) {
 		t.Error("expected true for inline fragment link")
 	}
-	if !hasAnyFragmentSyntax([]string{"[ref]: #section"}) {
+	if !hasAnyFragmentSyntax(preprocess.Scan([]string{"[ref]: #section"})) {
 		t.Error("expected true for fragment ref definition")
 	}
 }
@@ -335,7 +337,7 @@ func TestHasAnyFragmentSyntax(t *testing.T) {
 func TestCollectRefDefs(t *testing.T) {
 	t.Run("collects fragment refs", func(t *testing.T) {
 		lines := strings.Split("[ref1]: #section-1\n[ref2]: #section-2\n[ext]: https://example.com\n", "\n")
-		defs := collectRefDefs(lines)
+		defs := collectRefDefs(preprocess.Scan(lines))
 		if defs["ref1"] != "section-1" {
 			t.Errorf("expected ref1 -> section-1, got %q", defs["ref1"])
 		}
@@ -349,7 +351,7 @@ func TestCollectRefDefs(t *testing.T) {
 
 	t.Run("label is normalized to lowercase", func(t *testing.T) {
 		lines := []string{"[My Label]: #my-section"}
-		defs := collectRefDefs(lines)
+		defs := collectRefDefs(preprocess.Scan(lines))
 		if defs["my label"] != "my-section" {
 			t.Errorf("expected 'my label' -> 'my-section', got %q", defs["my label"])
 		}
@@ -357,7 +359,7 @@ func TestCollectRefDefs(t *testing.T) {
 
 	t.Run("ref def inside fenced code block is excluded", func(t *testing.T) {
 		lines := strings.Split("```\n[inside]: #fenced\n```\n[outside]: #real\n", "\n")
-		defs := collectRefDefs(lines)
+		defs := collectRefDefs(preprocess.Scan(lines))
 		if _, ok := defs["inside"]; ok {
 			t.Error("ref def inside fenced block should not be collected")
 		}

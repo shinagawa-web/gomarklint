@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 var (
@@ -153,7 +155,7 @@ func extractHost(rawURL string) string {
 
 // ExtractExternalLinksWithLineNumbers extracts external links from the given lines.
 // The offset parameter is added to line numbers to account for stripped frontmatter.
-func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []ExtractedLink {
+func ExtractExternalLinksWithLineNumbers(ctx *preprocess.Context, offset int) []ExtractedLink {
 	patterns := []*regexp.Regexp{
 		inlineLinkPattern,
 		imageLinkPattern,
@@ -162,7 +164,14 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 
 	var results []ExtractedLink
 
-	for i, line := range lines {
+	for i := 0; i < ctx.Len(); i++ {
+		// Skip code/HTML block contexts entirely, and scan the inline-sanitized
+		// text so URLs inside inline code spans and inline comments are not
+		// extracted (and therefore not fetched).
+		if inBlockContext(ctx, i) {
+			continue
+		}
+		line := ctx.Sanitized(i)
 		seenInLine := make(map[string]bool) // Track URLs found in this line
 		for _, re := range patterns {
 			matches := re.FindAllStringSubmatch(line, -1)
@@ -187,15 +196,15 @@ func ExtractExternalLinksWithLineNumbers(lines []string, offset int) []Extracted
 // CheckExternalLinks checks external links in the given lines.
 // The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
 // Returns lint errors and the count of unique URLs checked.
-func CheckExternalLinks(path string, lines []string, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map, perHostConcurrency int, perHostIntervalMs int) ([]LintError, int) {
-	codeBlockRanges := GetCodeBlockLineRanges(lines)
-	links := ExtractExternalLinksWithLineNumbers(lines, offset)
+func CheckExternalLinks(path string, ctx *preprocess.Context, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map, perHostConcurrency int, perHostIntervalMs int) ([]LintError, int) {
+	// Code/HTML context filtering is handled inside the extractor via the shared
+	// scanner, so links inside fenced/indented code, HTML blocks, HTML comments,
+	// inline code spans, and inline comments are never produced here.
+	links := ExtractExternalLinksWithLineNumbers(ctx, offset)
 
 	urlToLines := make(map[string][]int)
 	for _, link := range links {
-		// Adjust line number for code block check (relative to lines array)
-		relativeLineNum := link.Line - offset
-		if isInCodeBlock(relativeLineNum, codeBlockRanges) || shouldSkipLink(link.URL, skipPatterns) {
+		if shouldSkipLink(link.URL, skipPatterns) {
 			continue
 		}
 		urlToLines[link.URL] = append(urlToLines[link.URL], link.Line)
@@ -336,15 +345,6 @@ func formatLinkError(url string) string {
 func shouldSkipLink(url string, skipPatterns []*regexp.Regexp) bool {
 	for _, re := range skipPatterns {
 		if re.MatchString(url) {
-			return true
-		}
-	}
-	return false
-}
-
-func isInCodeBlock(line int, ranges [][2]int) bool {
-	for _, r := range ranges {
-		if line >= r[0] && line <= r[1] {
 			return true
 		}
 	}
