@@ -2,6 +2,8 @@ package rule
 
 import (
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // CheckConsistentEmphasisStyle flags emphasis spans that use a different marker
@@ -11,40 +13,23 @@ import (
 // the expected style; every subsequent span using a different character is
 // flagged. In "asterisk"/"underscore" mode every span using the wrong character
 // is flagged. Underscores inside words (e.g. snake_case) are not treated as
-// emphasis. Content inside fenced code blocks and inline code spans is ignored.
-func CheckConsistentEmphasisStyle(filename string, lines []string, offset int, style string) []LintError {
+// emphasis. Content inside fenced code, indented code, HTML blocks, HTML
+// comments, and inline code spans is ignored.
+func CheckConsistentEmphasisStyle(filename string, ctx *preprocess.Context, offset int, style string) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 	var expectedEmphCh byte   // for runLen == 1 (emphasis)
 	var expectedStrongCh byte // for runLen == 2 (strong)
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first == fenceMarker[0] && IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
 			continue
 		}
 
-		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-				continue
-			}
-		}
-
-		if !strings.ContainsAny(line, "*_") {
+		// Sanitized blanks inline code spans and inline HTML comments, so
+		// emphasis markers living inside them are not counted.
+		scanned := ctx.Sanitized(i)
+		if !strings.ContainsAny(scanned, "*_") {
 			continue
-		}
-
-		scanned := line
-		if strings.ContainsRune(scanned, '`') {
-			scanned = stripInlineCode(scanned)
 		}
 		if strings.Contains(scanned, "](") {
 			scanned = stripLinkURLs(scanned)

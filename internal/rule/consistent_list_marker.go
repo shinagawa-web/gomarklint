@@ -1,7 +1,7 @@
 package rule
 
 import (
-	"strings"
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // CheckConsistentListMarker flags unordered list items that use a different
@@ -10,34 +10,19 @@ import (
 // In "consistent" mode the first marker found in the document sets the
 // expected style; every subsequent item using a different marker is flagged.
 // In "dash"/"asterisk"/"plus" mode every item using the wrong marker is
-// flagged. Content inside fenced code blocks is ignored.
-func CheckConsistentListMarker(filename string, lines []string, offset int, style string) []LintError {
+// flagged. Content inside fenced code, indented code, HTML blocks, and HTML
+// comments is ignored.
+func CheckConsistentListMarker(filename string, ctx *preprocess.Context, offset int, style string) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 	var expectedCh byte // 0 until first list item seen (consistent mode)
 
-	for i, line := range lines {
-		first := firstNonSpaceByte(line)
-
-		if inBlock {
-			if first == '`' || first == '~' {
-				if IsClosingFence(strings.TrimSpace(line), fenceMarker) {
-					inBlock = false
-					fenceMarker = ""
-				}
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		if inBlockContext(ctx, i) {
 			continue
 		}
 
-		if first == '`' || first == '~' {
-			if marker := openingFenceMarker(strings.TrimSpace(line)); marker != "" {
-				inBlock = true
-				fenceMarker = marker
-				continue
-			}
-		}
-
+		line := ctx.Line(i)
+		first := firstNonSpaceByte(line)
 		if first != '-' && first != '*' && first != '+' {
 			continue
 		}
