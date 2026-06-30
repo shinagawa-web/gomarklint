@@ -30,6 +30,28 @@ func findClosingBacktickRun(s string, from, delimLen int) int {
 	return -1
 }
 
+// writeBlankedCodeSpan handles an inline code span whose opening backtick run
+// begins at index start (line[start] == '`'). If the run has a matching closing
+// run, the whole span (delimiters and content) is written to b as spaces;
+// otherwise the unmatched backticks are written literally. It returns the index
+// in line immediately after what it consumed.
+func writeBlankedCodeSpan(b *strings.Builder, line string, start int) int {
+	delimLen := countBacktickRun(line, start)
+	closing := findClosingBacktickRun(line, start+delimLen, delimLen)
+	if closing == -1 {
+		// No matching closing run — emit the backticks literally.
+		for k := 0; k < delimLen; k++ {
+			b.WriteByte('`')
+		}
+		return start + delimLen
+	}
+	spanLen := (closing + delimLen) - start
+	for k := 0; k < spanLen; k++ {
+		b.WriteByte(' ')
+	}
+	return closing + delimLen
+}
+
 // sanitizeInline replaces inline code spans and inline HTML comments with
 // spaces so that downstream rules do not scan their contents. Length is
 // preserved (each blanked byte becomes a single space) so that column positions
@@ -48,6 +70,17 @@ func findClosingBacktickRun(s string, from, delimLen int) int {
 //     text (i.e. it is a standalone comment line, not prose with a trailing
 //     comment). Always false unless a comment was actually present.
 func sanitizeInline(line string, startInComment bool) (sanitized string, endedInComment, fullyComment bool) {
+	// Fast path: a line outside any open comment with no inline code span or
+	// comment opener has nothing to blank, so it is returned verbatim with no
+	// allocation. Returning the input string unchanged also lets Scan detect via
+	// identity that the line needs no entry in its sparse sanitized map. This is
+	// the common case once the linter runs Scan on every file.
+	if !startInComment &&
+		strings.IndexByte(line, '`') < 0 &&
+		!strings.Contains(line, "<!--") {
+		return line, false, false
+	}
+
 	var b strings.Builder
 	b.Grow(len(line))
 
@@ -80,23 +113,8 @@ func sanitizeInline(line string, startInComment bool) (sanitized string, endedIn
 
 		// Inline code span.
 		if line[i] == '`' {
-			delimLen := countBacktickRun(line, i)
-			closing := findClosingBacktickRun(line, i+delimLen, delimLen)
-			if closing == -1 {
-				// No matching closing run — emit the backticks literally.
-				for k := 0; k < delimLen; k++ {
-					b.WriteByte('`')
-				}
-				hasOther = true
-				i += delimLen
-				continue
-			}
-			spanLen := (closing + delimLen) - i
-			for k := 0; k < spanLen; k++ {
-				b.WriteByte(' ')
-			}
+			i = writeBlankedCodeSpan(&b, line, i)
 			hasOther = true
-			i = closing + delimLen
 			continue
 		}
 

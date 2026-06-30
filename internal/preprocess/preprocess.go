@@ -1,7 +1,7 @@
 // Package preprocess provides a single shared pre-pass over a Markdown file's
 // lines, classifying each line by the context it lives in (fenced code,
-// indented code, HTML block, HTML comment) and producing a sanitized copy with
-// inline code spans and inline HTML comments blanked out.
+// indented code, HTML block, HTML comment) and exposing an inline-sanitized
+// view with inline code spans and inline HTML comments blanked out.
 //
 // It exists to replace the per-rule "skip code blocks / HTML" machinery that
 // each rule currently re-implements, which the audit in issue #337 found to be
@@ -13,66 +13,128 @@
 // not a full parser: it does not model container blocks (lists, block quotes),
 // so indentation is measured from the start of the line. See the note in
 // indented_code.go for the consequences.
+//
+// The result is stored compactly: context flags are packed one byte per line and
+// the sanitized text is materialized only for the lines that actually differ
+// from the original (those carrying an inline code span or comment). The
+// original lines are borrowed, not copied. This keeps the per-line overhead near
+// one byte rather than two string headers plus four bools, which matters because
+// the linter runs Scan over every file. Access the result through the Context
+// methods rather than touching the fields.
 package preprocess
 
 import "strings"
 
-// LineContext records, for one source line, which Markdown contexts it lives in
-// and a sanitized copy of its text.
+// Context is the result of Scan: the per-line Markdown classification of a file,
+// queried by line index through its methods.
 //
-// The boolean flags describe structural block membership and are mutually
-// exclusive: a line is in at most one of fenced code, indented code, an HTML
-// block, or an HTML comment. They are exposed individually rather than via a
-// single "skippable" convenience flag because different rules skip different
-// subsets — for example, rules implementing the markdownlint divergences in
-// issue #337 (max-line-length, no-hard-tabs) deliberately scan inside fenced
-// code blocks.
+// The four context predicates (InFencedCode, InIndentedCode, InHTMLBlock,
+// InHTMLComment) describe structural block membership and are mutually
+// exclusive: a line is in at most one of them. They are exposed individually
+// rather than via a single "skippable" convenience predicate because different
+// rules skip different subsets — for example, rules implementing the markdownlint
+// divergences in issue #337 (max-line-length, no-hard-tabs) deliberately scan
+// inside fenced code blocks.
 //
-// Sanitized is an inline-level transformation only: inline code spans and inline
-// HTML comments are replaced by spaces (length-preserving), so a rule can scan
-// Sanitized without matching content that lives in those spans. Block-level code
-// (fenced and indented) is NOT blanked in Sanitized — it is left verbatim so
-// that rules which want to inspect code-block contents still can; use the flags
-// to skip block code instead. For lines flagged InHTMLComment, Sanitized is
-// fully blank because the entire line was comment text.
-type LineContext struct {
-	// Original is the line exactly as it appeared in the input.
-	Original string
-	// Sanitized is Original with inline code spans and inline HTML comments
-	// replaced by spaces. For block-code and HTML-block lines it equals
-	// Original; for fully-commented lines it is all whitespace.
-	Sanitized string
-
-	// InFencedCode is true for every line of a fenced code block, including the
-	// opening and closing fence lines. If a fence is never closed, every line
-	// from the opener to end of file is flagged, which prevents downstream rules
-	// from mispairing fences inside the unclosed region.
-	InFencedCode bool
-	// InIndentedCode is true for lines inside an indented code block
-	// (CommonMark §4.4). See the limitation noted in indented_code.go.
-	InIndentedCode bool
-	// InHTMLBlock is true for lines inside an HTML block of CommonMark types 1
-	// and 3–7 (e.g. <div>…</div>). HTML comments are reported via
-	// InHTMLComment, not this flag.
-	InHTMLBlock bool
-	// InHTMLComment is true for lines whose entire content is an HTML comment —
-	// a standalone <!-- … --> line or a continuation line of a multi-line
-	// comment. A prose line with a trailing inline comment is not flagged here;
-	// its comment is blanked in Sanitized instead.
-	InHTMLComment bool
+// Sanitized returns an inline-level transformation only: inline code spans and
+// inline HTML comments are replaced by spaces (length-preserving), so a rule can
+// scan it without matching content that lives in those spans. Block-level code
+// (fenced and indented) is NOT blanked — it is returned verbatim so that rules
+// which want to inspect code-block contents still can; use the predicates to skip
+// block code instead. For lines reported by InHTMLComment, Sanitized is fully
+// blank because the entire line was comment text.
+type Context struct {
+	// lines is the borrowed input slice. The caller must not mutate it for the
+	// lifetime of the Context, since Line and Sanitized read from it directly.
+	lines []string
+	// flags holds the packed context bits for each line, parallel to lines.
+	flags []uint8
+	// sanitized holds the inline-sanitized text only for the lines that differ
+	// from their original (those with an inline code span or comment). Lines
+	// absent from the map are their own sanitized form. nil until the first such
+	// line is seen.
+	sanitized map[int]string
 }
 
-// Scan classifies every line of a Markdown file in a single pass and returns one
-// LineContext per input line, in order. The input is expected to have already
-// had YAML front matter stripped by the caller (the linter does this centrally),
-// so Scan does not handle front matter.
-func Scan(lines []string) []LineContext {
-	result := make([]LineContext, len(lines))
+// Context flag bits, packed one set per line in Context.flags.
+const (
+	flagFencedCode uint8 = 1 << iota
+	flagIndentedCode
+	flagHTMLBlock
+	flagHTMLComment
+)
+
+// Len returns the number of lines classified (equal to len(input)).
+func (c *Context) Len() int { return len(c.lines) }
+
+// Line returns the original text of line i, exactly as it appeared in the input.
+func (c *Context) Line(i int) string { return c.lines[i] }
+
+// Sanitized returns line i with inline code spans and inline HTML comments
+// replaced by spaces. For block-code and HTML-block lines it equals Line(i); for
+// fully-commented lines it is all whitespace.
+func (c *Context) Sanitized(i int) string {
+	if s, ok := c.sanitized[i]; ok {
+		return s
+	}
+	return c.lines[i]
+}
+
+// InFencedCode reports whether line i is part of a fenced code block, including
+// the opening and closing fence lines. If a fence is never closed, every line
+// from the opener to end of file is flagged, which prevents downstream rules from
+// mispairing fences inside the unclosed region.
+func (c *Context) InFencedCode(i int) bool { return c.flags[i]&flagFencedCode != 0 }
+
+// InIndentedCode reports whether line i is inside an indented code block
+// (CommonMark §4.4). See the limitation noted in indented_code.go.
+func (c *Context) InIndentedCode(i int) bool { return c.flags[i]&flagIndentedCode != 0 }
+
+// InHTMLBlock reports whether line i is inside an HTML block of CommonMark types
+// 1 and 3–7 (e.g. <div>…</div>). HTML comments are reported via InHTMLComment,
+// not this predicate.
+func (c *Context) InHTMLBlock(i int) bool { return c.flags[i]&flagHTMLBlock != 0 }
+
+// InHTMLComment reports whether line i is a line whose entire content is an HTML
+// comment — a standalone <!-- … --> line or a continuation line of a multi-line
+// comment. A prose line with a trailing inline comment is not reported here; its
+// comment is blanked in Sanitized instead.
+func (c *Context) InHTMLComment(i int) bool { return c.flags[i]&flagHTMLComment != 0 }
+
+// Scan classifies every line of a Markdown file in a single pass and returns a
+// Context to query by line index. The input slice is borrowed, not copied, and
+// must not be mutated while the Context is in use. The input is expected to have
+// already had YAML front matter stripped by the caller (the linter does this
+// centrally), so Scan does not handle front matter.
+func Scan(lines []string) *Context {
+	c := &Context{
+		lines: lines,
+		flags: make([]uint8, len(lines)),
+	}
 	var s scanner
 	for i, line := range lines {
-		result[i] = s.classify(line)
+		lc := s.classify(line)
+		c.flags[i] = lc.flags
+		// Store the sanitized text only when it actually differs from the
+		// original. The fast path in sanitizeInline returns the original string
+		// unchanged for ordinary lines, so this comparison is a cheap identity
+		// check for the common case.
+		if lc.sanitized != line {
+			if c.sanitized == nil {
+				c.sanitized = make(map[int]string)
+			}
+			c.sanitized[i] = lc.sanitized
+		}
 	}
-	return result
+	return c
+}
+
+// lineClass is the per-line classification produced by the scanner: the packed
+// context flags and the inline-sanitized text (which equals the original line
+// unless an inline code span or comment was blanked).
+type lineClass struct {
+	flags     uint8
+	sanitized string
 }
 
 // scanner holds the cross-line state needed to classify each line in context.
@@ -87,13 +149,13 @@ type scanner struct {
 	inParagraph bool
 }
 
-// classify advances the scanner by one line and returns that line's context.
-func (s *scanner) classify(line string) LineContext {
+// classify advances the scanner by one line and returns that line's class.
+func (s *scanner) classify(line string) lineClass {
 	cols, firstIdx := indentColumns(line)
 	isBlank := firstIdx == len(line)
 
-	if ctx, handled := s.continueOpenBlock(line, cols, isBlank); handled {
-		return ctx
+	if lc, handled := s.continueOpenBlock(line, cols, isBlank); handled {
+		return lc
 	}
 	return s.startLine(line, cols, isBlank)
 }
@@ -102,7 +164,7 @@ func (s *scanner) classify(line string) LineContext {
 // line (fenced code, HTML comment, or HTML block). It returns handled=false when
 // no such block is open, or when a type 6/7 HTML block has just ended on this
 // blank line and the line should be classified afresh by startLine.
-func (s *scanner) continueOpenBlock(line string, cols int, isBlank bool) (LineContext, bool) {
+func (s *scanner) continueOpenBlock(line string, cols int, isBlank bool) (lineClass, bool) {
 	switch {
 	// Fences take precedence over every other context; a comment or HTML start
 	// inside a code block is literal.
@@ -112,7 +174,7 @@ func (s *scanner) continueOpenBlock(line string, cols int, isBlank bool) (LineCo
 			s.fenceMarker = ""
 		}
 		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: line, InFencedCode: true}, true
+		return lineClass{flags: flagFencedCode, sanitized: line}, true
 
 	// Multi-line HTML comment: track until the closing "-->". The comment may
 	// close mid-line and leave trailing prose; in that case the line is not a
@@ -121,37 +183,37 @@ func (s *scanner) continueOpenBlock(line string, cols int, isBlank bool) (LineCo
 	case s.inComment:
 		sanitized, stillInComment, fullyComment := sanitizeInline(line, true)
 		s.inComment = stillInComment
-		ctx := LineContext{Original: line, Sanitized: sanitized}
+		lc := lineClass{sanitized: sanitized}
 		if fullyComment {
-			ctx.InHTMLComment = true
+			lc.flags = flagHTMLComment
 			s.inParagraph = false
 		} else {
 			s.inParagraph = true
 		}
-		return ctx, true
+		return lc, true
 
 	// Open HTML block. Types 1 and 3–5 end on a delimiter line; types 6 and 7
 	// end on a blank line, which is itself outside the block.
 	case s.inHTMLBlock:
 		if (s.htmlType == 6 || s.htmlType == 7) && isBlank {
 			s.inHTMLBlock = false
-			return LineContext{}, false
+			return lineClass{}, false
 		}
 		if s.htmlType >= 1 && s.htmlType <= 5 && htmlBlockEndsOnLine(line, s.htmlType) {
 			s.inHTMLBlock = false
 		}
 		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: line, InHTMLBlock: true}, true
+		return lineClass{flags: flagHTMLBlock, sanitized: line}, true
 	}
-	return LineContext{}, false
+	return lineClass{}, false
 }
 
 // startLine classifies a line that does not continue an already-open block.
-func (s *scanner) startLine(line string, cols int, isBlank bool) LineContext {
+func (s *scanner) startLine(line string, cols int, isBlank bool) lineClass {
 	// Blank line outside any block closes an open paragraph.
 	if isBlank {
 		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: line}
+		return lineClass{sanitized: line}
 	}
 
 	// Indented code block: four or more columns of indentation, but only when it
@@ -159,43 +221,43 @@ func (s *scanner) startLine(line string, cols int, isBlank bool) LineContext {
 	// paragraph). Checked before openers because an indented line can open
 	// neither a fence nor an HTML block.
 	if cols >= 4 && !s.inParagraph {
-		return LineContext{Original: line, Sanitized: line, InIndentedCode: true}
+		return lineClass{flags: flagIndentedCode, sanitized: line}
 	}
 
 	// Block openers are recognized only at an indentation below four columns.
 	if cols < 4 {
-		if ctx, opened := s.tryOpenBlock(line); opened {
-			return ctx
+		if lc, opened := s.tryOpenBlock(line); opened {
+			return lc
 		}
 	}
 
 	// Everything else is prose: paragraph text, headings, list items, lazy
 	// paragraph continuations, and standalone HTML comments. Inline code spans
-	// and inline comments are blanked in Sanitized.
+	// and inline comments are blanked in the sanitized text.
 	sanitized, endedInComment, fullyComment := sanitizeInline(line, false)
 	s.inComment = endedInComment
-	ctx := LineContext{Original: line, Sanitized: sanitized}
+	lc := lineClass{sanitized: sanitized}
 	if fullyComment {
 		// The line was nothing but comment text — a standalone comment line.
-		ctx.InHTMLComment = true
+		lc.flags = flagHTMLComment
 		s.inParagraph = false
 	} else {
 		s.inParagraph = true
 	}
-	return ctx
+	return lc
 }
 
 // tryOpenBlock attempts to open a fenced code block or an HTML block on line
 // (which must be indented fewer than four columns). It returns opened=false when
 // the line is not a block opener.
-func (s *scanner) tryOpenBlock(line string) (LineContext, bool) {
+func (s *scanner) tryOpenBlock(line string) (lineClass, bool) {
 	trimmed := strings.TrimSpace(line)
 
 	if marker := openingFenceMarker(trimmed); marker != "" {
 		s.inFence = true
 		s.fenceMarker = marker
 		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: line, InFencedCode: true}, true
+		return lineClass{flags: flagFencedCode, sanitized: line}, true
 	}
 
 	if t := htmlBlockStart(trimmed, s.inParagraph); t != 0 {
@@ -205,8 +267,8 @@ func (s *scanner) tryOpenBlock(line string) (LineContext, bool) {
 			s.inHTMLBlock = false
 		}
 		s.inParagraph = false
-		return LineContext{Original: line, Sanitized: line, InHTMLBlock: true}, true
+		return lineClass{flags: flagHTMLBlock, sanitized: line}, true
 	}
 
-	return LineContext{}, false
+	return lineClass{}, false
 }
