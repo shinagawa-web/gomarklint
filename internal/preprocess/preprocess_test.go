@@ -11,13 +11,13 @@ type flags struct {
 	fenced, indented, htmlBlock, htmlComment bool
 }
 
-func flagsOf(c LineContext) flags {
-	return flags{c.InFencedCode, c.InIndentedCode, c.InHTMLBlock, c.InHTMLComment}
+func flagsOf(c *Context, i int) flags {
+	return flags{c.InFencedCode(i), c.InIndentedCode(i), c.InHTMLBlock(i), c.InHTMLComment(i)}
 }
 
 // runScan splits a multi-line literal and runs Scan. A leading newline in the
 // literal is dropped so test inputs can start on their own line.
-func runScan(t *testing.T, doc string) []LineContext {
+func runScan(t *testing.T, doc string) *Context {
 	t.Helper()
 	doc = strings.TrimPrefix(doc, "\n")
 	return Scan(strings.Split(doc, "\n"))
@@ -181,13 +181,13 @@ still code
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runScan(t, tt.doc)
-			if len(got) != len(tt.want) {
-				t.Fatalf("got %d lines, want %d:\n%#v", len(got), len(tt.want), got)
+			if got.Len() != len(tt.want) {
+				t.Fatalf("got %d lines, want %d", got.Len(), len(tt.want))
 			}
 			for i := range tt.want {
-				if g := flagsOf(got[i]); g != tt.want[i] {
+				if g := flagsOf(got, i); g != tt.want[i] {
 					t.Errorf("line %d (%q): flags = %+v, want %+v",
-						i, got[i].Original, g, tt.want[i])
+						i, got.Line(i), g, tt.want[i])
 				}
 			}
 		})
@@ -195,12 +195,12 @@ still code
 }
 
 // TestScanSanitizedContract checks the inline-vs-block split of the Sanitized
-// field described in the LineContext docs.
+// view described in the Context docs.
 func TestScanSanitizedContract(t *testing.T) {
 	t.Run("inline code in prose is blanked", func(t *testing.T) {
 		ctx := runScan(t, "see `http://x.com` here")
-		if strings.Contains(ctx[0].Sanitized, "http://x.com") {
-			t.Errorf("inline code not blanked: %q", ctx[0].Sanitized)
+		if strings.Contains(ctx.Sanitized(0), "http://x.com") {
+			t.Errorf("inline code not blanked: %q", ctx.Sanitized(0))
 		}
 	})
 
@@ -208,59 +208,93 @@ func TestScanSanitizedContract(t *testing.T) {
 		doc := "```\n`backtick` text\n```"
 		ctx := Scan(strings.Split(doc, "\n"))
 		// Section B rules deliberately scan inside fenced code, so the content
-		// line's Sanitized must equal its Original (no inline stripping).
-		if ctx[1].Sanitized != ctx[1].Original {
+		// line's Sanitized must equal its Line (no inline stripping).
+		if ctx.Sanitized(1) != ctx.Line(1) {
 			t.Errorf("fenced content was sanitized: got %q, want %q",
-				ctx[1].Sanitized, ctx[1].Original)
+				ctx.Sanitized(1), ctx.Line(1))
 		}
 	})
 
 	t.Run("standalone comment line is fully blanked", func(t *testing.T) {
 		ctx := runScan(t, "<!-- a comment -->")
-		if strings.TrimSpace(ctx[0].Sanitized) != "" {
-			t.Errorf("comment line not blanked: %q", ctx[0].Sanitized)
+		if strings.TrimSpace(ctx.Sanitized(0)) != "" {
+			t.Errorf("comment line not blanked: %q", ctx.Sanitized(0))
 		}
-		if !ctx[0].InHTMLComment {
+		if !ctx.InHTMLComment(0) {
 			t.Errorf("standalone comment not flagged InHTMLComment")
 		}
 	})
 
 	t.Run("prose after a mid-line comment close is preserved", func(t *testing.T) {
 		ctx := runScan(t, "text <!-- start\nend --> visible prose")
-		last := ctx[len(ctx)-1]
-		if last.InHTMLComment {
-			t.Errorf("line with trailing prose flagged InHTMLComment: %q", last.Original)
+		last := ctx.Len() - 1
+		if ctx.InHTMLComment(last) {
+			t.Errorf("line with trailing prose flagged InHTMLComment: %q", ctx.Line(last))
 		}
-		if !strings.Contains(last.Sanitized, "visible prose") {
-			t.Errorf("trailing prose not preserved in Sanitized: %q", last.Sanitized)
+		if !strings.Contains(ctx.Sanitized(last), "visible prose") {
+			t.Errorf("trailing prose not preserved in Sanitized: %q", ctx.Sanitized(last))
 		}
 	})
 
 	t.Run("flags are mutually exclusive", func(t *testing.T) {
 		doc := "para\n\n```\ncode\n```\n\n<div>\nx\n</div>\n\n    indented\n\n<!-- c -->"
-		for i, c := range Scan(strings.Split(doc, "\n")) {
+		ctx := Scan(strings.Split(doc, "\n"))
+		for i := 0; i < ctx.Len(); i++ {
 			n := 0
-			for _, b := range []bool{c.InFencedCode, c.InIndentedCode, c.InHTMLBlock, c.InHTMLComment} {
+			for _, b := range []bool{ctx.InFencedCode(i), ctx.InIndentedCode(i), ctx.InHTMLBlock(i), ctx.InHTMLComment(i)} {
 				if b {
 					n++
 				}
 			}
 			if n > 1 {
-				t.Errorf("line %d (%q) has %d context flags set, want <=1", i, c.Original, n)
+				t.Errorf("line %d (%q) has %d context flags set, want <=1", i, ctx.Line(i), n)
 			}
 		}
 	})
 
-	t.Run("Original always preserved and Scan returns one ctx per line", func(t *testing.T) {
+	t.Run("Line preserves input and Scan covers every line", func(t *testing.T) {
 		lines := []string{"a", "  b `c`", "```", "d", "```"}
 		ctx := Scan(lines)
-		if len(ctx) != len(lines) {
-			t.Fatalf("got %d contexts, want %d", len(ctx), len(lines))
+		if ctx.Len() != len(lines) {
+			t.Fatalf("got %d lines, want %d", ctx.Len(), len(lines))
 		}
 		for i := range lines {
-			if ctx[i].Original != lines[i] {
-				t.Errorf("line %d: Original = %q, want %q", i, ctx[i].Original, lines[i])
+			if ctx.Line(i) != lines[i] {
+				t.Errorf("line %d: Line = %q, want %q", i, ctx.Line(i), lines[i])
 			}
 		}
 	})
+}
+
+// TestScanSanitizedIsSparse locks the compact-storage contract: the sanitized
+// map holds an entry only for lines whose sanitized form differs from the
+// original (those carrying an inline code span or comment). Verbatim lines —
+// blank, prose without inline code, block code, HTML blocks — are absent and
+// fall through to the original via Sanitized.
+func TestScanSanitizedIsSparse(t *testing.T) {
+	lines := []string{
+		"plain prose line",        // verbatim
+		"",                        // blank, verbatim
+		"text with `code` span",   // differs -> stored
+		"```",                     // fence open, verbatim
+		"code `not blanked` here", // inside fence, verbatim
+		"```",                     // fence close, verbatim
+		"<!-- standalone -->",     // fully comment -> stored
+	}
+	ctx := Scan(lines)
+
+	differs := map[int]bool{2: true, 6: true}
+	for i := range lines {
+		_, stored := ctx.sanitized[i]
+		if stored != differs[i] {
+			t.Errorf("line %d (%q): stored=%v, want %v", i, lines[i], stored, differs[i])
+		}
+		// Regardless of storage, Sanitized must round-trip verbatim lines.
+		if !differs[i] && ctx.Sanitized(i) != lines[i] {
+			t.Errorf("line %d (%q): Sanitized=%q, want verbatim", i, lines[i], ctx.Sanitized(i))
+		}
+	}
+	if len(ctx.sanitized) != 2 {
+		t.Errorf("sanitized map has %d entries, want 2 (only differing lines)", len(ctx.sanitized))
+	}
 }
