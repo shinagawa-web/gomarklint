@@ -2,11 +2,11 @@ package rule
 
 import "strings"
 
-// This file holds inline-code-stripping helpers shared by several rules that
-// have not yet been migrated to the preprocess context (#337 Phase 3):
-// no-empty-links, link-fragments, consistent-emphasis-style, and no-hard-tabs.
-// They duplicate logic now centralized in internal/preprocess (see
-// Context.Sanitized) and are removed once their last consumer migrates.
+// This file holds inline-code-stripping helpers. Its sole remaining consumer is
+// no-hard-tabs, a markdownlint divergence (#337 Section B) that strips inline
+// code spans but — unlike the shared preprocess sanitizer — must NOT blank inline
+// HTML comments (it still reports tabs there). The other rules that once shared
+// these helpers now use preprocess.Context.Sanitized instead.
 
 // countBacktickRun returns the number of consecutive backticks starting at
 // position start in s.

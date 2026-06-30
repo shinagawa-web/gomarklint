@@ -363,9 +363,6 @@ var simpleRules = []struct {
 	fn   func(string, []string, int) []rule.LintError
 }{
 	{"final-blank-line", rule.CheckFinalBlankLine},
-	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
-	{"blanks-around-lists", rule.CheckBlanksAroundLists},
-	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
 // contextRules lists rules migrated to consume the shared *preprocess.Context
@@ -386,6 +383,9 @@ var contextRules = []struct {
 	{"blanks-around-fences", rule.CheckBlanksAroundFences},
 	{"empty-alt-text", rule.CheckEmptyAltText},
 	{"no-empty-links", rule.CheckNoEmptyLinks},
+	{"no-multiple-blank-lines", rule.CheckNoMultipleBlankLines},
+	{"blanks-around-lists", rule.CheckBlanksAroundLists},
+	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
 // collectLineErrors runs all non-network rule checks and returns their errors.
@@ -414,16 +414,16 @@ func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.
 		errs = append(errs, l.withSeverity(rule.CheckConsistentCodeFence(path, ctx, offset, l.consistentCodeFenceStyle()), "consistent-code-fence")...)
 	}
 	if l.config.IsEnabled("consistent-emphasis-style") {
-		errs = append(errs, l.withSeverity(rule.CheckConsistentEmphasisStyle(path, lines, offset, l.consistentEmphasisStyle()), "consistent-emphasis-style")...)
+		errs = append(errs, l.withSeverity(rule.CheckConsistentEmphasisStyle(path, ctx, offset, l.consistentEmphasisStyle()), "consistent-emphasis-style")...)
 	}
 	if l.config.IsEnabled("consistent-list-marker") {
-		errs = append(errs, l.withSeverity(rule.CheckConsistentListMarker(path, lines, offset, l.consistentListMarkerStyle()), "consistent-list-marker")...)
+		errs = append(errs, l.withSeverity(rule.CheckConsistentListMarker(path, ctx, offset, l.consistentListMarkerStyle()), "consistent-list-marker")...)
 	}
 	if l.config.IsEnabled("max-line-length") {
-		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, lines, offset, l.maxLineLength()), "max-line-length")...)
+		errs = append(errs, l.withSeverity(rule.CheckMaxLineLength(path, ctx, offset, l.maxLineLength()), "max-line-length")...)
 	}
 	if l.config.IsEnabled("no-trailing-punctuation") {
-		errs = append(errs, l.withSeverity(rule.CheckNoTrailingPunctuation(path, lines, offset, l.noTrailingPunctuation()), "no-trailing-punctuation")...)
+		errs = append(errs, l.withSeverity(rule.CheckNoTrailingPunctuation(path, ctx, offset, l.noTrailingPunctuation()), "no-trailing-punctuation")...)
 	}
 	if l.config.IsEnabled("link-fragments") {
 		errs = append(errs, l.withSeverity(rule.CheckLinkFragments(path, ctx, offset, l.config.RuleOptions("link-fragments")), "link-fragments")...)

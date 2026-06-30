@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 func TestCheckMaxLineLength(t *testing.T) {
@@ -164,7 +166,7 @@ func TestCheckMaxLineLength(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := strings.Split(tt.content, "\n")
-			got := CheckMaxLineLength("test.md", lines, tt.offset, tt.lineLength)
+			got := CheckMaxLineLength("test.md", preprocess.Scan(lines), tt.offset, tt.lineLength)
 
 			if len(got) != len(tt.wantErrs) {
 				t.Fatalf("got %d errors, want %d\ngot:  %v\nwant: %v", len(got), len(tt.wantErrs), got, tt.wantErrs)

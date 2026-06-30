@@ -1,6 +1,10 @@
 package rule
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
+)
 
 // isListItem reports whether line is a list item (unordered or ordered),
 // allowing any amount of leading indentation. The marker must be followed by
@@ -47,11 +51,10 @@ func isOrderedListItem(s string) bool {
 // after the last item are checked. Lists at the start or end of the file are
 // exempt from the respective check. List items inside fenced code blocks are
 // ignored. Nested list items are treated as part of the same block and do not
-// require additional blank lines between them and their parent.
-func CheckBlanksAroundLists(filename string, lines []string, offset int) []LintError {
+// require additional blank lines between them and their parent. List items
+// inside fenced code, indented code, HTML blocks, and HTML comments are ignored.
+func CheckBlanksAroundLists(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 	// prevBlank and prevWasListItem replace the TrimSpace look-behind on
 	// lines[i-1] for every list item encountered.
 	// prevBlank starts as true to model the pre-file boundary as blank; the
@@ -60,13 +63,14 @@ func CheckBlanksAroundLists(filename string, lines []string, offset int) []LintE
 	prevWasListItem := false
 	prevLineNum := 0 // 1-indexed line number of the previous list item
 
-	for i, line := range lines {
+	for i := 0; i < ctx.Len(); i++ {
+		line := ctx.Line(i)
 		trimmed := strings.TrimSpace(line)
 		isBlank := trimmed == ""
 		isList := isListItem(line)
 
-		// Check "end of block" before fence branches so a list item immediately
-		// followed by a fence opener is still flagged (lesson from PR-4).
+		// Check "end of block" before the block skip so a list item immediately
+		// followed by a code/HTML block opener is still flagged (lesson from PR-4).
 		if prevWasListItem && !isBlank && !isList {
 			errs = append(errs, LintError{
 				File:    filename,
@@ -75,19 +79,7 @@ func CheckBlanksAroundLists(filename string, lines []string, offset int) []LintE
 			})
 		}
 
-		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
-			prevBlank = false
-			prevWasListItem = false
-			continue
-		}
-
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
+		if inBlockContext(ctx, i) {
 			prevBlank = false
 			prevWasListItem = false
 			continue

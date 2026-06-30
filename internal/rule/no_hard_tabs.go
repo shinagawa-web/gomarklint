@@ -3,32 +3,27 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
 // CheckNoHardTabs flags hard tab characters (\t) outside fenced code blocks
 // and inline code spans. Each tab is reported as a separate violation.
-func CheckNoHardTabs(filename string, lines []string, offset int) []LintError {
+//
+// This is a markdownlint divergence (#337 Section B): only fenced code is
+// skipped (tabs in indented code are still reported), and inline code spans are
+// stripped. It therefore skips just preprocess.InFencedCode and keeps its own
+// inline-code stripping rather than using the shared block-context helper or the
+// sanitized view (which would also blank inline HTML comments).
+func CheckNoHardTabs(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
-	inBlock := false
-	fenceMarker := ""
 
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
-		if inBlock {
-			if IsClosingFence(trimmed, fenceMarker) {
-				inBlock = false
-				fenceMarker = ""
-			}
+	for i := 0; i < ctx.Len(); i++ {
+		if ctx.InFencedCode(i) {
 			continue
 		}
 
-		if marker := openingFenceMarker(trimmed); marker != "" {
-			inBlock = true
-			fenceMarker = marker
-			continue
-		}
-
+		line := ctx.Line(i)
 		if !strings.ContainsRune(line, '\t') {
 			continue
 		}
