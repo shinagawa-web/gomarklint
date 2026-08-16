@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/shinagawa-web/gomarklint/v3/internal/config"
+	"github.com/shinagawa-web/gomarklint/v3/internal/file"
 	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
 )
 
@@ -118,6 +121,32 @@ func BenchmarkFullLinting(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _, _ = lint.LintContent("benchmark.md", content)
+	}
+}
+
+// BenchmarkEndToEnd exercises the full lint.Run path: file discovery, concurrent
+// file reading, goroutine fan-out with mutex, and result collection.
+// 50 files × 100 sections each (~1700 lines/file, ~85k lines total).
+func BenchmarkEndToEnd(b *testing.B) {
+	dir := b.TempDir()
+	content := generateComplexMarkdown(100)
+	for i := range 50 {
+		path := filepath.Join(dir, fmt.Sprintf("doc%02d.md", i))
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
+
+	cfg := benchmarkConfig()
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatalf("unexpected error: %v", err)
+	}
+
+	b.ResetTimer()
+	for b.Loop() {
+		paths := file.ExpandPaths([]string{dir}, cfg.Ignore)
+		_ = lint.Run(paths)
 	}
 }
 
