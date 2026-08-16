@@ -21,7 +21,7 @@ fi
 awk -v env_info="$ENV_INFO" '
   BEGIN {
     time_old=""; time_new=""; time_delta=""; time_status=""
-    heap_old=""; heap_new=""; heap_delta=""; heap_status=""
+    asize_old=""; asize_new=""; asize_delta=""; asize_status=""
     alloc_old=""; alloc_new=""; alloc_delta=""; alloc_status=""
     in_cmd_pkg=0
     current_metric=""
@@ -33,7 +33,7 @@ awk -v env_info="$ENV_INFO" '
   }
 
   /│[[:space:]]*sec\/op[[:space:]]*│/    { current_metric = "time";   next }
-  /│[[:space:]]*B\/op[[:space:]]*│/      { current_metric = "heap";   next }
+  /│[[:space:]]*B\/op[[:space:]]*│/      { current_metric = "alloc_size"; next }
   /│[[:space:]]*allocs\/op[[:space:]]*│/ { current_metric = "allocs"; next }
 
   /^geomean/ && in_cmd_pkg {
@@ -54,15 +54,15 @@ awk -v env_info="$ENV_INFO" '
 
     if (current_metric == "time") {
       time_old=old_val; time_new=new_val; time_delta=delta; time_status=status
-    } else if (current_metric == "heap") {
-      heap_old=old_val; heap_new=new_val; heap_delta=delta; heap_status=status
+    } else if (current_metric == "alloc_size") {
+      asize_old=old_val; asize_new=new_val; asize_delta=delta; asize_status=status
     } else if (current_metric == "allocs") {
       alloc_old=old_val; alloc_new=new_val; alloc_delta=delta; alloc_status=status
     }
   }
 
   END {
-    if (time_old == "" && heap_old == "" && alloc_old == "") {
+    if (time_old == "" && asize_old == "" && alloc_old == "") {
       print "No benchmark comparison data available."
       exit
     }
@@ -70,7 +70,7 @@ awk -v env_info="$ENV_INFO" '
     print "| Metric | main | PR | Change |"
     print "|------------|-----:|---:|-------:|"
     if (time_old  != "") printf "| Exec time   | %s | %s | %s %s |\n", time_old,  time_new,  time_delta,  time_status
-    if (heap_old  != "") printf "| Heap usage  | %s | %s | %s %s |\n", heap_old,  heap_new,  heap_delta,  heap_status
+    if (asize_old != "") printf "| Alloc size  | %s | %s | %s %s |\n", asize_old, asize_new, asize_delta, asize_status
     if (alloc_old != "") printf "| Alloc count | %s | %s | %s %s |\n", alloc_old, alloc_new, alloc_delta, alloc_status
 
     if (env_info != "") {

@@ -50,9 +50,9 @@ jobs:
         id: env_info
         run: |
           VCPU=$(nproc)
-          RAM_GB=$(awk '/MemTotal/ { printf "%.0f", $2/1024/1024 }' /proc/meminfo)
+          RAM_GB=$(awk '/MemTotal/ { printf "%d", $2/1024/1024 }' /proc/meminfo)
           CPU_MODEL=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
-          GO_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
+          GO_VERSION=$(go version | awk '{print $3}' | sed 's/^go//')
           echo "value=ubuntu-latest (${VCPU} vCPU, ${RAM_GB} GB RAM) · CPU: ${CPU_MODEL} · Go: ${GO_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Compare benchmarks
@@ -65,7 +65,7 @@ jobs:
             echo ""
             echo "Comparing PR branch against main branch:"
             echo ""
-            echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)"
+            echo "**Legend**: ✅ OK (≤0% or no change) | ⚠️ Caution (+10~50%) | ❌ Regression (+50%+)"
             echo ""
             benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
             bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "$ENV_INFO"
