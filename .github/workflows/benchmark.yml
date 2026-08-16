@@ -57,6 +57,8 @@ jobs:
 
       - name: Compare benchmarks
         id: benchmark_comparison
+        env:
+          ENV_INFO: ${{ steps.env_info.outputs.value }}
         run: |
           {
             echo "## Benchmark Comparison"
@@ -66,7 +68,7 @@ jobs:
             echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)"
             echo ""
             benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "${{ steps.env_info.outputs.value }}"
+            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "$ENV_INFO"
             cat formatted-comparison.txt
           } > comparison.txt
           cat comparison.txt
