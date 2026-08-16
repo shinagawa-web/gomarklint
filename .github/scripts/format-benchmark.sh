@@ -80,26 +80,15 @@ awk -v env_info="$ENV_INFO" '
     n_metrics = split("time memory allocs", metric_keys, " ")
     split("time/op B/op allocs/op", metric_labels, " ")
 
-    for (mi = 1; mi <= n_metrics; mi++) {
-      mk = metric_keys[mi]
-      ml = metric_labels[mi]
-
-      has_data = 0
-      for (i = 0; i < bench_count; i++) {
-        if (data[bench_names[i], mk, "old"] != "") { has_data = 1; break }
-      }
-      if (!has_data) continue
-
-      print ""
-      print "**" ml "**"
-      print ""
-      print "| Benchmark | main | PR | Change |"
-      print "|-----------|-----:|---:|-------:|"
-      for (i = 0; i < bench_count; i++) {
-        name = bench_names[i]
+    print "| Benchmark | Metric | main | PR | Change |"
+    print "|-----------|--------|-----:|---:|-------:|"
+    for (i = 0; i < bench_count; i++) {
+      name = bench_names[i]
+      for (mi = 1; mi <= n_metrics; mi++) {
+        mk = metric_keys[mi]
         if (data[name, mk, "old"] == "") continue
-        printf "| %s | %s | %s | %s%s |\n", \
-          name, data[name, mk, "old"], data[name, mk, "new"], \
+        printf "| %s | %s | %s | %s | %s%s |\n", \
+          name, metric_labels[mi], data[name, mk, "old"], data[name, mk, "new"], \
           data[name, mk, "delta"], data[name, mk, "status"]
       }
     }
