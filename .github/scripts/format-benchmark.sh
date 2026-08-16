@@ -20,11 +20,9 @@ fi
 
 awk -v env_info="$ENV_INFO" '
   BEGIN {
-    time_old=""; time_new=""; time_delta=""; time_status=""
-    asize_old=""; asize_new=""; asize_delta=""; asize_status=""
-    alloc_old=""; alloc_new=""; alloc_delta=""; alloc_status=""
-    in_cmd_pkg=0
-    current_metric=""
+    in_cmd_pkg = 0
+    current_metric = ""
+    bench_count = 0
   }
 
   /^pkg:/ {
@@ -33,45 +31,78 @@ awk -v env_info="$ENV_INFO" '
   }
 
   /│[[:space:]]*sec\/op[[:space:]]*│/    { current_metric = "time";   next }
-  /│[[:space:]]*B\/op[[:space:]]*│/      { current_metric = "alloc_size"; next }
+  /│[[:space:]]*B\/op[[:space:]]*│/      { current_metric = "memory"; next }
   /│[[:space:]]*allocs\/op[[:space:]]*│/ { current_metric = "allocs"; next }
 
-  /^geomean/ && in_cmd_pkg {
+  /^[A-Z]/ && in_cmd_pkg && current_metric != "" {
+    gsub(/±[[:space:]]*[0-9.]+%[[:space:]]*/, "")
     gsub(/±[[:space:]]*∞[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
     gsub(/\([^)]*\)[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
 
+    if (NF < 4) next  # present in only one file; skip
+
+    name = $1
     old_val = $2
     new_val = $3
-    delta   = $NF
+    delta = $NF
 
-    status = "✅"
+    status = ""
     if (delta ~ /^\+[0-9.]+%$/) {
       num = delta
       sub(/^\+/, "", num); sub(/%$/, "", num)
-      if (num + 0 >= 50)      status = "❌"
-      else if (num + 0 >= 10) status = "⚠️"
+      if (num + 0 >= 50)      status = " ❌"
+      else if (num + 0 >= 10) status = " ⚠️"
+      else                    status = " ✅"
+    } else if (delta ~ /^-[0-9.]+%$/) {
+      status = " ✅"
+    } else if (delta == "~") {
+      status = " ✅"
     }
 
-    if (current_metric == "time") {
-      time_old=old_val; time_new=new_val; time_delta=delta; time_status=status
-    } else if (current_metric == "alloc_size") {
-      asize_old=old_val; asize_new=new_val; asize_delta=delta; asize_status=status
-    } else if (current_metric == "allocs") {
-      alloc_old=old_val; alloc_new=new_val; alloc_delta=delta; alloc_status=status
+    data[name, current_metric, "old"]    = old_val
+    data[name, current_metric, "new"]    = new_val
+    data[name, current_metric, "delta"]  = delta
+    data[name, current_metric, "status"] = status
+
+    if (!(name in seen)) {
+      seen[name] = 1
+      bench_names[bench_count++] = name
     }
+    next
   }
 
   END {
-    if (time_old == "" && asize_old == "" && alloc_old == "") {
+    if (bench_count == 0) {
       print "No benchmark comparison data available."
       exit
     }
 
-    print "| Metric | main | PR | Change |"
-    print "|------------|-----:|---:|-------:|"
-    if (time_old  != "") printf "| Exec time   | %s | %s | %s %s |\n", time_old,  time_new,  time_delta,  time_status
-    if (asize_old != "") printf "| Alloc size  | %s | %s | %s %s |\n", asize_old, asize_new, asize_delta, asize_status
-    if (alloc_old != "") printf "| Alloc count | %s | %s | %s %s |\n", alloc_old, alloc_new, alloc_delta, alloc_status
+    n_metrics = split("time memory allocs", metric_keys, " ")
+    split("time/op B/op allocs/op", metric_labels, " ")
+
+    for (mi = 1; mi <= n_metrics; mi++) {
+      mk = metric_keys[mi]
+      ml = metric_labels[mi]
+
+      has_data = 0
+      for (i = 0; i < bench_count; i++) {
+        if (data[bench_names[i], mk, "old"] != "") { has_data = 1; break }
+      }
+      if (!has_data) continue
+
+      print ""
+      print "**" ml "**"
+      print ""
+      print "| Benchmark | main | PR | Change |"
+      print "|-----------|-----:|---:|-------:|"
+      for (i = 0; i < bench_count; i++) {
+        name = bench_names[i]
+        if (data[name, mk, "old"] == "") continue
+        printf "| %s | %s | %s | %s%s |\n", \
+          name, data[name, mk, "old"], data[name, mk, "new"], \
+          data[name, mk, "delta"], data[name, mk, "status"]
+      }
+    }
 
     if (env_info != "") {
       print ""
