@@ -46,6 +46,15 @@ jobs:
       - name: Run benchmarks on main branch
         run: make bench | tee old-bench.txt
 
+      - name: Collect environment info
+        id: env_info
+        run: |
+          VCPU=$(nproc)
+          RAM_GB=$(awk '/MemTotal/ { printf "%.0f", $2/1024/1024 }' /proc/meminfo)
+          CPU_MODEL=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
+          GO_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
+          echo "value=ubuntu-latest (${VCPU} vCPU, ${RAM_GB} GB RAM) · CPU: ${CPU_MODEL} · Go: ${GO_VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Compare benchmarks
         id: benchmark_comparison
         run: |
@@ -56,11 +65,9 @@ jobs:
             echo ""
             echo "**Legend**: ✅ OK (no change or faster) | ⚠️ Caution (+10~50% slower) | ❌ Regression (+50%+ slower)"
             echo ""
-            echo '```'
             benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt
+            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "${{ steps.env_info.outputs.value }}"
             cat formatted-comparison.txt
-            echo '```'
           } > comparison.txt
           cat comparison.txt
 

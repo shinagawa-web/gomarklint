@@ -1,109 +1,81 @@
 #!/bin/bash
-# Format benchmark comparison results with status symbols
+# Format benchmark comparison results as a markdown table
 
 set -e
 
 INPUT_FILE="$1"
 OUTPUT_FILE="$2"
+ENV_INFO="${3:-}"
 
-# Validate input file exists
 if [[ ! -f "$INPUT_FILE" ]]; then
   echo "Error: Input file '$INPUT_FILE' does not exist" >&2
   exit 1
 fi
 
-# Check if input file has content
 if [[ ! -s "$INPUT_FILE" ]]; then
   echo "Warning: Input file '$INPUT_FILE' is empty. No benchmark comparison available." >&2
   echo "No benchmark comparison data available." > "$OUTPUT_FILE"
   exit 0
 fi
 
-# Extract only geomean (summary) results for cleaner output
-awk '
-  # Print system info
-  /^goos:|^goarch:|^cpu:/ {
-    print
-    next
+awk -v env_info="$ENV_INFO" '
+  BEGIN {
+    time_old=""; time_new=""; time_delta=""; time_status=""
+    heap_old=""; heap_new=""; heap_delta=""; heap_status=""
+    alloc_old=""; alloc_new=""; alloc_delta=""; alloc_status=""
+    in_cmd_pkg=0
+    current_metric=""
   }
-  
-  # Track which package we are in
+
   /^pkg:/ {
-    current_pkg = $0
-    # Only process cmd package
-    if ($0 ~ /\/cmd$/) {
-      in_cmd_pkg = 1
-      print
-    } else {
-      in_cmd_pkg = 0
-    }
+    in_cmd_pkg = ($0 ~ /\/cmd$/) ? 1 : 0
     next
   }
-  
-  # Track which metric we are in (sec/op, B/op, allocs/op)
-  /│[[:space:]]*sec\/op[[:space:]]*│/ {
-    current_metric = "time"
-    next
-  }
-  /│[[:space:]]*B\/op[[:space:]]*│/ {
-    current_metric = "memory"
-    next
-  }
-  /│[[:space:]]*allocs\/op[[:space:]]*│/ {
-    current_metric = "allocs"
-    next
-  }
-  
-  # Process only geomean lines (summary statistics) for cmd package
-  /^geomean/ {
-    # Skip if not in cmd package
-    if (!in_cmd_pkg) {
-      next
-    }
-    
-    # Remove statistical annotations like ± ∞ ¹
+
+  /│[[:space:]]*sec\/op[[:space:]]*│/    { current_metric = "time";   next }
+  /│[[:space:]]*B\/op[[:space:]]*│/      { current_metric = "heap";   next }
+  /│[[:space:]]*allocs\/op[[:space:]]*│/ { current_metric = "allocs"; next }
+
+  /^geomean/ && in_cmd_pkg {
     gsub(/±[[:space:]]*∞[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
-    # Remove statistical notes like (p=... n=...) ²
     gsub(/\([^)]*\)[[:space:]]*[¹²³⁴⁵⁶⁷⁸⁹⁰]*/, "")
-    
-    # Extract delta percentage from last field
-    delta = $NF
-    status = ""
-    
-    # Check for positive change (+X.XX%)
+
+    old_val = $2
+    new_val = $3
+    delta   = $NF
+
+    status = "✅"
     if (delta ~ /^\+[0-9.]+%$/) {
-      # Extract the number
-      sub(/^\+/, "", delta)
-      sub(/%$/, "", delta)
-      percent = delta + 0
-      
-      if (percent >= 50) {
-        status = " ❌"
-      } else if (percent >= 10) {
-        status = " ⚠️"
-      } else {
-        status = " ✅"
-      }
-    } 
-    # Check for negative change (-X.XX%)
-    else if (delta ~ /^-[0-9.]+%$/) {
-      status = " ✅"  # Faster is good
-    } 
-    # No change
-    else if (delta == "~") {
-      status = " ✅"
+      num = delta
+      sub(/^\+/, "", num); sub(/%$/, "", num)
+      if (num + 0 >= 50)      status = "❌"
+      else if (num + 0 >= 10) status = "⚠️"
     }
-    
-    # Add metric label
-    metric_label = ""
+
     if (current_metric == "time") {
-      metric_label = " [time/op]"
-    } else if (current_metric == "memory") {
-      metric_label = " [memory/op]"
+      time_old=old_val; time_new=new_val; time_delta=delta; time_status=status
+    } else if (current_metric == "heap") {
+      heap_old=old_val; heap_new=new_val; heap_delta=delta; heap_status=status
     } else if (current_metric == "allocs") {
-      metric_label = " [allocs/op]"
+      alloc_old=old_val; alloc_new=new_val; alloc_delta=delta; alloc_status=status
     }
-    
-    print $0 status metric_label
+  }
+
+  END {
+    if (time_old == "" && heap_old == "" && alloc_old == "") {
+      print "No benchmark comparison data available."
+      exit
+    }
+
+    print "| Metric | main | PR | Change |"
+    print "|------------|-----:|---:|-------:|"
+    if (time_old  != "") printf "| Exec time   | %s | %s | %s %s |\n", time_old,  time_new,  time_delta,  time_status
+    if (heap_old  != "") printf "| Heap usage  | %s | %s | %s %s |\n", heap_old,  heap_new,  heap_delta,  heap_status
+    if (alloc_old != "") printf "| Alloc count | %s | %s | %s %s |\n", alloc_old, alloc_new, alloc_delta, alloc_status
+
+    if (env_info != "") {
+      print ""
+      print "> " env_info
+    }
   }
 ' "$INPUT_FILE" > "$OUTPUT_FILE"
