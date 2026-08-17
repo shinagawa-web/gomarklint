@@ -21,3 +21,6 @@ npm/node_modules/
 .claude/worktrees/
 .claude/settings.local.json
 .claude/memory/
+
+# Go test binary
+cmd.test
