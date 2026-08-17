@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
 	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 	"github.com/shinagawa-web/gomarklint/v3/internal/file"
 	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
