@@ -32,8 +32,10 @@ jobs:
       - name: Run benchmarks on PR branch
         run: make bench BENCH_COUNT=6 | tee new-bench.txt
 
-      - name: Save benchmark script from PR branch
-        run: cp .github/scripts/format-benchmark.sh /tmp/format-benchmark.sh
+      - name: Save benchmark script and Makefile from PR branch
+        run: |
+          cp .github/scripts/format-benchmark.sh /tmp/format-benchmark.sh
+          cp Makefile /tmp/Makefile
 
       - name: Checkout main branch
         run: |
@@ -44,7 +46,7 @@ jobs:
         run: go mod download
 
       - name: Run benchmarks on main branch
-        run: make bench BENCH_COUNT=6 | tee old-bench.txt
+        run: make -f /tmp/Makefile bench BENCH_COUNT=6 | tee old-bench.txt
 
       - name: Collect environment info
         id: env_info
