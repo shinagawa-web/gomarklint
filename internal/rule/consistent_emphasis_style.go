@@ -6,15 +6,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// CheckConsistentEmphasisStyle flags emphasis spans that use a different marker
-// than expected. style must be "consistent", "asterisk", or "underscore".
-//
-// In "consistent" mode the first emphasis character found in the document sets
-// the expected style; every subsequent span using a different character is
-// flagged. In "asterisk"/"underscore" mode every span using the wrong character
-// is flagged. Underscores inside words (e.g. snake_case) are not treated as
-// emphasis. Content inside fenced code, indented code, HTML blocks, HTML
-// comments, and inline code spans is ignored.
 func CheckConsistentEmphasisStyle(filename string, ctx *preprocess.Context, offset int, style string) []LintError {
 	var errs []LintError
 	var expectedEmphCh byte   // for runLen == 1 (emphasis)
@@ -41,14 +32,6 @@ func CheckConsistentEmphasisStyle(filename string, ctx *preprocess.Context, offs
 	return errs
 }
 
-// checkEmphasisLine scans s for emphasis spans and appends any style violations
-// to errs. Only valid spans (opener + matching closer) are counted, so closing
-// delimiters followed by punctuation are never double-counted. The function is
-// allocation-free: no intermediate slice is created.
-//
-// expectedEmphCh tracks the expected marker for single-delimiter spans (emphasis);
-// expectedStrongCh tracks it for double-delimiter spans (strong). They are kept
-// separate so that *italic* and __strong__ can coexist without a violation.
 func checkEmphasisLine(s string, filename string, lineNum int, style string, expectedEmphCh *byte, expectedStrongCh *byte, errs *[]LintError) {
 	i := 0
 	for i < len(s) {
@@ -110,8 +93,6 @@ func checkEmphasisLine(s string, filename string, lineNum int, style string, exp
 	}
 }
 
-// findEmphCloser returns the start position of the first right-flanking run of
-// ch with exactly runLen characters at or after start. Returns -1 if not found.
 func findEmphCloser(s string, start int, ch byte, runLen int) int {
 	j := start
 	for j < len(s) {
@@ -132,27 +113,18 @@ func findEmphCloser(s string, start int, ch byte, runLen int) int {
 	return -1
 }
 
-// isEmphLeftFlanking reports whether afterRun is a valid left-flanking position
-// (followed by a non-whitespace character).
 func isEmphLeftFlanking(s string, afterRun int) bool {
 	return afterRun < len(s) && s[afterRun] != ' ' && s[afterRun] != '\t'
 }
 
-// isEmphMidWord reports whether the delimiter run starting at i is a mid-word
-// underscore (flanked by word characters on both sides).
 func isEmphMidWord(s string, i, afterRun int) bool {
 	return i > 0 && isEmphWordChar(s[i-1]) && isEmphWordChar(s[afterRun])
 }
 
-// isEmphWordChar reports whether b is a word character for emphasis purposes.
 func isEmphWordChar(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_'
 }
 
-// checkEmphasisStyle validates ch against the configured style and updates
-// expectedCh in consistent mode. kind is "emphasis" for single-delimiter spans
-// and "strong" for double-delimiter spans. Returns a LintError if the marker
-// character does not match, nil otherwise.
 func checkEmphasisStyle(filename string, line int, ch byte, style string, expectedCh *byte, kind string) *LintError {
 	switch style {
 	case "consistent":
@@ -194,9 +166,6 @@ func emphCharName(ch byte) string {
 	return "underscore"
 }
 
-// stripLinkURLs replaces the destination and title of inline Markdown links
-// with spaces so that underscores or asterisks in URLs are not mistaken for
-// emphasis markers. The link text between [ and ] is preserved.
 func stripLinkURLs(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
@@ -220,7 +189,6 @@ func stripLinkURLs(s string) string {
 	return b.String()
 }
 
-// hasPrecedingBracket reports whether there is an unescaped '[' before position i in s.
 func hasPrecedingBracket(s string, i int) bool {
 	for j := i - 1; j >= 0; j-- {
 		if s[j] == '[' {
@@ -230,9 +198,6 @@ func hasPrecedingBracket(s string, i int) bool {
 	return false
 }
 
-// consumeLinkDest blanks out the link destination starting at i and returns
-// the position after it. Handles both angle-bracket form (<dest>) and the
-// regular balanced-paren form.
 func consumeLinkDest(b *strings.Builder, s string, i int) int {
 	if i >= len(s) {
 		return i
@@ -272,8 +237,6 @@ func consumeLinkDest(b *strings.Builder, s string, i int) int {
 	return i
 }
 
-// consumeLinkTitle blanks out optional whitespace and the link title (if any)
-// starting at i and returns the position after it.
 func consumeLinkTitle(b *strings.Builder, s string, i int) int {
 	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
 		b.WriteByte(' ')

@@ -1,8 +1,5 @@
 package rule
 
-// openingFenceMarker returns the full fence marker (e.g. "```", "````", "~~~") if the line
-// is an opening fence, or an empty string otherwise. The full run of fence characters is
-// captured so that closing fences of the same length are correctly matched.
 // Returns a substring of trimmed to avoid heap allocation.
 func openingFenceMarker(trimmed string) string {
 	if len(trimmed) < 3 {

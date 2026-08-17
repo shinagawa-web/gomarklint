@@ -12,10 +12,6 @@ import (
 )
 
 var (
-	// Link pattern matchers
-	// Inline/image patterns allow balanced (...) groups inside the URL per CommonMark spec.
-	// [^\s()]+ allows square brackets (needed for IPv6 hosts like https://[::1]/).
-	// + quantifier ensures at least one character after the scheme (rejects bare https://).
 	inlineLinkPattern = regexp.MustCompile(`\[[^\]]*\]\((https?://(?:[^\s()]+|\([^\s()]*\))+)\)`)
 	imageLinkPattern  = regexp.MustCompile(`!\[[^\]]*\]\((https?://(?:[^\s()]+|\([^\s()]*\))+)\)`)
 	bareURLPattern    = regexp.MustCompile(`(?m)^.*?(https?://(?:[^\s<>"'()]+|\([^\s<>"'()]*\))+).*?$`)
@@ -26,40 +22,27 @@ type cacheResult struct {
 	err    error
 }
 
-// ExtractedLink represents an external link found in markdown content
 type ExtractedLink struct {
 	URL  string
 	Line int
 }
 
 const (
-	// DefaultRetryDelayMs is the default delay in milliseconds before retrying a failed HTTP request
-	DefaultRetryDelayMs = 1000
-	// DefaultMaxConcurrency is the default maximum number of concurrent HTTP requests
-	DefaultMaxConcurrency = 10
-	// MaxConcurrencyLimit is the maximum allowed value for maxConcurrency
-	MaxConcurrencyLimit = 15
-	// DefaultMaxRetries is the default maximum number of retry attempts for failed requests
-	DefaultMaxRetries = 2
-	// MaxRetriesLimit is the maximum allowed value for maxRetries
-	MaxRetriesLimit = 4
-
-	// DefaultPerHostConcurrency is the default per-host concurrency limit
+	DefaultRetryDelayMs       = 1000
+	DefaultMaxConcurrency     = 10
+	MaxConcurrencyLimit       = 15
+	DefaultMaxRetries         = 2
+	MaxRetriesLimit           = 4
 	DefaultPerHostConcurrency = 2
-	// MaxPerHostConcurrencyLimit is the maximum allowed value for perHostConcurrency
 	MaxPerHostConcurrencyLimit = 15
-	// DefaultPerHostIntervalMs is the default minimum interval between requests to the same host
-	DefaultPerHostIntervalMs = 3000
-	// MinPerHostIntervalMs is the minimum non-zero value for perHostIntervalMs; values between 1 and 999 are rejected
-	MinPerHostIntervalMs = 1000
-	// MaxPerHostIntervalMsLimit is the maximum allowed value for perHostIntervalMs in milliseconds
+	DefaultPerHostIntervalMs  = 3000
+	MinPerHostIntervalMs      = 1000
 	MaxPerHostIntervalMsLimit = 60000
 
 	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )
 
-// defaultAllowedStatuses contains status codes never treated as link failures.
-// 429 (Too Many Requests) indicates rate limiting, not a broken link.
+// 429 (Too Many Requests) is rate limiting, not a broken link.
 var defaultAllowedStatuses = []int{http.StatusTooManyRequests}
 
 func isAllowedStatus(status int, extra []int) bool {
@@ -76,7 +59,6 @@ func isAllowedStatus(status int, extra []int) bool {
 	return false
 }
 
-// hostLimiter enforces per-host concurrency and minimum request interval.
 type hostLimiter struct {
 	sem       chan struct{} // nil when perHostConcurrency == 0
 	interval  time.Duration
@@ -84,7 +66,6 @@ type hostLimiter struct {
 	mu        sync.Mutex
 }
 
-// acquire waits for a per-host slot and enforces the minimum interval before returning.
 func (h *hostLimiter) acquire() {
 	if h.sem != nil {
 		h.sem <- struct{}{}
@@ -107,14 +88,12 @@ func (h *hostLimiter) acquire() {
 	}
 }
 
-// release frees the per-host semaphore slot.
 func (h *hostLimiter) release() {
 	if h.sem != nil {
 		<-h.sem
 	}
 }
 
-// hostLimiterRegistry maintains one hostLimiter per host.
 type hostLimiterRegistry struct {
 	mu                 sync.Mutex
 	limiters           map[string]*hostLimiter
@@ -144,7 +123,6 @@ func (r *hostLimiterRegistry) get(host string) *hostLimiter {
 	return lim
 }
 
-// extractHost returns the host component of rawURL (e.g. "github.com").
 func extractHost(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil || u.Host == "" {
@@ -153,8 +131,6 @@ func extractHost(rawURL string) string {
 	return u.Host
 }
 
-// ExtractExternalLinksWithLineNumbers extracts external links from the given lines.
-// The offset parameter is added to line numbers to account for stripped frontmatter.
 func ExtractExternalLinksWithLineNumbers(ctx *preprocess.Context, offset int) []ExtractedLink {
 	patterns := []*regexp.Regexp{
 		inlineLinkPattern,
@@ -182,7 +158,7 @@ func ExtractExternalLinksWithLineNumbers(ctx *preprocess.Context, offset int) []
 					if !seenInLine[url] {
 						results = append(results, ExtractedLink{
 							URL:  url,
-							Line: i + 1 + offset, // 1-based line number + offset for frontmatter
+							Line: i + 1 + offset,
 						})
 						seenInLine[url] = true
 					}
@@ -193,13 +169,7 @@ func ExtractExternalLinksWithLineNumbers(ctx *preprocess.Context, offset int) []
 	return results
 }
 
-// CheckExternalLinks checks external links in the given lines.
-// The offset parameter is used to calculate correct line numbers accounting for stripped frontmatter.
-// Returns lint errors and the count of unique URLs checked.
 func CheckExternalLinks(path string, ctx *preprocess.Context, offset int, skipPatterns []*regexp.Regexp, timeoutSeconds int, retryDelayMs int, maxConcurrency int, maxRetries int, allowedStatuses []int, urlCache *sync.Map, perHostConcurrency int, perHostIntervalMs int) ([]LintError, int) {
-	// Code/HTML context filtering is handled inside the extractor via the shared
-	// scanner, so links inside fenced/indented code, HTML blocks, HTML comments,
-	// inline code spans, and inline comments are never produced here.
 	links := ExtractExternalLinksWithLineNumbers(ctx, offset)
 
 	urlToLines := make(map[string][]int)
@@ -267,7 +237,6 @@ func CheckExternalLinks(path string, ctx *preprocess.Context, offset int, skipPa
 	return errs, len(urlToLines)
 }
 
-// checkURL performs the URL check with retry logic.
 func checkURL(client *http.Client, url string, retryDelayMs int, maxRetries int, allowedStatuses []int) (int, error) {
 	retryDelay := time.Duration(retryDelayMs) * time.Millisecond
 
@@ -281,33 +250,23 @@ func checkURL(client *http.Client, url string, retryDelayMs int, maxRetries int,
 
 		status, err = performCheck(client, url)
 
-		// Success: 2xx or 3xx
 		if err == nil && status < 400 {
 			return status, nil
 		}
-
-		// Allowed statuses (e.g. 429, user-configured): return immediately without retrying
 		if err == nil && isAllowedStatus(status, allowedStatuses) {
 			return status, nil
 		}
-
-		// Permanent failures: Don't bother retrying if it's 404 (Not Found) or 401 (Unauthorized)
 		if err == nil && (status == http.StatusNotFound || status == http.StatusUnauthorized) {
 			return status, nil
 		}
-
-		// If it's the last attempt, don't log "retrying"
 		if i == maxRetries {
 			break
 		}
-
-		// Optional: You could log that you're retrying here
 	}
 
 	return status, err
 }
 
-// performCheck contains the core HEAD -> GET fallback logic.
 func performCheck(client *http.Client, url string) (int, error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {

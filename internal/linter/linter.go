@@ -14,26 +14,22 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
-// Linter performs linting on markdown files.
 type Linter struct {
 	config           config.Config
 	compiledPatterns []*regexp.Regexp
 	urlCache         *sync.Map
 }
 
-// Result holds the results of a linting run.
 type Result struct {
-	Errors            map[string][]rule.LintError // All violations (errors + warnings) per file path
-	OrderedPaths      []string                    // Sorted file paths
-	TotalErrors       int                         // Count of severity=error violations (used for exit code)
-	TotalWarnings     int                         // Count of severity=warning violations
-	TotalLines        int                         // Total number of lines checked
-	TotalLinksChecked int                         // Total number of links checked
-	FailedFiles       map[string]error            // Files that failed to read
+	Errors            map[string][]rule.LintError
+	OrderedPaths      []string
+	TotalErrors       int
+	TotalWarnings     int
+	TotalLines        int
+	TotalLinksChecked int
+	FailedFiles       map[string]error
 }
 
-// New creates a new Linter with the given configuration.
-// Returns an error if any rule option value is invalid.
 func New(cfg config.Config) (*Linter, error) {
 	if err := validateStyleOption(cfg, "consistent-code-fence", "style", []string{"consistent", "backtick", "tilde"}); err != nil {
 		return nil, err
@@ -84,8 +80,6 @@ func New(cfg config.Config) (*Linter, error) {
 	}, nil
 }
 
-// validateStyleOption checks that the named option for a rule, if present and non-empty,
-// is one of the valid values. Returns a descriptive error if not.
 func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []string) error {
 	opts := cfg.RuleOptions(ruleName)
 	raw, exists := opts[optKey]
@@ -107,8 +101,7 @@ func validateStyleOption(cfg config.Config, ruleName, optKey string, valid []str
 	return fmt.Errorf("gomarklint: invalid value %q for %s.%s (valid values: %s)", val, ruleName, optKey, strings.Join(valid, ", "))
 }
 
-// validatePerHostIntervalMs checks that perHostIntervalMs is either 0 (disabled) or within
-// [MinPerHostIntervalMs, MaxPerHostIntervalMsLimit]. Values between 1 and 999 are rejected.
+// validatePerHostIntervalMs rejects values between 1 and 999 (too small to be intentional).
 func validatePerHostIntervalMs(cfg config.Config) error {
 	raw, exists := cfg.RuleOptions("external-link")["perHostIntervalMs"]
 	if !exists {
@@ -128,8 +121,6 @@ func validatePerHostIntervalMs(cfg config.Config) error {
 	return nil
 }
 
-// validateExternalLinkIntOption checks that a numeric external-link option, if present,
-// is within [minVal, maxVal]. Returns a descriptive error if not.
 func validateExternalLinkIntOption(cfg config.Config, optKey string, minVal, maxVal int) error {
 	raw, exists := cfg.RuleOptions("external-link")[optKey]
 	if !exists {
@@ -146,7 +137,6 @@ func validateExternalLinkIntOption(cfg config.Config, optKey string, minVal, max
 	return nil
 }
 
-// Run performs linting on the given file paths concurrently.
 func (l *Linter) Run(filePaths []string) *Result {
 	// Deduplicate file paths to prevent double-counting
 	uniquePaths := make(map[string]struct{})
@@ -202,7 +192,6 @@ func (l *Linter) Run(filePaths []string) *Result {
 
 	wg.Wait()
 
-	// Sort paths to ensure consistent output order
 	sort.Strings(orderedPaths)
 
 	return &Result{
@@ -216,13 +205,10 @@ func (l *Linter) Run(filePaths []string) *Result {
 	}
 }
 
-// LintContent performs linting checks on the provided content string.
-// This is useful for benchmarking and testing without file I/O overhead.
 func (l *Linter) LintContent(path string, content string) ([]rule.LintError, int, int) {
 	return l.collectErrors(path, content)
 }
 
-// withSeverity tags each error in errs with the configured severity and rule name.
 func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.LintError {
 	sev := l.config.RuleSeverity(ruleName)
 	for i := range errs {
@@ -232,7 +218,6 @@ func (l *Linter) withSeverity(errs []rule.LintError, ruleName string) []rule.Lin
 	return errs
 }
 
-// headingMinLevel returns the configured minLevel for the heading-level rule.
 func (l *Linter) headingMinLevel() int {
 	minLevel := 2
 	if v, ok := l.config.RuleOptions("heading-level")["minLevel"]; ok {
@@ -243,7 +228,6 @@ func (l *Linter) headingMinLevel() int {
 	return minLevel
 }
 
-// noTrailingPunctuation returns the configured punctuation string for the no-trailing-punctuation rule.
 func (l *Linter) noTrailingPunctuation() string {
 	if v, ok := l.config.RuleOptions("no-trailing-punctuation")["punctuation"]; ok {
 		if s, ok := v.(string); ok {
@@ -253,7 +237,6 @@ func (l *Linter) noTrailingPunctuation() string {
 	return config.DefaultNoTrailingPunctuation
 }
 
-// consistentCodeFenceStyle returns the configured style for the consistent-code-fence rule.
 func (l *Linter) consistentCodeFenceStyle() string {
 	style, _ := l.config.RuleOptions("consistent-code-fence")["style"].(string)
 	if style == "" {
@@ -262,7 +245,6 @@ func (l *Linter) consistentCodeFenceStyle() string {
 	return style
 }
 
-// consistentEmphasisStyle returns the configured style for the consistent-emphasis-style rule.
 func (l *Linter) consistentEmphasisStyle() string {
 	style, _ := l.config.RuleOptions("consistent-emphasis-style")["style"].(string)
 	if style == "" {
@@ -271,7 +253,6 @@ func (l *Linter) consistentEmphasisStyle() string {
 	return style
 }
 
-// consistentListMarkerStyle returns the configured style for the consistent-list-marker rule.
 func (l *Linter) consistentListMarkerStyle() string {
 	style, _ := l.config.RuleOptions("consistent-list-marker")["style"].(string)
 	if style == "" {
@@ -280,7 +261,6 @@ func (l *Linter) consistentListMarkerStyle() string {
 	return style
 }
 
-// maxLineLength returns the configured lineLength for the max-line-length rule.
 func (l *Linter) maxLineLength() int {
 	lineLength := 80
 	if v, ok := l.config.RuleOptions("max-line-length")["lineLength"]; ok {
@@ -291,7 +271,6 @@ func (l *Linter) maxLineLength() int {
 	return lineLength
 }
 
-// externalLinkTimeout returns the configured timeoutSeconds for the external-link rule.
 func (l *Linter) externalLinkTimeout() int {
 	timeoutSeconds := 5
 	if v, ok := l.config.RuleOptions("external-link")["timeoutSeconds"]; ok {
@@ -302,7 +281,6 @@ func (l *Linter) externalLinkTimeout() int {
 	return timeoutSeconds
 }
 
-// externalLinkMaxConcurrency returns the configured maxConcurrency for the external-link rule.
 func (l *Linter) externalLinkMaxConcurrency() int {
 	if v, ok := l.config.RuleOptions("external-link")["maxConcurrency"]; ok {
 		if f, ok := v.(float64); ok && int(f) > 0 {
@@ -312,7 +290,6 @@ func (l *Linter) externalLinkMaxConcurrency() int {
 	return rule.DefaultMaxConcurrency
 }
 
-// externalLinkMaxRetries returns the configured maxRetries for the external-link rule.
 func (l *Linter) externalLinkMaxRetries() int {
 	if v, ok := l.config.RuleOptions("external-link")["maxRetries"]; ok {
 		if f, ok := v.(float64); ok && int(f) >= 0 {
@@ -322,7 +299,6 @@ func (l *Linter) externalLinkMaxRetries() int {
 	return rule.DefaultMaxRetries
 }
 
-// externalLinkPerHostConcurrency returns the configured perHostConcurrency for the external-link rule.
 func (l *Linter) externalLinkPerHostConcurrency() int {
 	if v, ok := l.config.RuleOptions("external-link")["perHostConcurrency"]; ok {
 		if f, ok := v.(float64); ok && int(f) > 0 {
@@ -332,7 +308,6 @@ func (l *Linter) externalLinkPerHostConcurrency() int {
 	return rule.DefaultPerHostConcurrency
 }
 
-// externalLinkPerHostIntervalMs returns the configured perHostIntervalMs for the external-link rule.
 func (l *Linter) externalLinkPerHostIntervalMs() int {
 	if v, ok := l.config.RuleOptions("external-link")["perHostIntervalMs"]; ok {
 		if f, ok := v.(float64); ok && int(f) >= 0 {
@@ -342,7 +317,6 @@ func (l *Linter) externalLinkPerHostIntervalMs() int {
 	return rule.DefaultPerHostIntervalMs
 }
 
-// externalLinkAllowedStatuses returns the configured allowedStatuses for the external-link rule.
 func (l *Linter) externalLinkAllowedStatuses() []int {
 	raw, _ := l.config.RuleOptions("external-link")["allowedStatuses"].([]interface{})
 	statuses := make([]int, 0, len(raw))
@@ -354,10 +328,6 @@ func (l *Linter) externalLinkAllowedStatuses() []int {
 	return statuses
 }
 
-// simpleRules lists rules whose check function takes only (path, lines, offset)
-// and have not yet been migrated to the preprocess context. Rules that require
-// additional options, or that consume the shared *preprocess.Context, are
-// handled separately below.
 var simpleRules = []struct {
 	name string
 	fn   func(string, []string, int) []rule.LintError
@@ -365,9 +335,6 @@ var simpleRules = []struct {
 	{"final-blank-line", rule.CheckFinalBlankLine},
 }
 
-// contextRules lists rules migrated to consume the shared *preprocess.Context
-// (issue #337). They take (path, ctx, offset); rules that also need extra
-// options are still handled separately below.
 var contextRules = []struct {
 	name string
 	fn   func(string, *preprocess.Context, int) []rule.LintError
@@ -388,10 +355,6 @@ var contextRules = []struct {
 	{"no-hard-tabs", rule.CheckNoHardTabs},
 }
 
-// collectLineErrors runs all non-network rule checks and returns their errors.
-// ctx is the shared per-line context produced once by preprocess.Scan; rules
-// that have migrated to consume it receive ctx, while the rest continue to read
-// the raw lines slice (which Scan borrows, so no copy is made).
 func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.Context, offset int) []rule.LintError {
 	var errs []rule.LintError
 
@@ -431,7 +394,6 @@ func (l *Linter) collectLineErrors(path string, lines []string, ctx *preprocess.
 	return errs
 }
 
-// collectErrors performs linting checks on a single file's content.
 func (l *Linter) collectErrors(path string, content string) ([]rule.LintError, int, int) {
 	body, offset := file.StripFrontmatter(content)
 	lines := strings.Split(body, "\n")

@@ -13,19 +13,15 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
-// ErrLintViolations is returned when error-severity violations are found.
 var ErrLintViolations = errors.New("lint violations found")
 
-// Options holds the parameters for a lint run.
 type Options struct {
-	ConfigPath   string              // path to config file
-	Args         []string            // files/dirs to lint
-	OutputFormat string              // overrides config if non-empty
-	MinSeverity  config.RuleSeverity // overrides config if non-empty
+	ConfigPath   string
+	Args         []string
+	OutputFormat string
+	MinSeverity  config.RuleSeverity
 }
 
-// Run loads config, lints files, and writes results to w.
-// Returns ErrLintViolations if any error-severity violations are found.
 func Run(w io.Writer, opts Options) error {
 	start := time.Now()
 

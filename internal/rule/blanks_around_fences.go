@@ -6,16 +6,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// CheckBlanksAroundFences flags fenced code blocks that are not preceded or
-// followed by a blank line. Fences at the start or end of the file are exempt
-// from the respective check. Fences inside indented code, HTML blocks, and HTML
-// comments are not real fences and are ignored.
-//
-// A standalone single-line HTML comment (<!-- ... --> on its own line) is
-// transparent: it is invisible in rendered output, so it does not satisfy or
-// break the "preceded by a blank line" requirement. The preceding-blank check
-// therefore looks past such lines. Multi-line comment blocks and inline comments
-// (lines with visible text) are opaque.
 func CheckBlanksAroundFences(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
 
@@ -48,11 +38,6 @@ func CheckBlanksAroundFences(filename string, ctx *preprocess.Context, offset in
 	return errs
 }
 
-// isTransparentComment reports whether line i is a standalone single-line HTML
-// comment (the whole line is a comment, and it both opens and closes on that
-// line). Such lines render to nothing, so blanks-around-fences looks through them
-// when checking for a preceding blank line. Multi-line comment lines carry only
-// one of the markers and are therefore opaque.
 func isTransparentComment(ctx *preprocess.Context, i int) bool {
 	if !ctx.InHTMLComment(i) {
 		return false
