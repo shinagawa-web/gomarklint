@@ -19,6 +19,20 @@ if [[ ! -s "$INPUT_FILE" ]]; then
 fi
 
 awk -v env_info="$ENV_INFO" '
+  function parse_val(v,    num, suffix) {
+    num = v + 0
+    suffix = v
+    gsub(/^[0-9.]+/, "", suffix)
+    if (suffix == "k")  return num * 1000
+    if (suffix == "M")  return num * 1000000
+    if (suffix == "Ki") return num * 1024
+    if (suffix == "Mi") return num * 1048576
+    if (suffix == "Gi") return num * 1073741824
+    if (suffix == "m")  return num * 0.001
+    if (suffix == "n")  return num * 1e-9
+    return num
+  }
+
   BEGIN {
     in_cmd_pkg = 0
     current_metric = ""
@@ -56,6 +70,12 @@ awk -v env_info="$ENV_INFO" '
     } else if (delta ~ /^-[0-9.]+%$/) {
       status = " ✅"
     } else if (delta == "~") {
+      old_n = parse_val(old_val)
+      new_n = parse_val(new_val)
+      if (old_n != 0) {
+        pct = (new_n - old_n) / old_n * 100
+        delta = (pct >= 0) ? sprintf("+%.2f%%", pct) : sprintf("%.2f%%", pct)
+      }
       status = " ✅"
     }
 
