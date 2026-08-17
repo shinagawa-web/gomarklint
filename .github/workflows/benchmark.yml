@@ -70,7 +70,7 @@ jobs:
             echo "**Legend**: ✅ OK (≤0% or no change) | ⚠️ Caution (+10~50%) | ❌ Regression (+50%+)"
             echo ""
             benchstat old-bench.txt new-bench.txt > raw-comparison.txt || true
-            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "$ENV_INFO"
+            bash /tmp/format-benchmark.sh raw-comparison.txt formatted-comparison.txt "$ENV_INFO" new-bench.txt
             cat formatted-comparison.txt
           } > comparison.txt
           cat comparison.txt

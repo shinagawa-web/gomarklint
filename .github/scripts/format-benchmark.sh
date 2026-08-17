@@ -6,6 +6,13 @@ set -e
 INPUT_FILE="$1"
 OUTPUT_FILE="$2"
 ENV_INFO="${3:-}"
+NEW_BENCH_FILE="${4:-}"
+
+# Extract PR benchmark order from new-bench.txt (strip Benchmark prefix, deduplicate)
+PR_ORDER=""
+if [[ -n "$NEW_BENCH_FILE" && -f "$NEW_BENCH_FILE" ]]; then
+  PR_ORDER=$(grep '^Benchmark' "$NEW_BENCH_FILE" | awk '{print $1}' | sed 's/^Benchmark//' | awk '!seen[$0]++' | tr '\n' ',')
+fi
 
 if [[ ! -f "$INPUT_FILE" ]]; then
   echo "Error: Input file '$INPUT_FILE' does not exist" >&2
@@ -18,7 +25,7 @@ if [[ ! -s "$INPUT_FILE" ]]; then
   exit 0
 fi
 
-awk -v env_info="$ENV_INFO" '
+awk -v env_info="$ENV_INFO" -v pr_order="$PR_ORDER" '
   function parse_val(v,    num, suffix) {
     num = v + 0
     suffix = v
@@ -102,14 +109,30 @@ awk -v env_info="$ENV_INFO" '
 
     print "| Benchmark | Metric | main | PR | Change |"
     print "|-----------|--------|-----:|---:|-------:|"
-    for (i = 0; i < bench_count; i++) {
-      name = bench_names[i]
-      for (mi = 1; mi <= n_metrics; mi++) {
-        mk = metric_keys[mi]
-        if (data[name, mk, "old"] == "") continue
-        printf "| %s | %s | %s | %s | %s%s |\n", \
-          name, metric_labels[mi], data[name, mk, "old"], data[name, mk, "new"], \
-          data[name, mk, "delta"], data[name, mk, "status"]
+
+    if (pr_order != "") {
+      n_ordered = split(pr_order, ordered_names, ",")
+      for (i = 1; i <= n_ordered; i++) {
+        name = ordered_names[i]
+        if (name == "" || !(name in seen)) continue
+        for (mi = 1; mi <= n_metrics; mi++) {
+          mk = metric_keys[mi]
+          if (data[name, mk, "old"] == "") continue
+          printf "| %s | %s | %s | %s | %s%s |\n", \
+            name, metric_labels[mi], data[name, mk, "old"], data[name, mk, "new"], \
+            data[name, mk, "delta"], data[name, mk, "status"]
+        }
+      }
+    } else {
+      for (i = 0; i < bench_count; i++) {
+        name = bench_names[i]
+        for (mi = 1; mi <= n_metrics; mi++) {
+          mk = metric_keys[mi]
+          if (data[name, mk, "old"] == "") continue
+          printf "| %s | %s | %s | %s | %s%s |\n", \
+            name, metric_labels[mi], data[name, mk, "old"], data[name, mk, "new"], \
+            data[name, mk, "delta"], data[name, mk, "status"]
+        }
       }
     }
 
