@@ -124,6 +124,20 @@ func BenchmarkFullLinting(b *testing.B) {
 	}
 }
 
+func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
+	content := generateComplexMarkdown(5000)
+	cfg := benchmarkConfig()
+	lint, err := linter.New(cfg)
+	if err != nil {
+		b.Fatalf("unexpected error: %v", err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _, _ = lint.LintContent("benchmark.md", content)
+	}
+}
+
 // BenchmarkEndToEnd exercises the full lint.Run path: file discovery, concurrent
 // file reading, goroutine fan-out with mutex, and result collection.
 // 50 files × 100 sections each (~1700 lines/file, ~85k lines total).
@@ -147,19 +161,5 @@ func BenchmarkEndToEnd(b *testing.B) {
 	for b.Loop() {
 		paths := file.ExpandPaths([]string{dir}, cfg.Ignore)
 		_ = lint.Run(paths)
-	}
-}
-
-func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
-	content := generateComplexMarkdown(5000)
-	cfg := benchmarkConfig()
-	lint, err := linter.New(cfg)
-	if err != nil {
-		b.Fatalf("unexpected error: %v", err)
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _, _ = lint.LintContent("benchmark.md", content)
 	}
 }
