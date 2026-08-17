@@ -6,9 +6,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// isListItem reports whether line is a list item (unordered or ordered),
-// allowing any amount of leading indentation. The marker must be followed by
-// at least one space or tab, matching CommonMark's list item definition.
 func isListItem(line string) bool {
 	s := strings.TrimLeft(line, " \t")
 	if len(s) < 2 {
@@ -17,8 +14,6 @@ func isListItem(line string) bool {
 	return isUnorderedListItem(s) || isOrderedListItem(s)
 }
 
-// isUnorderedListItem reports whether s (already left-trimmed) starts with an
-// unordered list marker ("- ", "* ", or "+ ").
 func isUnorderedListItem(s string) bool {
 	if s[0] != '-' && s[0] != '*' && s[0] != '+' {
 		return false
@@ -26,9 +21,6 @@ func isUnorderedListItem(s string) bool {
 	return s[1] == ' ' || s[1] == '\t'
 }
 
-// isOrderedListItem reports whether s (already left-trimmed) starts with an
-// ordered list marker: one or more digits followed by '.' or ')' then a space
-// or tab.
 func isOrderedListItem(s string) bool {
 	i := 0
 	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
@@ -46,13 +38,6 @@ func isOrderedListItem(s string) bool {
 	return s[i+1] == ' ' || s[i+1] == '\t'
 }
 
-// CheckBlanksAroundLists flags list blocks that are not preceded or followed by
-// a blank line (MD032). The first item of a list block and the line immediately
-// after the last item are checked. Lists at the start or end of the file are
-// exempt from the respective check. List items inside fenced code blocks are
-// ignored. Nested list items are treated as part of the same block and do not
-// require additional blank lines between them and their parent. List items
-// inside fenced code, indented code, HTML blocks, and HTML comments are ignored.
 func CheckBlanksAroundLists(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
 	// prevBlank and prevWasListItem replace the TrimSpace look-behind on

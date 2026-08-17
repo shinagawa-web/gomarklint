@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-// LoadConfig reads the config file from the given path and returns a Config object.
-// If the file is missing or unreadable, an error is returned.
 func LoadConfig(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

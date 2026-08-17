@@ -8,9 +8,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// atxHeadingText returns the visible text of an ATX heading with the opening
-// '#' markers and optional closing '#' sequence removed.
-// Returns ("", false) if the line is not a valid ATX heading.
 func atxHeadingText(line string) (string, bool) {
 	level := atxHeadingLevel(line)
 	if level == 0 {
@@ -30,8 +27,6 @@ func atxHeadingText(line string) (string, bool) {
 	return text, true
 }
 
-// atxLineText returns the heading text if first == '#' and line is a valid ATX
-// heading. Returns ("", false) otherwise.
 func atxLineText(first byte, line string) (string, bool) {
 	if first != '#' {
 		return "", false
@@ -39,9 +34,6 @@ func atxLineText(first byte, line string) (string, bool) {
 	return atxHeadingText(strings.TrimSpace(line))
 }
 
-// setextHeadingText returns the trimmed heading text when line is a setext
-// underline following a valid heading candidate on the previous line.
-// Returns ("", false) when the conditions are not met.
 func setextHeadingText(first byte, line, prevLine string, prevIsBlock bool) (string, bool) {
 	if prevLine == "" || prevIsBlock || (first != '=' && first != '-') {
 		return "", false
@@ -52,13 +44,10 @@ func setextHeadingText(first byte, line, prevLine string, prevIsBlock bool) (str
 	return strings.TrimSpace(prevLine), true
 }
 
-// isPossibleBlockMarker reports whether b can open a list item, ordered list,
-// or block-quote line per CommonMark, making the line ineligible as setext text.
 func isPossibleBlockMarker(b byte) bool {
 	return b == '*' || b == '+' || b == '-' || b == '>' || (b >= '0' && b <= '9')
 }
 
-// noTPViolation builds a LintError for a heading that ends with rune r.
 func noTPViolation(filename string, lineNum int, r rune) LintError {
 	return LintError{
 		File:    filename,
@@ -67,11 +56,6 @@ func noTPViolation(filename string, lineNum int, r rune) LintError {
 	}
 }
 
-// CheckNoTrailingPunctuation flags ATX and setext headings whose visible text
-// ends with a character contained in punctuation (MD026).
-//
-// Headings inside fenced code, indented code, HTML blocks, and HTML comments are
-// ignored, and a setext underline cannot follow a block line.
 func CheckNoTrailingPunctuation(filename string, ctx *preprocess.Context, offset int, punctuation string) []LintError {
 	if punctuation == "" {
 		return nil
@@ -130,9 +114,6 @@ func CheckNoTrailingPunctuation(filename string, ctx *preprocess.Context, offset
 	return errs
 }
 
-// isOtherBlockLine reports whether line is a CommonMark block-level element
-// (unordered/ordered list item or blockquote) per the pattern ^ {0,3}(?:[*+-]|\d+[.)]|>),
-// using byte scanning instead of a regex. first must equal firstNonSpaceByte(line).
 func isOtherBlockLine(line string, first byte) bool {
 	i := 0
 	for i < len(line) && line[i] == ' ' {
@@ -153,8 +134,6 @@ func isOtherBlockLine(line string, first byte) bool {
 	}
 }
 
-// lastRuneInSet reports whether the last Unicode rune of s is in set.
-// Returns the rune and true when found, zero and false otherwise.
 func lastRuneInSet(s, set string) (rune, bool) {
 	if s == "" {
 		return 0, false

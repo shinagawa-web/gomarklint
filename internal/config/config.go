@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// DefaultNoTrailingPunctuation is the default punctuation set for the no-trailing-punctuation rule.
 const DefaultNoTrailingPunctuation = ".,;:!"
 
 // DefaultConfigJSON is the canonical JSON written by `gomarklint init`.
@@ -43,7 +42,6 @@ const DefaultConfigJSON = `{
 }
 `
 
-// RuleSeverity represents the severity level of a rule violation.
 type RuleSeverity string
 
 const (
@@ -52,20 +50,12 @@ const (
 	SeverityOff     RuleSeverity = "off"
 )
 
-// RuleConfig holds per-rule configuration.
-// It supports three JSON shorthand forms:
-//
-//	true             → enabled, severity = "error"
-//	false            → disabled
-//	"warning"        → enabled, severity = "warning"
-//	{"enabled": true, "severity": "warning", ...options}
 type RuleConfig struct {
 	Enabled  bool
 	Severity RuleSeverity
 	Options  map[string]interface{}
 }
 
-// UnmarshalJSON handles bool, string, and object forms.
 func (r *RuleConfig) UnmarshalJSON(data []byte) error {
 	var b bool
 	if err := json.Unmarshal(data, &b); err == nil {
@@ -155,30 +145,15 @@ func (r *RuleConfig) applyObjectField(k string, v json.RawMessage) error {
 	return nil
 }
 
-// Config defines the options for gomarklint, loaded from a config file.
 type Config struct {
-	// Default controls whether rules are enabled by default when not listed in Rules.
-	// true = all rules on by default; false = opt-in mode (only listed rules run).
-	Default bool `json:"default"`
-
-	// Rules maps rule keys to their configuration.
-	Rules map[string]*RuleConfig `json:"rules"`
-
-	// Include lists files or directories to lint when no arguments are given.
-	Include []string `json:"include"`
-
-	// Ignore lists glob patterns to exclude from linting.
-	Ignore []string `json:"ignore"`
-
-	// OutputFormat controls output: "text" or "json".
-	OutputFormat string `json:"output"`
-
-	// MinSeverity filters output: only report rules at or above this severity ("warning" or "error").
-	// This field is not serialized to JSON; it is set via CLI flag only.
-	MinSeverity RuleSeverity `json:"-"`
+	Default      bool                   `json:"default"`
+	Rules        map[string]*RuleConfig `json:"rules"`
+	Include      []string               `json:"include"`
+	Ignore       []string               `json:"ignore"`
+	OutputFormat string                 `json:"output"`
+	MinSeverity  RuleSeverity           `json:"-"`
 }
 
-// IsEnabled reports whether the named rule should run.
 func (c *Config) IsEnabled(name string) bool {
 	rc, ok := c.Rules[name]
 	if !ok || rc == nil {
@@ -187,7 +162,6 @@ func (c *Config) IsEnabled(name string) bool {
 	return rc.Enabled
 }
 
-// RuleOptions returns the options map for the named rule, or an empty map.
 func (c *Config) RuleOptions(name string) map[string]interface{} {
 	rc, ok := c.Rules[name]
 	if !ok || rc == nil || rc.Options == nil {
@@ -196,8 +170,6 @@ func (c *Config) RuleOptions(name string) map[string]interface{} {
 	return rc.Options
 }
 
-// RuleSeverity returns the configured severity for the named rule.
-// Returns "error" if the rule is not listed or has no severity set.
 func (c *Config) RuleSeverity(name string) string {
 	rc, ok := c.Rules[name]
 	if !ok || rc == nil || rc.Severity == "" {
@@ -206,12 +178,10 @@ func (c *Config) RuleSeverity(name string) string {
 	return string(rc.Severity)
 }
 
-// enabledRule returns a RuleConfig with Enabled=true, Severity=error, and no options.
 func enabledRule() *RuleConfig {
 	return &RuleConfig{Enabled: true, Severity: SeverityError, Options: map[string]interface{}{}}
 }
 
-// Default returns the default configuration with all standard rules enabled.
 func Default() Config {
 	return Config{
 		Default: true,

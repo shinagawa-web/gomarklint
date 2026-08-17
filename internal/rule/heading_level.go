@@ -7,7 +7,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// LintError represents a single lint violation detected in a Markdown file.
 type LintError struct {
 	File     string `json:"file"`
 	Line     int    `json:"line"`
@@ -16,10 +15,6 @@ type LintError struct {
 	Severity string `json:"severity"`
 }
 
-// atxHeadingLevel returns the ATX heading level (1–6) if line begins with a
-// valid ATX heading marker, or 0 otherwise. A valid marker is one to six '#'
-// characters followed by a space, a tab, or end-of-string.
-// This replaces a regex match and allocates nothing.
 func atxHeadingLevel(line string) int {
 	level := 0
 	for level < len(line) && line[level] == '#' {
@@ -35,21 +30,6 @@ func atxHeadingLevel(line string) int {
 	return 0
 }
 
-// CheckHeadingLevels analyzes the heading structure of the given Markdown content
-// and reports any issues such as the first heading not starting at the specified minimum level
-// or heading levels that jump more than one level (e.g., from ## to ####).
-//
-// Parameters:
-//   - filename: the name of the file being checked (used in error reporting)
-//   - ctx: the shared per-line context produced by preprocess.Scan
-//   - offset: the line number offset due to frontmatter removal
-//   - minLevel: the expected minimum level for the first heading (e.g., 2 for ##)
-//
-// Returns:
-//   - A slice of LintError containing the line number and description of each detected issue.
-//
-// Headings inside fenced code, indented code, HTML blocks, and HTML comments are
-// ignored, so they neither report nor pollute the heading-level state.
 func CheckHeadingLevels(filename string, ctx *preprocess.Context, offset int, minLevel int) []LintError {
 	var errs []LintError
 

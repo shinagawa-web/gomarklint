@@ -7,15 +7,12 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/rule"
 )
 
-// JSONFormatter formats lint results as JSON.
 type JSONFormatter struct{}
 
-// NewJSONFormatter creates a new JSONFormatter.
 func NewJSONFormatter() *JSONFormatter {
 	return &JSONFormatter{}
 }
 
-// Format implements the Formatter interface for JSON output.
 func (f *JSONFormatter) Format(w io.Writer, result *Result) error {
 	output := struct {
 		Files        int                         `json:"files"`

@@ -7,9 +7,6 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// matchDoubleDelim returns the inner text if line is entirely wrapped in a
-// two-character delimiter (e.g. "**" or "__"). The inner text must not contain
-// the delimiter itself.
 func matchDoubleDelim(line, delim string) (string, bool) {
 	if len(line) <= len(delim)*2 {
 		return "", false
@@ -24,9 +21,6 @@ func matchDoubleDelim(line, delim string) (string, bool) {
 	return inner, true
 }
 
-// matchSingleDelim returns the inner text if line is entirely wrapped in a
-// single-character delimiter (e.g. '*' or '_') that is not doubled. The inner
-// text must not contain the delimiter character.
 func matchSingleDelim(line string, ch byte) (string, bool) {
 	double := string([]byte{ch, ch})
 	if len(line) <= 2 || line[0] != ch || line[len(line)-1] != ch {
@@ -42,15 +36,6 @@ func matchSingleDelim(line string, ch byte) (string, bool) {
 	return inner, true
 }
 
-// emphasisContent extracts the inner text if line is entirely a single bold or
-// italic span. Returns ("", false) when the line is not a bare emphasis span.
-//
-// Recognized forms (CommonMark):
-//
-//	**text**   __text__   (strong)
-//	*text*     _text_     (emphasis)
-//
-// The span must cover the entire trimmed line — no surrounding text allowed.
 func emphasisContent(line string) (string, bool) {
 	if inner, ok := matchDoubleDelim(line, "**"); ok {
 		return inner, true
@@ -67,17 +52,11 @@ func emphasisContent(line string) (string, bool) {
 	return "", false
 }
 
-// punctuationChars is the set of sentence-ending punctuation characters that
-// indicate the emphasis is prose rather than a heading substitute.
-// Includes ASCII and full-width equivalents used in CJK writing systems.
-// Mirrors the default punctuation list used by markdownlint MD036.
 var punctuationChars = map[rune]struct{}{
 	'.': {}, ',': {}, ';': {}, ':': {}, '!': {}, '?': {}, // ASCII
 	'。': {}, '、': {}, '；': {}, '：': {}, '！': {}, '？': {}, // Full-width / CJK
 }
 
-// endsWithPunctuation reports whether s ends with sentence-ending punctuation.
-// When true, the emphasis is likely inline prose, not a heading.
 func endsWithPunctuation(s string) bool {
 	if s == "" {
 		return false
@@ -87,13 +66,6 @@ func endsWithPunctuation(s string) bool {
 	return ok
 }
 
-// CheckNoEmphasisAsHeading flags lines where bold or italic text is used as a
-// substitute for an ATX heading (MD036). A violation is reported when:
-//  1. The trimmed line consists entirely of a single bold/italic span.
-//  2. The inner text does not end with sentence-ending punctuation.
-//
-// Lines inside fenced code, indented code, HTML blocks, and HTML comments are
-// ignored.
 func CheckNoEmphasisAsHeading(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
 

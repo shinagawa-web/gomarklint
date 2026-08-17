@@ -7,16 +7,10 @@ import (
 	"github.com/shinagawa-web/gomarklint/v3/internal/preprocess"
 )
 
-// emptyLinkDest reports whether dest is an "empty" link destination.
-// Empty means literally empty, a lone fragment "#", or angle-bracket-wrapped
-// empty "<>".
 func emptyLinkDest(dest string) bool {
 	return dest == "" || dest == "#" || dest == "<>"
 }
 
-// findEmptyLinks scans a single line (already stripped of inline code) for
-// Markdown links or images whose destination is empty.
-// It returns the raw matched text for each violation (e.g. "[text]()").
 func findEmptyLinks(line string) []string {
 	var results []string
 	pos := 0
@@ -56,10 +50,6 @@ func findEmptyLinks(line string) []string {
 	return results
 }
 
-// CheckNoEmptyLinks flags Markdown links and images whose destination URL is
-// empty, contains only "#", or is "<>".
-// Links inside fenced code, indented code, HTML blocks, HTML comments, and inline
-// code spans are ignored.
 func CheckNoEmptyLinks(filename string, ctx *preprocess.Context, offset int) []LintError {
 	var errs []LintError
 
@@ -68,8 +58,6 @@ func CheckNoEmptyLinks(filename string, ctx *preprocess.Context, offset int) []L
 			continue
 		}
 
-		// Sanitized blanks inline code spans and inline comments, so links
-		// living inside them are not seen here.
 		line := ctx.Sanitized(i)
 		if !strings.Contains(line, "](") {
 			continue

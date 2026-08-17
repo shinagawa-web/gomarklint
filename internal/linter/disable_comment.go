@@ -27,7 +27,6 @@ func (ld lineDisable) isRuleDisabled(ruleName string) bool {
 	return false
 }
 
-// disabledSet maps absolute line numbers to their disable state.
 type disabledSet map[int]lineDisable
 
 func (d disabledSet) isDisabled(line int, ruleName string) bool {
@@ -50,7 +49,6 @@ func (d disabledSet) addLine(line int, ruleNames []string) {
 	d[line] = lineDisable{names: append(existing.names, ruleNames...)}
 }
 
-// blockState holds the current block-level disable state while scanning lines.
 type blockState struct {
 	allDisabled bool
 	exceptions  []string // re-enabled rules when allDisabled=true
@@ -73,16 +71,12 @@ func (bs *blockState) applyTo(set disabledSet, absLine int) {
 		set[absLine] = lineDisable{allDisabled: true, names: bs.exceptions}
 		return
 	}
-	// named-disable mode
 	if exists && existing.allDisabled {
 		return // all-disabled takes priority
 	}
 	set[absLine] = lineDisable{names: append(existing.names, bs.rules...)}
 }
 
-// parseDisableComments scans lines for gomarklint-disable directives and returns
-// a disabledSet mapping absolute line numbers to the set of disabled rules.
-// offset is the frontmatter line count used to compute absolute line numbers.
 func parseDisableComments(lines []string, offset int) disabledSet {
 	set := make(disabledSet)
 	var bs blockState
@@ -120,7 +114,6 @@ func parseDisableComments(lines []string, offset int) disabledSet {
 	return set
 }
 
-// removeAll returns s with all elements in remove filtered out.
 func removeAll(s []string, remove []string) []string {
 	result := s[:0]
 	for _, v := range s {
@@ -138,9 +131,6 @@ func removeAll(s []string, remove []string) []string {
 	return result
 }
 
-// parseDirectiveLine extracts the directive keyword and optional rule names
-// from a gomarklint HTML comment directive on a line.
-// Returns ("", nil) when no valid directive is found.
 func parseDirectiveLine(line string) (directive string, ruleNames []string) {
 	start := strings.Index(line, "<!--")
 	if start == -1 {
