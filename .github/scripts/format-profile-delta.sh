@@ -6,8 +6,8 @@ set -e
 COMPARISON_FILE="$1"
 PROFILES_DIR="${2:-profiles}"
 
-# Find regressing benchmarks: time/op rows without ✅
-REGRESSING=$(grep 'time/op' "$COMPARISON_FILE" | grep -v '✅' | awk -F'|' '{
+# Find regressing benchmarks: time/op rows with explicit ⚠️ or ❌ marker
+REGRESSING=$(grep 'time/op' "$COMPARISON_FILE" | grep -E '⚠️|❌' | awk -F'|' '{
   name = $2
   gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
   gsub(/-[0-9]+$/, "", name)
