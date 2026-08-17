@@ -121,17 +121,7 @@ func BenchmarkFullLinting(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _, _ = lint.LintContent("benchmark.md", content)
-		artificialCPUWork() // artificial regression to test CPU profile delta
 	}
-}
-
-// artificialCPUWork simulates a CPU regression for testing the CPU profile delta feature.
-func artificialCPUWork() {
-	result := 0
-	for i := 0; i < 10000000; i++ {
-		result += i * i
-	}
-	_ = result
 }
 
 func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
