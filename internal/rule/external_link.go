@@ -28,16 +28,16 @@ type ExtractedLink struct {
 }
 
 const (
-	DefaultRetryDelayMs       = 1000
-	DefaultMaxConcurrency     = 10
-	MaxConcurrencyLimit       = 15
-	DefaultMaxRetries         = 2
-	MaxRetriesLimit           = 4
-	DefaultPerHostConcurrency = 2
+	DefaultRetryDelayMs        = 1000
+	DefaultMaxConcurrency      = 10
+	MaxConcurrencyLimit        = 15
+	DefaultMaxRetries          = 2
+	MaxRetriesLimit            = 4
+	DefaultPerHostConcurrency  = 2
 	MaxPerHostConcurrencyLimit = 15
-	DefaultPerHostIntervalMs  = 3000
-	MinPerHostIntervalMs      = 1000
-	MaxPerHostIntervalMsLimit = 60000
+	DefaultPerHostIntervalMs   = 3000
+	MinPerHostIntervalMs       = 1000
+	MaxPerHostIntervalMsLimit  = 60000
 
 	userAgent = "gomarklint/v3 (+https://github.com/shinagawa-web/gomarklint)"
 )

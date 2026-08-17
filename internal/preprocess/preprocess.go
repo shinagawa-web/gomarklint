@@ -23,13 +23,13 @@ const (
 	flagHTMLComment
 )
 
-func (c *Context) Len() int                    { return len(c.lines) }
-func (c *Context) Line(i int) string           { return c.lines[i] }
-func (c *Context) InFencedCode(i int) bool     { return c.flags[i]&flagFencedCode != 0 }
-func (c *Context) InIndentedCode(i int) bool   { return c.flags[i]&flagIndentedCode != 0 }
-func (c *Context) InHTMLBlock(i int) bool      { return c.flags[i]&flagHTMLBlock != 0 }
-func (c *Context) InHTMLComment(i int) bool    { return c.flags[i]&flagHTMLComment != 0 }
-func (c *Context) FenceSpans() []FenceSpan     { return c.fences }
+func (c *Context) Len() int                  { return len(c.lines) }
+func (c *Context) Line(i int) string         { return c.lines[i] }
+func (c *Context) InFencedCode(i int) bool   { return c.flags[i]&flagFencedCode != 0 }
+func (c *Context) InIndentedCode(i int) bool { return c.flags[i]&flagIndentedCode != 0 }
+func (c *Context) InHTMLBlock(i int) bool    { return c.flags[i]&flagHTMLBlock != 0 }
+func (c *Context) InHTMLComment(i int) bool  { return c.flags[i]&flagHTMLComment != 0 }
+func (c *Context) FenceSpans() []FenceSpan   { return c.fences }
 
 func (c *Context) Sanitized(i int) string {
 	if s, ok := c.sanitized[i]; ok {

@@ -146,12 +146,12 @@ func (r *RuleConfig) applyObjectField(k string, v json.RawMessage) error {
 }
 
 type Config struct {
-	Default      bool                    `json:"default"`
-	Rules        map[string]*RuleConfig  `json:"rules"`
-	Include      []string                `json:"include"`
-	Ignore       []string                `json:"ignore"`
-	OutputFormat string                  `json:"output"`
-	MinSeverity  RuleSeverity            `json:"-"`
+	Default      bool                   `json:"default"`
+	Rules        map[string]*RuleConfig `json:"rules"`
+	Include      []string               `json:"include"`
+	Ignore       []string               `json:"ignore"`
+	OutputFormat string                 `json:"output"`
+	MinSeverity  RuleSeverity           `json:"-"`
 }
 
 func (c *Config) IsEnabled(name string) bool {
