@@ -46,8 +46,9 @@ for bench in $REGRESSING; do
   echo "| Function | Δ cum |"
   echo "|---|---:|"
   go tool pprof "${PPROF_ARGS_CUM[@]}" 2>/dev/null | \
-    awk 'NR>5 && NF>=6 && /(gomarklint|shinagawa-web)/ && /^\s*\+/ {
-      printf "| %s | %s |\n", $NF, $4
+    awk 'NR>5 && NF>=6 && /(gomarklint|shinagawa-web)/ && $4 ~ /^[0-9]/ {
+      name = ($NF == "(inline)") ? $(NF-1) : $NF
+      printf "| %s | %s |\n", name, $4
     }' | head -10
   echo ""
 
@@ -56,8 +57,9 @@ for bench in $REGRESSING; do
   echo "| Function | Δ flat |"
   echo "|---|---:|"
   go tool pprof "${PPROF_ARGS_FLAT[@]}" 2>/dev/null | \
-    awk 'NR>5 && NF>=6 && /^\s*\+/ {
-      printf "| %s | %s |\n", $NF, $1
+    awk 'NR>5 && NF>=6 && $1 ~ /^[0-9]/ {
+      name = ($NF == "(inline)") ? $(NF-1) : $NF
+      printf "| %s | %s |\n", name, $1
     }' | head -10
   echo ""
 done
