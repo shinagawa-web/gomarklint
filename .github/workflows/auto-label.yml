@@ -38,7 +38,8 @@ jobs:
             if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
               labels.push('refactor');
             }
-            if (title.startsWith('test:') || title.startsWith('test(')) {
+            if (title.startsWith('test:') || title.startsWith('test(') ||
+                title.startsWith('bench:') || title.startsWith('bench(')) {
               labels.push('test');
             }
             if (title.startsWith('deps:') || title.startsWith('deps(') || title.includes('dependencies')) {
