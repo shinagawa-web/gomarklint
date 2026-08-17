@@ -6,6 +6,9 @@
 # Coverage threshold (percentage, integer)
 COVERAGE_THRESHOLD ?= 100
 
+# Benchmark sample count (override with BENCH_COUNT=6 for statistical comparison)
+BENCH_COUNT ?= 1
+
 # Binary name
 BINARY_NAME=gomarklint
 E2E_BINARY=gomarklint-e2e-test
@@ -70,7 +73,7 @@ check-coverage: ## Run tests with coverage and enforce minimum threshold
 
 bench: ## Run benchmark tests
 	@echo "Running benchmark tests..."
-	$(GOTEST) -bench=. -benchmem $(shell go list ./... | grep -v '/e2e') -run=^$$
+	$(GOTEST) -bench=. -benchmem -count=$(BENCH_COUNT) $(shell go list ./... | grep -v '/e2e') -run=^$$
 
 bench-compare: ## Compare benchmarks against origin/main; blocks on ⚠️ +10%+ regression
 	@bash scripts/bench-compare.sh
