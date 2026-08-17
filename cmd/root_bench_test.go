@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
-
 	"github.com/shinagawa-web/gomarklint/v3/internal/config"
 	"github.com/shinagawa-web/gomarklint/v3/internal/file"
 	"github.com/shinagawa-web/gomarklint/v3/internal/linter"
@@ -122,8 +120,17 @@ func BenchmarkFullLinting(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _, _ = lint.LintContent("benchmark.md", content)
-		time.Sleep(3 * time.Millisecond) // artificial regression to test CPU profile delta
+		artificialCPUWork() // artificial regression to test CPU profile delta
 	}
+}
+
+// artificialCPUWork simulates a CPU regression for testing the CPU profile delta feature.
+func artificialCPUWork() {
+	result := 0
+	for i := 0; i < 500000; i++ {
+		result += i * i
+	}
+	_ = result
 }
 
 func BenchmarkFullLinting_ExtraLarge(b *testing.B) {
