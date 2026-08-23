@@ -4,7 +4,7 @@ Thank you for your interest in contributing! This guide explains how to set up t
 
 ## Prerequisites
 
-- **Go 1.23+** — [install](https://go.dev/dl/)
+- **Go 1.27+** — [install](https://go.dev/dl/)
 - **Make** — standard on macOS/Linux; on Windows use WSL or Git Bash
 - **Git**
 
