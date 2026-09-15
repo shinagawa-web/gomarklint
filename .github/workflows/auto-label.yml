@@ -70,7 +70,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Check for labels
-        uses: docker://agilepathway/pull-request-label-checker@sha256:00ec57feb5612d2153d4f7eeace0c4c2c2a2642bc69a37874a8e9d15accbca7f
+        uses: docker://agilepathway/pull-request-label-checker@sha256:89c6432342f424d5ce99f6d56700e97c87c8388d04dffe8ce1709217ec07b5b5
         with:
           one_of: bug,documentation,duplicate,enhancement,help wanted,good first issue,invalid,question,wontfix,breaking-change,dependencies,chore,refactor,test
           repo_token: ${{ secrets.GITHUB_TOKEN }}
