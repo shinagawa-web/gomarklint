@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 RUN go build -o gomarklint .
 
-FROM alpine:latest@sha256:c6b073f8e9e58d881f6ffba6ebf3b9ebd60b9e7d6e8337018c0e68bb5c356873
+FROM alpine:latest@sha256:71e9b7bae160ba167fa17414401b94cbcdaf3c32feeab9298bd794a2a0614c35
 RUN apk --no-cache add ca-certificates curl jq
 
 COPY --from=builder /app/gomarklint /usr/local/bin/gomarklint
