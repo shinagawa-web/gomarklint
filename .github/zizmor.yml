@@ -10,3 +10,9 @@ rules:
       # globally to verify the released distribution works end-to-end;
       # there is no lockfile to install from by design.
       - verify-distribution.yml
+  self-repository:
+    ignore:
+      # actionlint does not support `uses: $/` yet (rhysd/actionlint#711), so
+      # this workflow keeps `uses: ./`. Switch to `$/` and remove this ignore
+      # once actionlint accepts the self-repository syntax.
+      - test-action.yml
