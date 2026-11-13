@@ -155,8 +155,6 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
+      - name: Stage npm publish (approve on npmjs.com)
+        run: npm stage publish --provenance --access public
         working-directory: npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
