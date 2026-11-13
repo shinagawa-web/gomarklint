@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shinagawa-web/gomarklint.git",
+    "url": "git+https://github.com/shinagawa-web/gomarklint.git",
     "directory": "npm"
   },
   "homepage": "https://shinagawa-web.github.io/gomarklint/",
